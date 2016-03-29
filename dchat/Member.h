@@ -9,6 +9,7 @@
 
 #include "stdincludes.h"
 
+
 /**
  * CLASS NAME: q_elt
  *
@@ -21,6 +22,7 @@ public:
     q_elt(void *elt, int size);
 };
 
+
 /**
  * CLASS NAME: Address
  *
@@ -28,24 +30,25 @@ public:
  */
 class Address {
 public:
-    std::string addr;
+    std::string ip;
     int port;
-    Address() {}
-    Address(const Address &anotherAddress);             // Copy constructor
-    Address& operator =(const Address &anotherAddress); // Overloaded = operator
-    bool operator ==(const Address &anotherAddress);    // Overloaded == operator
     Address(std::string address) {
         size_t pos = address.find(":");
-        addr = address.substr(0, pos);
+        ip = address.substr(0, pos);
         port = stoi(address.substr(pos + 1, address.size()-pos-1));
     }
+    Address(const Address &anotherAddress) {
+        ip = anotherAddress.ip;
+        port = anotherAddress.port;
+    }
     std::string getAddress() {
-        return addr + ":" + std::to_string(port);
+        return ip + ":" + std::to_string(port);
     }
     void init() {
-        addr.clear();
+        ip.clear();
     }
 };
+
 
 /**
  * CLASS NAME: MemberListEntry
@@ -54,24 +57,17 @@ public:
  */
 class MemberListEntry {
 public:
-    int id;
-    short port;
-    long heartbeat;
-    long timestamp;
-    MemberListEntry(int id, short port, long heartbeat, long timestamp);
-    MemberListEntry(int id, short port);
-    MemberListEntry(): id(0), port(0), heartbeat(0), timestamp(0) {}
-    MemberListEntry(const MemberListEntry &anotherMLE);
-    MemberListEntry& operator =(const MemberListEntry &anotherMLE);
-    int getid();
-    short getport();
-    long getheartbeat();
-    long gettimestamp();
-    void setid(int id);
-    void setport(short port);
-    void setheartbeat(long hearbeat);
-    void settimestamp(long timestamp);
+    std::string ip;
+    int port;
+    long heartbeat = 0;
+    long timestamp = 0;
+    bool isLeader = false;
+    MemberListEntry(std::string ip, short port) {};
+    std::string getAddress() {
+        return ip + ":" + std::to_string(port);
+    }
 };
+
 
 /**
  * CLASS NAME: Member
@@ -81,7 +77,7 @@ public:
 class Member {
     
 public:
-    Address addr;           // This member's Address
+    Address * address;      // This member's Address
     bool inited = false;    // boolean indicating if this member is up
     bool inGroup;           // boolean indicating if this member is in the group
     bool bFailed;           // boolean indicating if this member has failed
@@ -90,23 +86,32 @@ public:
     int pingCounter;        // counter for next ping
     int timeOutCounter;     // counter for ping timeout
     
-    
     std::vector<MemberListEntry> memberList;            // Membership table
     std::vector<MemberListEntry>::iterator myPos;       // My position in the membership table
     std::queue<q_elt> mp1q;                             // Queue for failure detection messages
     
+    std::string getLeaderAddress() {
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            if ((*iter).isLeader) {
+                return (*iter).getAddress();
+            }
+        }
+        return "";
+    }
+    
     /**
      * Constructor
      */
-    Member(): inited(false), inGroup(false), bFailed(false), nnb(0), heartbeat(0), pingCounter(0), timeOutCounter(0) {}
-    
-    Member(const Member &anotherMember);                // copy constructor
-    Member& operator =(const Member &anotherMember);    // Assignment operator overloading
+    Member(Address addr): inited(false), inGroup(false), bFailed(false), nnb(0), heartbeat(0), pingCounter(0), timeOutCounter(0) {
+        this->address = new Address(addr);
+    }
     
     /**
      *  Destructor
      */
-    virtual ~Member() {}
+    virtual ~Member() {
+        delete address;
+    }
 };
 
 #endif /* MEMBER_H */

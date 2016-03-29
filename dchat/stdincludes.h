@@ -10,7 +10,6 @@
 /*
  * Macros
  */
-//#define RING_SIZE 512
 #define FAILURE -1
 #define SUCCESS 0
 
@@ -32,6 +31,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <queue>
 #include <fstream>
@@ -52,4 +52,6 @@
 
 #define MAXBUFLEN 512
 
+#define DCHAT "DCHAT"
+#define DJOIN "DJOIN"
 #endif /* STDINCLUDES_H */

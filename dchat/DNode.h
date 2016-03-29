@@ -10,6 +10,8 @@
 
 #include "stdincludes.h"
 #include "Member.h"
+#include "DNode.h"
+#include "DNet.h"
 
 /**
  * Macros
@@ -43,29 +45,51 @@ typedef struct MessageHdr {
  */
 class DNode {
 private:
-    Member memberNode;
+    Member * memberNode;
+    DNet * dNet;
+    Address * joinAddress = nullptr;
+    std::string username;
 
 public:
-    // Need to know the centralized server address
-    DNode ();
-    Member * getMemberNode() {
-        return &memberNode;
+    DNode(std::string name) : username(name) {
+        dNet = new DNet;
+        Address myAddr(dNet->DNinit());
+        memberNode = new Member(myAddr); // Create Member node
+        joinAddress = new Address(myAddr); // Join address
+        nodeStart(myAddr.port);
     }
-    int recvLoop();
     
-    void nodeStart(char *servaddrstr, short serverport);
-    
-    int initThisNode(Address *joinaddr);
+    DNode(std::string name, std::string addr) : username(name) {
+        dNet = new DNet;
+        Address myAddr(dNet->DNinit());
+        memberNode = new Member(myAddr); // Create Member node
+        joinAddress = new Address(addr); // Join address
+        nodeStart(myAddr.port);
+    }
+
+    Member * getMemberNode() {
+        return memberNode;
+    }
+
+    void nodeStart(int serverport);
+    int initThisNode();
     int introduceSelfToGroup(Address *joinAddress);
-    int finishUpThisNode();
+    int finishUpThisNode(); // Wind up this node and clean up state
     
-    void checkMessages();
-    
+    int recvLoop();
+    static int enqueueWrapper(void *env, char *buff, int size);
     void nodeLoopOps();
-    
+    void checkMessages();
+    bool recvCallBack(void *env, char *data, int size);
     void nodeLoop();
+        
+    void sendMsg(std::string msg);
     
-    Address getJoinAddress();
+    virtual ~DNode() {
+        delete dNet;
+        delete memberNode;
+        delete joinAddress;
+    }
 };
 
 #endif /* DNODE_H */
