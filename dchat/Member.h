@@ -102,7 +102,7 @@ public:
     /**
      * Constructor
      */
-    Member(Address addr): inited(false), inGroup(false), bFailed(false), nnb(0), heartbeat(0), pingCounter(0), timeOutCounter(0) {
+    Member(std::string addr): inited(false), inGroup(false), bFailed(false), nnb(0), heartbeat(0), pingCounter(0), timeOutCounter(0) {
         this->address = new Address(addr);
     }
     

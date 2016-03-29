@@ -16,10 +16,10 @@ private:
     int sockfd;
     std::queue<q_elt> queue;
 public:
-    DNet();
+    DNet() {};
     // DNet(DNet &anotherDNet);
     // DNet& operator = (DNet &anotherDNet);
-    virtual ~DNet();
+    virtual ~DNet() {};
 
     std::string DNinit();
     int DNsend(Address *toaddr, std::string data);

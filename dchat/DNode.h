@@ -52,26 +52,24 @@ private:
 
 public:
     DNode(std::string name) : username(name) {
-        dNet = new DNet;
-        Address myAddr(dNet->DNinit());
-        memberNode = new Member(myAddr); // Create Member node
-        joinAddress = new Address(myAddr); // Join address
-        nodeStart(myAddr.port);
+        dNet = new DNet();
+        std::string myAddr = dNet->DNinit();
+        memberNode = new Member(myAddr);        // Create Member node
+        joinAddress = new Address(myAddr);      // Join address
     }
     
     DNode(std::string name, std::string addr) : username(name) {
-        dNet = new DNet;
-        Address myAddr(dNet->DNinit());
-        memberNode = new Member(myAddr); // Create Member node
-        joinAddress = new Address(addr); // Join address
-        nodeStart(myAddr.port);
+        dNet = new DNet();
+        std::string myAddr = dNet->DNinit();
+        memberNode = new Member(myAddr);        // Create Member node
+        joinAddress = new Address(addr);        // JoimyAddressn address
     }
 
     Member * getMemberNode() {
         return memberNode;
     }
 
-    void nodeStart(int serverport);
+    int nodeStart();
     int initThisNode();
     int introduceSelfToGroup(Address *joinAddress);
     int finishUpThisNode(); // Wind up this node and clean up state
@@ -84,6 +82,7 @@ public:
     void nodeLoop();
         
     void sendMsg(std::string msg);
+    std::string recvMsg();
     
     virtual ~DNode() {
         delete dNet;

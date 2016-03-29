@@ -31,14 +31,14 @@ int DNode::recvLoop() {
  * 				All initializations routines for a member.
  * 				Called by the application layer.
  */
-void DNode::nodeStart(int servport) {
+int DNode::nodeStart() {
     
     // Self booting routines
     if( initThisNode() == -1 ) {
 #ifdef DEBUGLOG
         std::cerr << "init_thisnode failed. Exit." << std::endl;
 #endif
-        exit(1);
+        return FAILURE;
     }
     
     if( !introduceSelfToGroup(joinAddress) ) {
@@ -46,10 +46,10 @@ void DNode::nodeStart(int servport) {
 #ifdef DEBUGLOG
         std::cerr << "Unable to join self to group. Exiting." << std::endl;
 #endif
-        exit(1);
+        return FAILURE;
     }
     
-    return;
+    return SUCCESS;
 }
 
 /**
@@ -130,4 +130,9 @@ void DNode::sendMsg(std::string msg) {
             
         }
     }
+}
+
+std::string DNode::recvMsg() {
+    
+    return NULL;
 }

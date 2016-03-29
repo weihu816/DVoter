@@ -82,15 +82,14 @@ int DNet::DNsend(Address * addr, std::string data) {
     int sockfd_w = 0;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    int numbytes;
+    size_t numbytes;
     
     // receive msg from server, for ack
     struct sockaddr_storage their_addr;
     char buf[MAXBUFLEN];
     socklen_t addr_len;
     char s[INET6_ADDRSTRLEN];
-    
-    char* fullmsg = new char[MAXBUFLEN];
+    char * fullmsg = new char[MAXBUFLEN];
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -124,15 +123,22 @@ int DNet::DNsend(Address * addr, std::string data) {
     }
     
     // TODO: assign sequence number and add to mes queue
-    
+    if ((numbytes = sendto(sockfd, data.c_str(), strlen(data.c_str()), 0, p->ai_addr, p->ai_addrlen)) == -1) {
+        perror("sendto");
+        exit(1);
+    }
 
+#ifdef DEBUGLOG
+    std::cout << "Send " << numbytes << " bytes to " << addr->getAddress() << std::endl;
+#endif
     // Free resources
+    freeaddrinfo(servinfo);
     close(sockfd_w);
-    
     return SUCCESS;
 }
 
 int DNet::DNrecv(int (*enq)(void *, char *, int), struct timeval *t, int times, void *queue) {
+    
     
     return SUCCESS;
 }
