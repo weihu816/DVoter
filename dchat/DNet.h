@@ -15,7 +15,7 @@ class DNet
 private:
     int sockfd;
     std::queue<q_elt> queue;    //msg queue (better priority q)
-    int seqNum;
+    
 public:
     DNet() {};
     // DNet(DNet &anotherDNet);
@@ -24,7 +24,7 @@ public:
 
     std::string DNinit();
     int DNsend(Address *toaddr, std::string data);
-    int DNrecv(int (* enq)(void *, char *, int), struct timeval *t, int times, void *queue);
+    int DNrecv(Address *fromaddr, std::string data);
     int DNcleanup();
     
     bool enqueue(void *buffer, int size) {

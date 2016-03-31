@@ -49,6 +49,7 @@ private:
     DNet * dNet;
     Address * joinAddress = nullptr;
     std::string username;
+    int seqNum;
 
 public:
     DNode(std::string name) : username(name) {

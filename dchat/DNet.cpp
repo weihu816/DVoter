@@ -84,13 +84,6 @@ int DNet::DNsend(Address * addr, std::string data) {
     int rv;
     size_t numbytes;
     
-    // receive msg from server, for ack
-    struct sockaddr_storage their_addr;
-    char buf[MAXBUFLEN];
-    socklen_t addr_len;
-    char s[INET6_ADDRSTRLEN];
-    char * fullmsg = new char[MAXBUFLEN];
-    
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
@@ -137,8 +130,55 @@ int DNet::DNsend(Address * addr, std::string data) {
     return SUCCESS;
 }
 
-int DNet::DNrecv(int (*enq)(void *, char *, int), struct timeval *t, int times, void *queue) {
+int DNet::DNrecv(Address *fromaddr, std::string data) {
+    int sockfd_r;
+    size_t numbytes;
+    char buf[MAXBUFLEN];
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
+    char s[INET6_ADDRSTRLEN];
     
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    
+    if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return FAILURE;
+    }
+    
+    // loop through all the results and make a scocket
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sockfd_r = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1) {
+            perror("client: socket");
+            continue;
+        }
+        
+        break;
+    }
+    
+    if (p == NULL) {
+        fprintf(stderr, "client: failed to connect\n");
+        return 2;
+    }
+    
+    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
+              s, sizeof s);
+    printf("client: connecting to %s\n", s);
+    
+    freeaddrinfo(servinfo); // all done with this structure
+    
+    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+        perror("recv");
+        exit(1);
+    }
+    
+    buf[numbytes] = '\0';
+    
+    printf("client: received '%s'\n",buf);
+    
+    close(sockfd);
     
     return SUCCESS;
 }
