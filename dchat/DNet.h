@@ -14,7 +14,8 @@ class DNet
 {
 private:
     int sockfd;
-    std::queue<q_elt> queue;
+    std::queue<q_elt> queue;    //msg queue (better priority q)
+    int seqNum;
 public:
     DNet() {};
     // DNet(DNet &anotherDNet);
