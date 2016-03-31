@@ -99,9 +99,9 @@ in_port_t get_in_port(struct sockaddr *sa)
 }
 
 /**
- * FUNCTION NAME: ENsend
+ * FUNCTION NAME: DNsend
  *
- * DESCRIPTION: EmulNet send function
+ * DESCRIPTION: send msg
  *
  * RETURNS: Message send successfully or not
  */
@@ -159,6 +159,13 @@ int DNet::DNsend(Address * addr, std::string data) {
     return SUCCESS;
 }
 
+/**
+ * FUNCTION NAME: DNrecv
+ *
+ * DESCRIPTION: receive msg
+ *
+ * RETURNS: Message received successfully or not
+ */
 int DNet::DNrecv(Address & fromaddr, std::string & data) {
     int sockfd_r = 0;
     size_t numbytes;
