@@ -32,6 +32,7 @@ class Address {
 public:
     std::string ip;
     int port;
+    Address() {}
     Address(std::string address) {
         size_t pos = address.find(":");
         ip = address.substr(0, pos);

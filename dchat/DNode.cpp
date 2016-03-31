@@ -159,5 +159,9 @@ void DNode::multicastMsg(std::string msg) {
  * DESCRIPTION:
  */
 std::string DNode::recvMsg() {
+    Address fromAddr;
+    std::string content;
+    int port;
+    dNet->DNrecv(&fromAddr, content, port);
     return NULL;
 }
