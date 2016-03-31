@@ -16,7 +16,7 @@
 std::string DNet::DNinit() {
     // Randomly choose port number
     srand((unsigned int) time(NULL));
-    int port = rand() % 500 + 20000;
+    port = rand() % 500 + 20000;
     
     struct addrinfo hints, *servinfo, *p;
     int rv;
@@ -68,11 +68,42 @@ std::string DNet::DNinit() {
 }
 
 /**
+ * FUNCTION NAME: get_in_addr
+ *
+ * DESCRIPTION: get sockaddr, IPv4 or IPv6
+ */
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+    
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+/**
+ * FUNCTION NAME: get_in_addr
+ *
+ * DESCRIPTION: get port number, IPv4 or IPv6
+ *
+ * RETURNS: port number
+ *
+ */
+in_port_t get_in_port(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return (((struct sockaddr_in*)sa)->sin_port);
+    }
+    
+    return (((struct sockaddr_in6*)sa)->sin6_port);
+}
+
+/**
  * FUNCTION NAME: ENsend
  *
  * DESCRIPTION: EmulNet send function
  *
- * RETURNS: ???
+ * RETURNS: Message send successfully or not
  */
 int DNet::DNsend(Address * addr, std::string data) {
 #ifdef DEBUGLOG
@@ -110,11 +141,10 @@ int DNet::DNsend(Address * addr, std::string data) {
     }
     
     if (p == NULL) {
-        fprintf(stderr, "stub: failed to get addr.\n");
+        fprintf(stderr, "stub: failed to create socket.\n");
         return FAILURE;
     }
     
-    // TODO: assign sequence number and add to mes queue
     if ((numbytes = sendto(sockfd_w, data.c_str(), strlen(data.c_str()), 0, p->ai_addr, p->ai_addrlen)) == -1) {
         perror("sendto");
         exit(1);
@@ -132,9 +162,12 @@ int DNet::DNsend(Address * addr, std::string data) {
 int DNet::DNrecv(Address & fromaddr, std::string & data) {
     int sockfd_r = 0;
     size_t numbytes;
+    struct sockaddr_storage their_addr;
     char buf[MAXBUFLEN];
     struct addrinfo hints, *servinfo, *p;
     int rv;
+    socklen_t addr_len;
+    char s[INET6_ADDRSTRLEN];
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -159,27 +192,44 @@ int DNet::DNrecv(Address & fromaddr, std::string & data) {
             perror("setsockopt");
             return FAILURE;
         }
+        if (bind(sockfd_r, p->ai_addr, p->ai_addrlen) == -1) {
+            close(sockfd_r);
+            perror("listener: bind");
+            continue;
+        }
         break;
     }
-    
     if (p == NULL) {
-        fprintf(stderr, "failed to get addr.\n");
-        return FAILURE;
+        fprintf(stderr, "listener: failed to bind socket\n");
+        return 2;
     }
     
-    freeaddrinfo(servinfo); // all done with this structure
+    freeaddrinfo(servinfo);
     
-    if ((numbytes = recv(sockfd_r, buf, MAXBUFLEN-1, 0)) == -1) {
-        perror("recv");
+    addr_len = sizeof their_addr;
+    if ((numbytes = recvfrom(sockfd_r, buf, MAXBUFLEN-1 , 0,
+                             (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+        perror("recvfrom");
         exit(1);
     }
     
+    //copy their_addr to fromaddr
+    fromaddr.ip = inet_ntop(their_addr.ss_family,
+                            get_in_addr((struct sockaddr *)&their_addr),
+                            s, sizeof s);
+    fromaddr.port = ntohs(get_in_port((struct sockaddr *)&their_addr));
+
     buf[numbytes] = '\0';
-    
-    printf("client: received '%s'\n",buf);
+#ifdef DEBUGLOG
+    printf("listener: got packet from %s\n",
+           inet_ntop(their_addr.ss_family,
+                     get_in_addr((struct sockaddr *)&their_addr),
+                     s, sizeof s));
+    printf("listener: packet is %d bytes long\n", (int)numbytes);
+    printf("listener: packet contains \"%s\"\n", buf);
+#endif
     
     data = std::string(buf);
-    
     close(sockfd_r);
     
     return SUCCESS;
