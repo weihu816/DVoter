@@ -120,6 +120,8 @@ int DNode::finishUpThisNode() {
  * FUNCTION NAME: sendMsg
  *
  * DESCRIPTION: Send a chat message
+ *              If the current node is the leader, call multicast directly
+ *              There is a thread continuing calling this method
  */
 void DNode::sendMsg(std::string msg) {
     std::string leader_address = memberNode->getLeaderAddress();
@@ -142,6 +144,7 @@ void DNode::sendMsg(std::string msg) {
  * FUNCTION NAME: multicastMsg
  *
  * DESCRIPTION: Multicast the message to all the members
+ *              TODO: only leaders can call this function
  */
 void DNode::multicastMsg(std::string msg) {
     int seq = this->getNextSeqNum();
@@ -162,28 +165,40 @@ void DNode::multicastMsg(std::string msg) {
 /**
  * FUNCTION NAME: recvMsg
  *
- * DESCRIPTION:
+ * DESCRIPTION: TODO: what if it receives CHAT:Bob:"Hello", but the current node is not the leader
+ *              MSG:1:"Bob: Hello"
+ *              CHAT:Bob:"Hello"
  */
-std::string DNode::recvMsg() {
+void DNode::checkMessages() {
     Address fromAddr;
     std::string content;
 #ifdef DEBUGLOG
     std::cout << "Handling message: " + content << " from: " << fromAddr.getAddress() << std::endl;
 #endif
     if (dNet->DNrecv(fromAddr, content) == SUCCESS) {
-        char *cstr = new char[content.length() + 1];
+        char * cstr = new char[content.length() + 1];
         strcpy(cstr, content.c_str());
         char * msg_type = strtok(cstr, ":");
         if (strcmp(msg_type, D_CHAT)) {
-            char * name= strtok (NULL, ":");
-            char * msg= strtok (NULL, ":");
+            // CHAT:Bob:"Hello"
+            const char * param1= strtok (NULL, ":");
+            const char * param2= strtok (NULL, ":");
             
         } else if (strcmp(msg_type, D_MSG)) {
-            char * seq_num = strtok (NULL, ":");
-            char * msg = strtok (NULL, ":");
+            // MSG:1:"Bob: Hello"
+            int seq_recv = atoi(strtok (NULL, ":"));
+            std::string msg_recv(strtok (NULL, ":"));
+            if (seq_recv == seq_num_seen - 1) {
+                // Deliver message
+                seq_num_seen++;
+                message_queue_ready.push(msg_recv);
+            } else {
+                // Suspend delivery of message
+                std::pair<int, std::string> pair(seq_recv, msg_recv);
+                message_queue.push(pair);
+            }
         }
         
         delete [] cstr;
     }
-    return NULL;
 }

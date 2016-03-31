@@ -31,10 +31,14 @@ void sendMsg(DNode * node) {
     }
 }
 
+/**
+ * FUNCTION NAME: 
+ *
+ * DESCRIPTION:
+ */
 void recvMsg(DNode * node) {
     while (1) {
-        std::string msg = node->recvMsg();
-        std::cout << msg << std::endl;
+        node->checkMessages();
     }
 }
 

@@ -49,10 +49,13 @@ private:
     DNet * dNet;
     Address * joinAddress = nullptr;
     std::string username;
-    int seqNum = 0;
+    int seq_num = 0;
+    int seq_num_seen = 0;
     int getNextSeqNum() {
-        return seqNum++;
+        return seq_num++;
     }
+    std::queue<std::pair<int, std::string>> message_queue;
+    std::queue<std::string> message_queue_ready;
 
 public:
     DNode(std::string name) : username(name) {
@@ -81,13 +84,12 @@ public:
     int recvLoop();
     static int enqueueWrapper(void *env, char *buff, int size);
     void nodeLoopOps();
-    void checkMessages();
     bool recvCallBack(void *env, char *data, int size);
     void nodeLoop();
         
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg);
-    std::string recvMsg();
+    void checkMessages();
     
     virtual ~DNode() {
         delete dNet;
