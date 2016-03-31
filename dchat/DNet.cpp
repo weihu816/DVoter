@@ -129,8 +129,8 @@ int DNet::DNsend(Address * addr, std::string data) {
     return SUCCESS;
 }
 
-int DNet::DNrecv(Address *fromaddr, std::string data, int port) {
-    int sockfd_r;
+int DNet::DNrecv(Address *fromaddr, std::string &data, int port) {
+    int sockfd_r = 0;
     size_t numbytes;
     char buf[MAXBUFLEN];
     struct addrinfo hints, *servinfo, *p;

@@ -24,7 +24,7 @@ public:
 
     std::string DNinit();
     int DNsend(Address *toaddr, std::string data);
-    int DNrecv(Address *fromaddr, std::string data, int port);
+    int DNrecv(Address *fromaddr, std::string &data, int port);
     int DNcleanup();
     
     bool enqueue(void *buffer, int size) {
