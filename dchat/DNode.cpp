@@ -119,7 +119,7 @@ int DNode::finishUpThisNode() {
 /**
  * FUNCTION NAME: sendMsg
  *
- * DESCRIPTION: msg is the content
+ * DESCRIPTION: Send a chat message
  */
 void DNode::sendMsg(std::string msg) {
     std::string leader_address = memberNode->getLeaderAddress();
@@ -131,6 +131,9 @@ void DNode::sendMsg(std::string msg) {
         ss << D_CHAT << ":" << username << ":" << msg;
         Address leader_addr(leader_address);
         dNet->DNsend(&leader_addr, ss.str());
+#ifdef DEBUGLOG
+        std::cout << "Send message: " + ss.str() << " to (Leader): " << leader_addr.getAddress() << std::endl;
+#endif
     }
 }
 
@@ -138,7 +141,7 @@ void DNode::sendMsg(std::string msg) {
 /**
  * FUNCTION NAME: multicastMsg
  *
- * DESCRIPTION: msg is the content
+ * DESCRIPTION: Multicast the message to all the members
  */
 void DNode::multicastMsg(std::string msg) {
     int seq = this->getNextSeqNum();
@@ -149,6 +152,9 @@ void DNode::multicastMsg(std::string msg) {
         ss << D_MSG << ":" << seq << ":" << msg;
         Address addr((*iter).getAddress());
         dNet->DNsend(&addr, ss.str());
+#ifdef DEBUGLOG
+        std::cout << "Multicast message: " + ss.str() << " to: " << addr.getAddress() << std::endl;
+#endif
     }
 }
 
@@ -161,7 +167,23 @@ void DNode::multicastMsg(std::string msg) {
 std::string DNode::recvMsg() {
     Address fromAddr;
     std::string content;
-    int port;
-    dNet->DNrecv(&fromAddr, content, port);
+#ifdef DEBUGLOG
+    std::cout << "Handling message: " + content << " from: " << fromAddr.getAddress() << std::endl;
+#endif
+    if (dNet->DNrecv(fromAddr, content) == SUCCESS) {
+        char *cstr = new char[content.length() + 1];
+        strcpy(cstr, content.c_str());
+        char * msg_type = strtok(cstr, ":");
+        if (strcmp(msg_type, D_CHAT)) {
+            char * name= strtok (NULL, ":");
+            char * msg= strtok (NULL, ":");
+            
+        } else if (strcmp(msg_type, D_MSG)) {
+            char * seq_num = strtok (NULL, ":");
+            char * msg = strtok (NULL, ":");
+        }
+        
+        delete [] cstr;
+    }
     return NULL;
 }

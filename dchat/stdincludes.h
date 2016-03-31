@@ -55,5 +55,5 @@
 
 #define D_CHAT "CHAT" // DCHAT:Name:Message - From node to sequencer
 #define D_JOIN "JOIN"
-#define D_MSG "MSG0"
+#define D_MSG "MSG"
 #endif /* STDINCLUDES_H */
