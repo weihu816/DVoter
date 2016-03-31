@@ -18,7 +18,6 @@ std::string DNet::DNinit() {
     srand((unsigned int) time(NULL));
     int port = rand() % 500 + 20000;
     
-    int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
 
@@ -116,7 +115,7 @@ int DNet::DNsend(Address * addr, std::string data) {
     }
     
     // TODO: assign sequence number and add to mes queue
-    if ((numbytes = sendto(sockfd, data.c_str(), strlen(data.c_str()), 0, p->ai_addr, p->ai_addrlen)) == -1) {
+    if ((numbytes = sendto(sockfd_w, data.c_str(), strlen(data.c_str()), 0, p->ai_addr, p->ai_addrlen)) == -1) {
         perror("sendto");
         exit(1);
     }
@@ -130,7 +129,7 @@ int DNet::DNsend(Address * addr, std::string data) {
     return SUCCESS;
 }
 
-int DNet::DNrecv(Address *fromaddr, std::string data) {
+int DNet::DNrecv(Address *fromaddr, std::string data, int port) {
     int sockfd_r;
     size_t numbytes;
     char buf[MAXBUFLEN];
@@ -142,7 +141,7 @@ int DNet::DNrecv(Address *fromaddr, std::string data) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     
-    if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return FAILURE;
     }
@@ -154,22 +153,24 @@ int DNet::DNrecv(Address *fromaddr, std::string data) {
             perror("client: socket");
             continue;
         }
-        
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        if (setsockopt(sockfd_r, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
+            perror("setsockopt");
+            return FAILURE;
+        }
         break;
     }
     
     if (p == NULL) {
-        fprintf(stderr, "client: failed to connect\n");
-        return 2;
+        fprintf(stderr, "failed to get addr.\n");
+        return FAILURE;
     }
-    
-    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
-              s, sizeof s);
-    printf("client: connecting to %s\n", s);
     
     freeaddrinfo(servinfo); // all done with this structure
     
-    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+    if ((numbytes = recv(sockfd_r, buf, MAXBUFLEN-1, 0)) == -1) {
         perror("recv");
         exit(1);
     }
@@ -177,6 +178,8 @@ int DNet::DNrecv(Address *fromaddr, std::string data) {
     buf[numbytes] = '\0';
     
     printf("client: received '%s'\n",buf);
+    
+    data = std::string(buf);
     
     close(sockfd);
     
