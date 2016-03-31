@@ -53,6 +53,7 @@
 
 #define MAXBUFLEN 512
 
-#define DCHAT "DCHAT"
-#define DJOIN "DJOIN"
+#define D_CHAT "CHAT" // DCHAT:Name:Message - From node to sequencer
+#define D_JOIN "JOIN"
+#define D_MSG "MSG0"
 #endif /* STDINCLUDES_H */

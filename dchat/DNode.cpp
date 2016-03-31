@@ -116,23 +116,48 @@ int DNode::finishUpThisNode() {
 }
 
 
+/**
+ * FUNCTION NAME: sendMsg
+ *
+ * DESCRIPTION: msg is the content
+ */
 void DNode::sendMsg(std::string msg) {
-    std::stringstream ss;
-    ss << DCHAT << ":" << username << ":" << msg;
-
     std::string leader_address = memberNode->getLeaderAddress();
     std::string self_address = memberNode->address->getAddress();
-    if (leader_address.compare(self_address)) { // I'm the leader
-        // msgQueue.push(me.getNickname() + "_" + message);
-    } else {
-        auto list = memberNode->memberList;
-        for (auto iter = list.begin(); iter != list.end(); iter++) {
-            
-        }
+    if (leader_address.compare(self_address)) { // I'm the leader (sequencer)
+        multicastMsg(msg);
+    } else { // Send Multicast request to the sequencer
+        std::stringstream ss;
+        ss << D_CHAT << ":" << username << ":" << msg;
+        Address leader_addr(leader_address);
+        dNet->DNsend(&leader_addr, ss.str());
     }
 }
 
+
+/**
+ * FUNCTION NAME: multicastMsg
+ *
+ * DESCRIPTION: msg is the content
+ */
+void DNode::multicastMsg(std::string msg) {
+    int seq = this->getNextSeqNum();
+    std::stringstream ss;
+    auto list = memberNode->memberList;
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        ss.clear();
+        ss << D_MSG << ":" << seq << ":" << msg;
+        Address addr((*iter).getAddress());
+        dNet->DNsend(&addr, ss.str());
+    }
+}
+
+
+/**
+ * FUNCTION NAME: recvMsg
+ *
+ * DESCRIPTION:
+ */
 std::string DNode::recvMsg() {
-    
     return NULL;
 }

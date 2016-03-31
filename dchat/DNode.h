@@ -49,7 +49,10 @@ private:
     DNet * dNet;
     Address * joinAddress = nullptr;
     std::string username;
-    int seqNum;
+    int seqNum = 0;
+    int getNextSeqNum() {
+        return seqNum++;
+    }
 
 public:
     DNode(std::string name) : username(name) {
@@ -83,6 +86,7 @@ public:
     void nodeLoop();
         
     void sendMsg(std::string msg);
+    void multicastMsg(std::string msg);
     std::string recvMsg();
     
     virtual ~DNode() {
