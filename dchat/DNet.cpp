@@ -135,7 +135,6 @@ int DNet::DNrecv(Address *fromaddr, std::string data, int port) {
     char buf[MAXBUFLEN];
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    char s[INET6_ADDRSTRLEN];
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -181,7 +180,7 @@ int DNet::DNrecv(Address *fromaddr, std::string data, int port) {
     
     data = std::string(buf);
     
-    close(sockfd);
+    close(sockfd_r);
     
     return SUCCESS;
 }
