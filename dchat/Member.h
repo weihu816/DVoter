@@ -84,31 +84,21 @@ public:
 class Member {
     
 public:
-    Address * address;      // This member's Address
+    Address * address;              // This member's Address
     Address * leaderAddr = nullptr; // The leader's Address
-    bool inited = false;    // boolean indicating if this member is up
-    bool inGroup;           // boolean indicating if this member is in the group
-    bool bFailed;           // boolean indicating if this member has failed
-    int nnb;                // number of my neighbors
-    long heartbeat;         // the node's own heartbeat
-    int pingCounter;        // counter for next ping
-    int timeOutCounter;     // counter for ping timeout
-    bool isLeader = false;
+    bool inited = false;            // boolean indicating if this member is up
+    bool inGroup;                   // boolean indicating if this member is in the group
+    bool bFailed;                   // boolean indicating if this member has failed
+    int nnb;                        // number of my neighbors
+    long heartbeat;                 // the node's own heartbeat
+    int pingCounter;                // counter for next ping
+    int timeOutCounter;             // counter for ping timeout
     
     std::vector<MemberListEntry> memberList;            // Membership table
     // std::vector<MemberListEntry>::iterator myPos;       // My position in the membership table
     
     std::string getLeaderAddress() {
         return  leaderAddr->getAddress();
-    }
-    
-    std::string getMemberList() {
-        std::string list;
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            list += (*iter).getAddress();
-            if (iter != memberList.end()-1) list += ":";
-        }
-        return list;
     }
     
     std::string getMemberList() {
@@ -136,6 +126,7 @@ public:
     
     virtual ~Member() {
         delete address;
+        delete leaderAddr;
     }
 };
 

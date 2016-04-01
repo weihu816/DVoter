@@ -111,7 +111,7 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " started a new chat, listening on ";
         std::cout << memberNode->getAddress() << std::endl;
         memberNode->inGroup = true;
-        addMember(join_addr);
+        addMember(join_addr, true);
     } else {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << memberNode->getAddress() << std::endl;
@@ -120,8 +120,7 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         if (dNet->DNsend(joinaddr, msg) != SUCCESS) return FAILURE;
         // Receive member lists from the leader, then save the leader address
         Address address;
-        memberNode->leaderAddr; 
-        std::string meessage;
+        std::string message;
         // TODO: what if message lost blocking:timeout
         if (dNet->DNrecv(address, message) != SUCCESS) return FAILURE;
         // send JOINREQ message to introducer member
@@ -171,12 +170,13 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
  *
  * DESCRIPTION:
  */
-void DNode::addMember(std::string ip_port){
+void DNode::addMember(std::string ip_port, bool isLeader){
 #ifdef DEBUGLOG
     std::cout << "DNode::addMember: " << ip_port << std::endl;
 #endif
     MemberListEntry entry(ip_port); // memberList with no such boolean?
     memberNode->memberList.push_back(entry);
+    if (isLeader) memberNode->leaderAddr = new Address(ip_port);
 }
 
 /**
@@ -291,7 +291,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         
     } else if (strcmp(msg_type, D_JOINREQ) == 0) {
         
-        if (memberNode->isLeader) {
+        if (memberNode->leaderAddr != nullptr) {
             // send D_JOINLIST:ip1:port1:...
             // First need to add this member to the list (should not exist)
             addMember(fromAddr.getAddress(), false);
