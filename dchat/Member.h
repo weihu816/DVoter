@@ -111,6 +111,15 @@ public:
         return list;
     }
     
+    std::string getMemberList() {
+        std::string list;
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            list += (*iter).getAddress();
+            if (iter != memberList.end()-1) list += ":";
+        }
+        return list;
+    }
+    
     std::string getAddress() {
         return address->getAddress();
     }
