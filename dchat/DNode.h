@@ -74,7 +74,7 @@ public:
         std::string myAddr = dNet->DNinit();
         memberNode = new Member(myAddr);        // Create Member node
         joinAddress = new Address(addr);        // JoimyAddressn address
-        std::cout << username << " join an existing chat, listening on "
+        std::cout << username << " started a new chat, listening on "
             << memberNode->getAddress() << std::endl;
     }
 
