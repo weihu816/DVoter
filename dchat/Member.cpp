@@ -38,7 +38,8 @@ bool Address::operator ==(const Address& anotherAddress) {
 }
 
 /**
- * Constructor
+ * Constructor: holds the heartbeat info
+ * Main use: heartbeat entry
  */
 MemberListEntry::MemberListEntry(std::string address, long heartbeat, long timestamp): heartbeat(heartbeat), timestamp(timestamp) {
     size_t pos = address.find(":");
@@ -47,9 +48,10 @@ MemberListEntry::MemberListEntry(std::string address, long heartbeat, long times
 }
 
 /**
- * Constuctor
+ * Constuctor: holds the member address; 
+ * Main use: memberList addr track
  */
-MemberListEntry::MemberListEntry(std::string address, bool isLeader): isLeader(isLeader) {
+MemberListEntry::MemberListEntry(std::string address) {
     size_t pos = address.find(":");
     ip = address.substr(0, pos);
     port = stoi(address.substr(pos + 1, address.size()-pos-1));
@@ -83,6 +85,7 @@ MemberListEntry& MemberListEntry::operator =(const MemberListEntry &anotherMLE) 
  */
 Member::Member(const Member &anotherMember) {
     *this->address = *anotherMember.address;
+    *this->leaderAddr = *anotherMember.leaderAddr;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
     this->bFailed = anotherMember.bFailed;
@@ -99,6 +102,7 @@ Member::Member(const Member &anotherMember) {
  */
 Member& Member::operator =(const Member& anotherMember) {
     *this->address = *anotherMember.address;
+    *this->leaderAddr = *anotherMember.leaderAddr;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
     this->bFailed = anotherMember.bFailed;

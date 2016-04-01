@@ -111,7 +111,7 @@ int DNode::introduceSelfToGroup(Address *joinaddr) {
         std::cout << username << " started a new chat, listening on ";
         std::cout << memberNode->getAddress() << std::endl;
         memberNode->inGroup = true;
-        MemberListEntry entry(join_addr, true);
+        MemberListEntry entry(join_addr);
         memberNode->memberList.push_back(entry);
         memberNode->myPos = memberNode->memberList.begin();
     } else {
@@ -120,8 +120,9 @@ int DNode::introduceSelfToGroup(Address *joinaddr) {
         // Requst to join by contacting the member
         std::string msg = std::string(D_JOINREQ) + ":" + std::to_string(joinaddr->port);
         if (dNet->DNsend(joinaddr, msg) != SUCCESS) return FAILURE;
-        // Receive member lists
+        // Receive member lists from the leader, then save the leader address
         Address address;
+        memberNode->leaderAddr; 
         std::string member_list;
         // TODO: what if message lost blocking:timeout
         if (dNet->DNrecv(address, member_list) != SUCCESS) return FAILURE;
