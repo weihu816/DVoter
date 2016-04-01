@@ -47,9 +47,6 @@
 
 //using namespace std;
 
-//#define STDCLLBKARGS (void *env, char *data, int size)
-//#define STDCLLBKRET	void
-
 // You can comment out the following line
 #define DEBUGLOG 1
 
@@ -59,5 +56,5 @@
 #define D_MSG "MSG"                     // MSG:SEQ#:Message - From sequence to node
 #define D_JOINREQ "JOINREQ"             // JOINREQ:PORT
 #define D_JOINLEADER "JOINLEADER"       // JOINOK:ip:port
-#define D_JOINLIST "JOINLIST"       // JOINOK:ip1:port1:ip2:port2:...
+#define D_JOINLIST "JOINLIST"           // JOINOK:ip1:port1:ip2:port2:...
 #endif /* STDINCLUDES_H */

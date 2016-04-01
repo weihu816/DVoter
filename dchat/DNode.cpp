@@ -135,6 +135,7 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         } else if (msg_type.compare(D_JOINLIST) == 0) {
             std::string member_list = message.substr(index+1);
             initMemberList(member_list, address.getAddress());
+            memberNode->inGroup = true;
         } else {
             return FAILURE;
         }
@@ -267,14 +268,15 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
     char * msg_type = strtok(cstr, ":");
     if (strcmp(msg_type, D_CHAT)) {
         
-        // CHAT:Bob:"Hello"
+        // Multicast message - CHAT:Bob:"Hello"
         std::string name_recv(strtok (NULL, ":"));
         std::string msg_recv(strtok (NULL, ":"));
-        
-        
+        std::string message = name_recv + ":: " + msg_recv;
+        multicastMsg(message);
+
     } else if (strcmp(msg_type, D_MSG)) {
         
-        // MSG:1:"Bob: Hello"
+        // Display message - MSG:1:"Bob: Hello"
         int seq_recv = atoi(strtok (NULL, ":"));
         std::string msg_recv(strtok (NULL, ":"));
         if (seq_recv == seq_num_seen - 1) {
@@ -288,12 +290,19 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         }
         
     } else if (strcmp(msg_type, D_JOINREQ) == 0) {
+        
         if (memberNode->isLeader) {
             // send D_JOINLIST:ip1:port1:...
-            
+            // First need to add this member to the list (should not exist)
+            addMember(fromAddr.getAddress(), false);
+            std::string message = std::string(D_JOINLIST) + ":" + memberNode->getMemberList();
+            dNet->DNsend(&fromAddr, message);
         } else {
-            
+            // send leader address
+            std::string message = std::string(D_JOINLEADER) + ":" + memberNode->getLeaderAddress();
+            dNet->DNsend(&fromAddr, message);
         }
+        
     } else {
         std::cout << "Fail : recvHandler" << std::endl;
     }
