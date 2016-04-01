@@ -144,9 +144,9 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
 }
 
 /**
- * FUNCTION NAME: finishUpThisNode
+ * FUNCTION NAME: initMemberList
  *
- * DESCRIPTION: Wind up this node and clean up state
+ * DESCRIPTION:
  */
 void DNode::initMemberList(std::string member_list) {
 
