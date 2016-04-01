@@ -89,7 +89,6 @@ public:
     
     std::vector<MemberListEntry> memberList;            // Membership table
     std::vector<MemberListEntry>::iterator myPos;       // My position in the membership table
-    std::queue<q_elt> mp1q;                             // Queue for failure detection messages
     
     std::string getLeaderAddress() {
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {

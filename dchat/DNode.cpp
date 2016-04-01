@@ -14,13 +14,39 @@
  * 				This function is called by a node to receive messages currently waiting for it
  */
 int DNode::recvLoop() {
-//    if ( memberNode.bFailed ) {
-//        return false;
-//    }
-//    else {
-//        return dnet->DNrecv(enqueueWrapper, NULL, 1, &(memberNode.mp1q));
-//    }
+    if ( memberNode->bFailed ) {
+        return false;
+    } else {
+        Address addr;
+        std::string data;
+        dNet->DNrecv(addr, data);
+    }
     return false;
+}
+
+/**
+ * FUNCTION NAME: nodeLoop
+ *
+ * DESCRIPTION: Executed periodically at each member
+ * 				Check your messages in queue and perform membership protocol duties
+ */
+void DNode::nodeLoop() {
+    if (memberNode->bFailed) {
+        return;
+    }
+    
+    // Check my messages
+    checkMessages();
+    
+    // Wait until you're in the group...
+    if( !memberNode->inGroup ) {
+        return;
+    }
+    
+    // ...then jump in and share your responsibilites!
+    nodeLoopOps();
+    
+    return;
 }
 
 
@@ -58,9 +84,8 @@ int DNode::nodeStart() {
  * DESCRIPTION: Find out who I am and start up
  */
 int DNode::initThisNode() {
-    std::string ip = memberNode->address->ip;
-    int port = memberNode->address->port;
-    
+    // std::string ip = memberNode->address->ip;
+    // int port = memberNode->address->port;
     memberNode->bFailed = false;
     memberNode->inited = true;
     memberNode->inGroup = false;
@@ -163,15 +188,33 @@ void DNode::multicastMsg(std::string msg) {
 
 
 /**
+ * FUNCTION NAME: checkMessages
+ *
+ * DESCRIPTION: Check messages in the queue and call the respective message handler
+ */
+void DNode::checkMessages() {
+    // Pop waiting messages from DNode's queue
+    std::string str;
+    // Pop waiting messages from memberNode's mp1q
+    while ( !message_queue.empty() ) {
+        str = message_queue.front();
+        message_queue.pop();
+        recvHandler(str);
+    }
+    return;
+}
+
+
+/**
  * FUNCTION NAME: recvMsg
  *
- * DESCRIPTION: TODO: what if it receives CHAT:Bob:"Hello", but the current node is not the leader
+ * DESCRIPTION: Message handler for different message types
+ *              TODO: what if it receives CHAT:Bob:"Hello", but the current node is not the leader
  *              MSG:1:"Bob: Hello"
  *              CHAT:Bob:"Hello"
  */
-void DNode::checkMessages() {
+void DNode::recvHandler(std::string content) {
     Address fromAddr;
-    std::string content;
 #ifdef DEBUGLOG
     std::cout << "Handling message: " + content << " from: " << fromAddr.getAddress() << std::endl;
 #endif
@@ -181,9 +224,8 @@ void DNode::checkMessages() {
         char * msg_type = strtok(cstr, ":");
         if (strcmp(msg_type, D_CHAT)) {
             // CHAT:Bob:"Hello"
-            const char * param1= strtok (NULL, ":");
-            const char * param2= strtok (NULL, ":");
-            
+            std::string name_recv(strtok (NULL, ":"));
+            std::string msg_recv(strtok (NULL, ":"));
         } else if (strcmp(msg_type, D_MSG)) {
             // MSG:1:"Bob: Hello"
             int seq_recv = atoi(strtok (NULL, ":"));
@@ -191,14 +233,30 @@ void DNode::checkMessages() {
             if (seq_recv == seq_num_seen - 1) {
                 // Deliver message
                 seq_num_seen++;
-                message_queue_ready.push(msg_recv);
+                message_chat_queue_ready.push(msg_recv);
             } else {
                 // Suspend delivery of message
-                std::pair<int, std::string> pair(seq_recv, msg_recv);
-                message_queue.push(pair);
+                std::pair<int, std::string> _pair(seq_recv, msg_recv);
+                message_chat_queue.push(_pair);
             }
         }
         
         delete [] cstr;
     }
+}
+
+/**
+ * FUNCTION NAME: nodeLoopOps
+ *
+ * DESCRIPTION: Check if any node hasn't responded within a timeout period and then delete
+ * 				the nodes
+ * 				Propagate your membership list
+ */
+void DNode::nodeLoopOps() {
+    
+    /*
+     * TODO
+     */
+    
+    return;
 }

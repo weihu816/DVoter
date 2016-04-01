@@ -54,8 +54,9 @@ private:
     int getNextSeqNum() {
         return seq_num++;
     }
-    std::queue<std::pair<int, std::string>> message_queue;
-    std::queue<std::string> message_queue_ready;
+    std::queue<std::string> message_queue;
+    std::queue<std::pair<int, std::string>> message_chat_queue;
+    std::queue<std::string> message_chat_queue_ready;
 
 public:
     DNode(std::string name) : username(name) {
@@ -82,14 +83,16 @@ public:
     int finishUpThisNode(); // Wind up this node and clean up state
     
     int recvLoop();
+    void nodeLoop();
+    
     static int enqueueWrapper(void *env, char *buff, int size);
     void nodeLoopOps();
-    bool recvCallBack(void *env, char *data, int size);
-    void nodeLoop();
-        
+    
+    void checkMessages();
+    void recvHandler(std::string str);
+    
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg);
-    void checkMessages();
     
     virtual ~DNode() {
         delete dNet;
