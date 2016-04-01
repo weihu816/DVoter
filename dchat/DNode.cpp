@@ -111,9 +111,8 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " started a new chat, listening on ";
         std::cout << memberNode->getAddress() << std::endl;
         memberNode->inGroup = true;
-        MemberListEntry entry(join_addr, true);
-        memberNode->memberList.push_back(entry);
-        memberNode->myPos = memberNode->memberList.begin();
+        memberNode->isLeader = true;
+        addMember(join_addr, true);
     } else {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << memberNode->getAddress() << std::endl;
@@ -135,7 +134,7 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
             this->introduceSelfToGroup(&new_addr, true); // Connect to leader
         } else if (msg_type.compare(D_JOINLIST) == 0) {
             std::string member_list = message.substr(index+1);
-            initMemberList(member_list);
+            initMemberList(member_list, address.getAddress());
         } else {
             return FAILURE;
         }
@@ -148,18 +147,21 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
  *
  * DESCRIPTION:
  */
-void DNode::initMemberList(std::string member_list) {
+void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
     if (member_list.empty()) return;
     char * cstr = new char[member_list.length() + 1];
+    std::string addr;
     strcpy(cstr, member_list.c_str());
     std::string ip(strtok(cstr, ":"));
     std::string port(strtok(NULL, ":"));
-    addMember(ip + ":" + port);
+    addr = ip + ":" + port;
+    addMember(addr, addr.compare(leaderAddr)==0);
     char * pch;;
     while ((pch = strtok(NULL, ":")) != NULL) {
         ip = std::string(pch);
         port = std::string(strtok(NULL, ":"));
-        addMember(ip + ":" + port);
+        addr = ip + ":" + port;
+        addMember(addr, addr.compare(leaderAddr)==0);
     }
 }
 
@@ -168,8 +170,11 @@ void DNode::initMemberList(std::string member_list) {
  *
  * DESCRIPTION:
  */
-void DNode::addMember(std::string ip_port){
-    MemberListEntry entry(ip_port, false);
+void DNode::addMember(std::string ip_port, bool isLeader){
+#ifdef DEBUGLOG
+    std::cout << "DNode::addMember: " << ip_port << std::endl;
+#endif
+    MemberListEntry entry(ip_port, isLeader);
     memberNode->memberList.push_back(entry);
 }
 
@@ -260,10 +265,16 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
     char * cstr = new char[content.length() + 1];
     strcpy(cstr, content.c_str());
     char * msg_type = strtok(cstr, ":");
-    if (strcmp(msg_type, D_CHAT)) { // CHAT:Bob:"Hello"
+    if (strcmp(msg_type, D_CHAT)) {
+        
+        // CHAT:Bob:"Hello"
         std::string name_recv(strtok (NULL, ":"));
         std::string msg_recv(strtok (NULL, ":"));
-    } else if (strcmp(msg_type, D_MSG)) { // MSG:1:"Bob: Hello"
+        
+        
+    } else if (strcmp(msg_type, D_MSG)) {
+        
+        // MSG:1:"Bob: Hello"
         int seq_recv = atoi(strtok (NULL, ":"));
         std::string msg_recv(strtok (NULL, ":"));
         if (seq_recv == seq_num_seen - 1) {
@@ -274,6 +285,14 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
             // Suspend delivery of message
             std::pair<int, std::string> _pair(seq_recv, msg_recv);
             message_chat_queue.push(_pair);
+        }
+        
+    } else if (strcmp(msg_type, D_JOINREQ) == 0) {
+        if (memberNode->isLeader) {
+            // send D_JOINLIST:ip1:port1:...
+            
+        } else {
+            
         }
     } else {
         std::cout << "Fail : recvHandler" << std::endl;

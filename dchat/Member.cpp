@@ -91,7 +91,7 @@ Member::Member(const Member &anotherMember) {
     this->pingCounter = anotherMember.pingCounter;
     this->timeOutCounter = anotherMember.timeOutCounter;
     this->memberList = anotherMember.memberList;
-    this->myPos = anotherMember.myPos;
+    // this->myPos = anotherMember.myPos;
 }
 
 /**
@@ -107,6 +107,6 @@ Member& Member::operator =(const Member& anotherMember) {
     this->pingCounter = anotherMember.pingCounter;
     this->timeOutCounter = anotherMember.timeOutCounter;
     this->memberList = anotherMember.memberList;
-    this->myPos = anotherMember.myPos;
+    // this->myPos = anotherMember.myPos;
     return *this;
 }
