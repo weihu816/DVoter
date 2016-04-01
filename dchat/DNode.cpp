@@ -149,7 +149,28 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
  * DESCRIPTION:
  */
 void DNode::initMemberList(std::string member_list) {
+    if (member_list.empty()) return;
+    char * cstr = new char[member_list.length() + 1];
+    strcpy(cstr, member_list.c_str());
+    std::string ip(strtok(cstr, ":"));
+    std::string port(strtok(NULL, ":"));
+    addMember(ip + ":" + port);
+    char * pch;;
+    while ((pch = strtok(NULL, ":")) != NULL) {
+        ip = std::string(pch);
+        port = std::string(strtok(NULL, ":"));
+        addMember(ip + ":" + port);
+    }
+}
 
+/**
+ * FUNCTION NAME: initMemberList
+ *
+ * DESCRIPTION:
+ */
+void DNode::addMember(std::string ip_port){
+    MemberListEntry entry(ip_port, false);
+    memberNode->memberList.push_back(entry);
 }
 
 /**

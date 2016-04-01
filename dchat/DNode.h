@@ -87,6 +87,7 @@ public:
     int introduceSelfToGroup(Address *joinAddress, bool isSureLeaderAddr);
     int finishUpThisNode(); // Wind up this node and clean up state
     void initMemberList(std::string member_list);
+    void addMember(std::string ip_port);
     
     int recvLoop();
     void nodeLoop();
