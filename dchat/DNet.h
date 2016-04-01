@@ -1,5 +1,5 @@
 /**********************************
- * FILE NAME: DNet
+ * FILE NAME: DNet.h
  *
  * DESCRIPTION: Network classes header file
  **********************************/

@@ -12,6 +12,7 @@
 #include "Member.h"
 #include "DNode.h"
 #include "DNet.h"
+#include "BlockingQueue.h"
 
 /**
  * Macros
@@ -54,9 +55,9 @@ private:
     int getNextSeqNum() {
         return seq_num++;
     }
-    std::queue<std::string> message_queue;
-    std::queue<std::pair<int, std::string>> message_chat_queue;
-    std::queue<std::string> message_chat_queue_ready;
+    blocking_queue<std::pair<Address, std::string>> m_queue;
+    blocking_queue<std::pair<int, std::string>> message_chat_queue;
+    blocking_queue<std::string> message_chat_queue_ready;
 
 public:
     DNode(std::string name) : username(name) {

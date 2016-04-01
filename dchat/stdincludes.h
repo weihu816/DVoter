@@ -34,6 +34,8 @@
 #include <sstream>
 #include <algorithm>
 #include <queue>
+#include <deque>
+#include <list>
 #include <fstream>
 #include <thread>
 
@@ -53,7 +55,9 @@
 
 #define MAXBUFLEN 512
 
-#define D_CHAT "CHAT" // DCHAT:Name:Message - From node to sequencer
-#define D_JOIN "JOIN"
-#define D_MSG "MSG"
+#define D_CHAT "CHAT"                   // DCHAT:Name:Message - From node to sequencer
+#define D_MSG "MSG"                     // MSG:SEQ#:Message - From sequence to node
+#define D_JOINREQ "JOINREQ"             // JOINREQ:PORT
+#define D_JOINLEADER "JOINLEADER"       // JOINOK:ip:port
+#define D_JOINMEMBER "JOINMEMBER"       // JOINOK:ip1:port1:ip2:port2:...
 #endif /* STDINCLUDES_H */

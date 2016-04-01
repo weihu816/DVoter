@@ -20,9 +20,12 @@ int DNode::recvLoop() {
         Address addr;
         std::string data;
         dNet->DNrecv(addr, data);
+        std::pair<Address, std::string> new_pair(addr, data);
+        m_queue.push(new_pair);
     }
     return false;
 }
+
 
 /**
  * FUNCTION NAME: nodeLoop
@@ -34,18 +37,14 @@ void DNode::nodeLoop() {
     if (memberNode->bFailed) {
         return;
     }
-    
     // Check my messages
     checkMessages();
-    
     // Wait until you're in the group...
     if( !memberNode->inGroup ) {
         return;
     }
-    
     // ...then jump in and share your responsibilites!
     nodeLoopOps();
-    
     return;
 }
 
@@ -58,13 +57,11 @@ void DNode::nodeLoop() {
  * 				Called by the application layer.
  */
 int DNode::nodeStart() {
-    
     // Self booting routines
     if( initThisNode() == FAILURE ) {
         std::cout << "init_thisnode failed. Exit." << std::endl;
         return FAILURE;
     }
-    
     if( !introduceSelfToGroup(joinAddress) ) {
         finishUpThisNode();
         // TODO
@@ -72,7 +69,6 @@ int DNode::nodeStart() {
             << ", try again later." << std::endl;
         return FAILURE;
     }
-    
     std::cout << "Succeed, current users:" << std::endl; // TODO
 //    printMembers();
     // std::cout << username << memberNode->getAddress() << " (Leader)"; // TODO: who is leader
@@ -107,9 +103,6 @@ int DNode::initThisNode() {
  * DESCRIPTION: Join the distributed system
  */
 int DNode::introduceSelfToGroup(Address *joinaddr) {
-    // TODO
-    std::string msg;
-    
     std::string self_addr = memberNode->address->getAddress();
     std::string join_addr = joinaddr->getAddress();
 
@@ -122,16 +115,29 @@ int DNode::introduceSelfToGroup(Address *joinaddr) {
         memberNode->memberList.push_back(entry);
         memberNode->myPos = memberNode->memberList.begin();
     } else {
-        // Join
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << memberNode->getAddress() << std::endl;
-        // create JOINREQ message: format of data is {struct Address myaddr}
-        
-        
+        // Requst to join by contacting the member
+        std::string msg = std::string(D_JOINREQ) + ":" + std::to_string(joinaddr->port);
+        if (dNet->DNsend(joinaddr, msg) != SUCCESS) return FAILURE;
+        // Receive member lists
+        Address address;
+        std::string member_list;
+        // TODO: what if message lost blocking:timeout
+        if (dNet->DNrecv(address, member_list) != SUCCESS) return FAILURE;
         // send JOINREQ message to introducer member
-        dNet->DNsend(joinaddr, msg);
+        char * cstr = new char[member_list.length() + 1];
+        strcpy(cstr, member_list.c_str());
+        char * msg_type = strtok(cstr, ":");
+        if (strcmp(msg_type, D_JOINLEADER) == 0) { // CHAT:Bob:"Hello"
+            std::string ip = strtok(NULL, ":");
+            int port = atoi(strtok(NULL, ":"));
+        } else if (strcmp(msg_type, D_JOINMEMBER) == 0) {
+            
+        } else {
+            return FAILURE;
+        }
     }
-
     return SUCCESS;
 }
 
@@ -201,11 +207,11 @@ void DNode::checkMessages() {
     // Pop waiting messages from DNode's queue
     std::string str;
     // Pop waiting messages from memberNode's mp1q
-    while ( !message_queue.empty() ) {
-        str = message_queue.front();
-        message_queue.pop();
-        recvHandler(str);
-    }
+//    while ( !message_queue.empty() ) {
+//        str = message_queue.front();
+//        message_queue.pop();
+//        recvHandler(str);
+//    }
     return;
 }
 
@@ -227,12 +233,10 @@ void DNode::recvHandler(std::string content) {
         char * cstr = new char[content.length() + 1];
         strcpy(cstr, content.c_str());
         char * msg_type = strtok(cstr, ":");
-        if (strcmp(msg_type, D_CHAT)) {
-            // CHAT:Bob:"Hello"
+        if (strcmp(msg_type, D_CHAT)) { // CHAT:Bob:"Hello"
             std::string name_recv(strtok (NULL, ":"));
             std::string msg_recv(strtok (NULL, ":"));
-        } else if (strcmp(msg_type, D_MSG)) {
-            // MSG:1:"Bob: Hello"
+        } else if (strcmp(msg_type, D_MSG)) { // MSG:1:"Bob: Hello"
             int seq_recv = atoi(strtok (NULL, ":"));
             std::string msg_recv(strtok (NULL, ":"));
             if (seq_recv == seq_num_seen - 1) {
@@ -244,6 +248,8 @@ void DNode::recvHandler(std::string content) {
                 std::pair<int, std::string> _pair(seq_recv, msg_recv);
                 message_chat_queue.push(_pair);
             }
+        } else {
+            std::cout << "Fail : recvHandler" << std::endl;
         }
         
         delete [] cstr;

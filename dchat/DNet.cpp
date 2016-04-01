@@ -208,7 +208,7 @@ int DNet::DNrecv(Address & fromaddr, std::string & data) {
     }
     if (p == NULL) {
         fprintf(stderr, "listener: failed to bind socket\n");
-        return 2;
+        return FAILURE;
     }
     
     freeaddrinfo(servinfo);
