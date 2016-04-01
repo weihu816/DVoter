@@ -38,7 +38,18 @@ void sendMsg(DNode * node) {
  */
 void recvMsg(DNode * node) {
     while (1) {
-        node->checkMessages();
+        node->recvLoop();
+    }
+}
+
+/**
+ * FUNCTION NAME:
+ *
+ * DESCRIPTION:
+ */
+void handleMsg(DNode * node) {
+    while (1) {
+        node->nodeLoop();
     }
 }
 

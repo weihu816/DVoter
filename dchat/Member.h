@@ -93,9 +93,10 @@ public:
     long heartbeat;         // the node's own heartbeat
     int pingCounter;        // counter for next ping
     int timeOutCounter;     // counter for ping timeout
+    bool isLeader = false;
     
     std::vector<MemberListEntry> memberList;            // Membership table
-    std::vector<MemberListEntry>::iterator myPos;       // My position in the membership table
+    // std::vector<MemberListEntry>::iterator myPos;       // My position in the membership table
     
     std::string getLeaderAddress() {
         return  leaderAddr->getAddress();
