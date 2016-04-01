@@ -64,6 +64,8 @@ public:
         std::string myAddr = dNet->DNinit();
         memberNode = new Member(myAddr);        // Create Member node
         joinAddress = new Address(myAddr);      // Join address
+        std::cout << username << " started a new chat, listening on "
+            << memberNode->getAddress() << std::endl;
     }
     
     DNode(std::string name, std::string addr) : username(name) {
@@ -71,6 +73,8 @@ public:
         std::string myAddr = dNet->DNinit();
         memberNode = new Member(myAddr);        // Create Member node
         joinAddress = new Address(addr);        // JoimyAddressn address
+        std::cout << username << " started a new chat, listening on "
+            << memberNode->getAddress() << std::endl;
     }
 
     Member * getMemberNode() {

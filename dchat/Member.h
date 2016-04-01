@@ -33,14 +33,15 @@ public:
     std::string ip;
     int port;
     Address() {}
+    // Copy constructor
+    Address(const Address &anotherAddress);
+    // Overloaded = operator
+    Address& operator =(const Address &anotherAddress);
+    bool operator ==(const Address &anotherAddress);
     Address(std::string address) {
         size_t pos = address.find(":");
         ip = address.substr(0, pos);
         port = stoi(address.substr(pos + 1, address.size()-pos-1));
-    }
-    Address(const Address &anotherAddress) {
-        ip = anotherAddress.ip;
-        port = anotherAddress.port;
     }
     std::string getAddress() {
         return ip + ":" + std::to_string(port);
@@ -63,7 +64,13 @@ public:
     long heartbeat = 0;
     long timestamp = 0;
     bool isLeader = false;
-    MemberListEntry(std::string ip, short port) {};
+    
+    MemberListEntry(std::string address, long heartbeat, long timestamp);
+    MemberListEntry(std::string address, bool isLeader);
+    MemberListEntry(): ip(0), port(0), heartbeat(0), timestamp(0) {}
+    MemberListEntry(const MemberListEntry &anotherMLE);
+    MemberListEntry& operator =(const MemberListEntry &anotherMLE);
+
     std::string getAddress() {
         return ip + ":" + std::to_string(port);
     }
@@ -99,16 +106,20 @@ public:
         return "";
     }
     
+    std::string getAddress() {
+        return address->getAddress();
+    }
     /**
      * Constructor
      */
     Member(std::string addr): inited(false), inGroup(false), bFailed(false), nnb(0), heartbeat(0), pingCounter(0), timeOutCounter(0) {
         this->address = new Address(addr);
     }
+    // copy constructor
+    Member(const Member &anotherMember);
+    // Assignment operator overloading
+    Member& operator =(const Member &anotherMember);
     
-    /**
-     *  Destructor
-     */
     virtual ~Member() {
         delete address;
     }

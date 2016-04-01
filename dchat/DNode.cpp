@@ -60,21 +60,23 @@ void DNode::nodeLoop() {
 int DNode::nodeStart() {
     
     // Self booting routines
-    if( initThisNode() == -1 ) {
-#ifdef DEBUGLOG
-        std::cerr << "init_thisnode failed. Exit." << std::endl;
-#endif
+    if( initThisNode() == FAILURE ) {
+        std::cout << "init_thisnode failed. Exit." << std::endl;
         return FAILURE;
     }
     
     if( !introduceSelfToGroup(joinAddress) ) {
         finishUpThisNode();
-#ifdef DEBUGLOG
-        std::cerr << "Unable to join self to group. Exiting." << std::endl;
-#endif
+        // TODO
+        std::cout << "Sorry no chat is active on " << memberNode->getAddress()
+            << ", try again later." << std::endl;
         return FAILURE;
     }
     
+    std::cout << "Succeed, current users:" << std::endl; // TODO
+//    printMembers();
+    // std::cout << username << memberNode->getAddress() << " (Leader)"; // TODO: who is leader
+    // std::cout << "Waiting for others to join" << std::endl;
     return SUCCESS;
 }
 
@@ -95,7 +97,7 @@ int DNode::initThisNode() {
     memberNode->pingCounter = TFAIL;
     memberNode->timeOutCounter = -1;
     memberNode->memberList.clear();
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -113,21 +115,24 @@ int DNode::introduceSelfToGroup(Address *joinaddr) {
 
     if (self_addr.compare(join_addr) == 0) {
         // I am the group booter (first process to join the group). Boot up the group
-#ifdef DEBUGLOG
-        std::cout << "Starting up group..." + self_addr << std::endl;
-#endif
+        std::cout << username << " started a new chat, listening on ";
+        std::cout << memberNode->getAddress() << std::endl;
         memberNode->inGroup = true;
+        MemberListEntry entry(join_addr, true);
+        memberNode->memberList.push_back(entry);
+        memberNode->myPos = memberNode->memberList.begin();
     } else {
         // Join
-#ifdef DEBUGLOG
-        std::cout << "Trying to join..." + self_addr << std::endl;
-#endif
+        std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
+        std::cout << memberNode->getAddress() << std::endl;
         // create JOINREQ message: format of data is {struct Address myaddr}
+        
         
         // send JOINREQ message to introducer member
         dNet->DNsend(joinaddr, msg);
     }
-    return 1;
+
+    return SUCCESS;
 }
 
 /**
