@@ -84,8 +84,9 @@ public:
 
     int nodeStart();
     int initThisNode();
-    int introduceSelfToGroup(Address *joinAddress);
+    int introduceSelfToGroup(Address *joinAddress, bool isSureLeaderAddr);
     int finishUpThisNode(); // Wind up this node and clean up state
+    void initMemberList(std::string member_list);
     
     int recvLoop();
     void nodeLoop();
@@ -94,7 +95,7 @@ public:
     void nodeLoopOps();
     
     void checkMessages();
-    void recvHandler(std::string str);
+    void recvHandler(std::pair<Address, std::string>);
     
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg);
