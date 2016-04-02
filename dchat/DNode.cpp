@@ -19,7 +19,7 @@ int DNode::recvLoop() {
     } else {
         Address addr;
         std::string data;
-        dNet->DNrecv(addr, data); // CODE COMMENT: add in current time stamp to allow heartbeat tracking? -> update heartbeatList or leaderHeartbeatTracker
+        dNet->DNrecv(addr, data, -1); // CODE COMMENT: add in current time stamp to allow heartbeat tracking? -> update heartbeatList or leaderHeartbeatTracker
         std::pair<Address, std::string> new_pair(addr, data);
         m_queue.push(new_pair);
     }
@@ -124,7 +124,7 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
         Address address;
         std::string message;
         // TODO: what if message lost blocking:timeout
-        if (dNet->DNrecv(address, message) != SUCCESS) return FAILURE;
+        if (dNet->DNrecv(address, message, -1) != SUCCESS) return FAILURE;
 
         // send JOINREQ message to introducer member
         size_t index = message.find(":");

@@ -177,7 +177,7 @@ int DNet::DNsend(Address * addr, std::string data) {
  *
  * RETURNS: Message received successfully or not
  */
-int DNet::DNrecv(Address & fromaddr, std::string & data) {
+int DNet::DNrecv(Address & fromaddr, std::string & data, int timeout) {
     size_t numbytes;
     struct sockaddr_storage their_addr;
     char buf[MAXBUFLEN];
@@ -208,14 +208,23 @@ int DNet::DNrecv(Address & fromaddr, std::string & data) {
 //            fprintf(stderr, "Fail to set socket options!\n");
 //            exit(1);
 //        }
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
-            perror("setsockopt");
-            return FAILURE;
+        
+        if (timeout > 0) {
+            struct timeval tv;
+            tv.tv_sec = timeout/1000;
+            tv.tv_usec = timeout % 1000;
+            if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
+                perror("setsockopt");
+                return FAILURE;
+            }
+        } else {
+            if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, NULL, NULL) == -1) {
+                perror("setsockopt");
+                return FAILURE;
+            }
         }
-//        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+
+        //        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
 //            close(sockfd);
 //            perror("listener: bind");
 //            continue;

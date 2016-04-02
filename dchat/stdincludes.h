@@ -64,7 +64,7 @@
 
 #define D_JOINREQ "JOINREQ"             // JOINREQ:PORT
 #define D_JOINLEADER "JOINLEADER"       // JOINOK:ip:port
-#define D_JOINLIST "JOINLIST"           // JOINOK:ip1:port1:ip2:port2:...
+#define D_JOINLIST "JOINLIST"           // JOINOK:initSeq:ip1:port1:ip2:port2:...
 
 #define D_LEAVE "LEAVE"
 #define D_HEARTBEAT "HEARTBEAT"         // HEARTBEAT: () : detect failed node
