@@ -61,12 +61,8 @@ class MemberListEntry {
 public:
     std::string ip;
     int port;
-    long heartbeat = 0;
-    long timestamp = 0;
     
-    MemberListEntry(std::string address, long heartbeat, long timestamp);
-    MemberListEntry(std::string address); 
-    MemberListEntry(): ip(0), port(0), heartbeat(0), timestamp(0) {}
+    MemberListEntry(std::string address);
     MemberListEntry(const MemberListEntry &anotherMLE);
     MemberListEntry& operator =(const MemberListEntry &anotherMLE);
 
@@ -90,9 +86,10 @@ public:
     bool inGroup;                   // boolean indicating if this member is in the group
     bool bFailed;                   // boolean indicating if this member has failed
     int nnb;                        // number of my neighbors
-    long heartbeat;                 // the node's own heartbeat
-    int pingCounter;                // counter for next ping
-    int timeOutCounter;             // counter for ping timeout
+//    long heartbeat;                 // the node's own heartbeat
+//    int pingCounter;                // counter for next ping
+//    int timeOutCounter;             // counter for ping timeout
+    std::unordered_map<std::string, time_t> heartBeatList; //member will track leader; leader will track every one
     
     std::vector<MemberListEntry> memberList;            // Membership table
     // std::vector<MemberListEntry>::iterator myPos;       // My position in the membership table
@@ -101,6 +98,7 @@ public:
         return  leaderAddr->getAddress();
     }
     
+    // this is the member address list, without user name 
     std::string getMemberList() {
         std::string list;
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
@@ -113,12 +111,28 @@ public:
     std::string getAddress() {
         return address->getAddress();
     }
+    
+    void updateHeartBeat(std::string addrKey, time_t heartbeat) {
+        heartBeatList[addrKey] = heartbeat;
+    }
+    
+    time_t getHeartBeat(std::string addrKey) {
+        //if found, return the heartbeat, otherwise return 0
+        std::unordered_map<std::string,int long>::const_iterator got = heartBeatList.find (addrKey);
+        if(got == heartBeatList.end()) {
+            return NULL;
+        } else {
+            return got->second;
+        }
+    }
+    
     /**
      * Constructor
      */
-    Member(std::string addr): inited(false), inGroup(false), bFailed(false), nnb(0), heartbeat(0), pingCounter(0), timeOutCounter(0) {
+    Member(std::string addr): inited(false), inGroup(false), bFailed(false), nnb(0){
         this->address = new Address(addr);
     }
+    
     // copy constructor
     Member(const Member &anotherMember);
     // Assignment operator overloading

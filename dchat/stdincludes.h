@@ -30,6 +30,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -51,11 +52,13 @@
 #define DEBUGLOG 1
 #define MAXBUFLEN 512
 #define TIMEOUT 10000
+#define HEARTFREQ 3000
 
 #define D_CHAT "CHAT"                   // DCHAT:Name:Message - From node to sequencer
 #define D_MSG "MSG"                     // MSG:SEQ#:Message - From sequence to node
 #define D_JOINREQ "JOINREQ"             // JOINREQ:PORT
 #define D_JOINLEADER "JOINLEADER"       // JOINOK:ip:port
 #define D_JOINLIST "JOINLIST"           // JOINOK:ip1:port1:ip2:port2:...
+#define D_LEAVE "LEAVE"
 #define D_HEARTBEAT "HEARTBEAT"         // HEARTBEAT: () : detect failed node
 #endif /* STDINCLUDES_H */

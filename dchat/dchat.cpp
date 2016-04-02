@@ -48,13 +48,26 @@ void recvMsg(DNode * node) {
 }
 
 /**
- * FUNCTION NAME:
+ * FUNCTION NAME: handleMsg
  *
- * DESCRIPTION:
+ * DESCRIPTION: pop message out of queue and process
  */
 void handleMsg(DNode * node) {
     while (1) {
         node->nodeLoop();
+    }
+}
+
+/**
+ * FUNCTION NAME: heartBeatRoutine
+ *
+ * DESCRIPTION: send and check heartbeat
+ */
+void heartBeatRoutine(DNode * node) {
+    while (1) {
+        std::chrono::milliseconds sleepTime(HEARTFREQ); // check every 3 seconds
+        std::this_thread::sleep_for(sleepTime);
+        node->nodeLoopOps();
     }
 }
 
@@ -98,10 +111,13 @@ int main(int argc, const char * argv[]) {
     std::thread thread_recvMsg(recvMsg, node);
     // Thread: Keep looking at message queue and handles message
     std::thread thread_handleMsg(handleMsg, node);
+    // Thread: Track heartbeat
+    std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
     thread_handleMsg.join();
+    thread_heartbeat.join();
     
     // Clean up and quit
     node->finishUpThisNode();

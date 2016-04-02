@@ -38,16 +38,6 @@ bool Address::operator ==(const Address& anotherAddress) {
 }
 
 /**
- * Constructor: holds the heartbeat info
- * Main use: heartbeat entry
- */
-MemberListEntry::MemberListEntry(std::string address, long heartbeat, long timestamp): heartbeat(heartbeat), timestamp(timestamp) {
-    size_t pos = address.find(":");
-    ip = address.substr(0, pos);
-    port = stoi(address.substr(pos + 1, address.size()-pos-1));
-}
-
-/**
  * Constuctor: holds the member address; 
  * Main use: memberList addr track
  */
@@ -62,10 +52,10 @@ MemberListEntry::MemberListEntry(std::string address) {
  * Copy constructor
  */
 MemberListEntry::MemberListEntry(const MemberListEntry &anotherMLE) {
-    this->heartbeat = anotherMLE.heartbeat;
+//    this->heartbeat = anotherMLE.heartbeat;
     this->ip = anotherMLE.ip;
     this->port = anotherMLE.port;
-    this->timestamp = anotherMLE.timestamp;
+//    this->timestamp = anotherMLE.timestamp;
 }
 
 /**
@@ -73,10 +63,10 @@ MemberListEntry::MemberListEntry(const MemberListEntry &anotherMLE) {
  */
 MemberListEntry& MemberListEntry::operator =(const MemberListEntry &anotherMLE) {
     MemberListEntry temp(anotherMLE);
-    std::swap(heartbeat, temp.heartbeat);
+//    std::swap(heartbeat, temp.heartbeat);
     std::swap(ip, temp.ip);
     std::swap(port, temp.port);
-    std::swap(timestamp, temp.timestamp);
+//    std::swap(timestamp, temp.timestamp);
     return *this;
 }
 
@@ -90,9 +80,9 @@ Member::Member(const Member &anotherMember) {
     this->inGroup = anotherMember.inGroup;
     this->bFailed = anotherMember.bFailed;
     this->nnb = anotherMember.nnb;
-    this->heartbeat = anotherMember.heartbeat;
-    this->pingCounter = anotherMember.pingCounter;
-    this->timeOutCounter = anotherMember.timeOutCounter;
+//    this->heartbeat = anotherMember.heartbeat;
+//    this->pingCounter = anotherMember.pingCounter;
+//    this->timeOutCounter = anotherMember.timeOutCounter;
     this->memberList = anotherMember.memberList;
     // this->myPos = anotherMember.myPos;
 }
@@ -107,9 +97,9 @@ Member& Member::operator =(const Member& anotherMember) {
     this->inGroup = anotherMember.inGroup;
     this->bFailed = anotherMember.bFailed;
     this->nnb = anotherMember.nnb;
-    this->heartbeat = anotherMember.heartbeat;
-    this->pingCounter = anotherMember.pingCounter;
-    this->timeOutCounter = anotherMember.timeOutCounter;
+//    this->heartbeat = anotherMember.heartbeat;
+//    this->pingCounter = anotherMember.pingCounter;
+//    this->timeOutCounter = anotherMember.timeOutCounter;
     this->memberList = anotherMember.memberList;
     // this->myPos = anotherMember.myPos;
     return *this;
