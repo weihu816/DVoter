@@ -56,9 +56,11 @@ private:
         return seq_num++;
     }
     blocking_queue<std::pair<Address, std::string>> m_queue;
-    blocking_queue<std::pair<int, std::string>> message_chat_queue;
     blocking_queue<std::string> message_chat_queue_ready;
-
+    
+    // multicst_queue will be initilized using a sequence number init_seen from the leader
+    holdback_queue * multicast_queue;
+    
 public:
     DNode(std::string name) : username(name) {
         dNet = new DNet();
@@ -66,7 +68,7 @@ public:
         memberNode = new Member(myAddr);        // Create Member node
         joinAddress = new Address(myAddr);      // Join address
         std::cout << username << " started a new chat, listening on "
-            << memberNode->getAddress() << std::endl;
+        << memberNode->getAddress() << std::endl;
     }
     
     DNode(std::string name, std::string addr) : username(name) {
@@ -75,13 +77,13 @@ public:
         memberNode = new Member(myAddr);        // Create Member node
         joinAddress = new Address(addr);        // JoimyAddressn address
         std::cout << username << " join an existing chat, listening on "
-            << memberNode->getAddress() << std::endl;
+        << memberNode->getAddress() << std::endl;
     }
-
+    
     Member * getMemberNode() {
         return memberNode;
     }
-
+    
     int nodeStart();
     int initThisNode();
     int introduceSelfToGroup(Address *joinAddress, bool isSureLeaderAddr);
@@ -91,7 +93,7 @@ public:
     
     int recvLoop();
     void nodeLoop();
-   
+    
     static int enqueueWrapper(void *env, char *buff, int size);
     void nodeLoopOps();
     void multicastHeartbeat();
@@ -104,14 +106,12 @@ public:
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg);
     
-    void startElection();
-
     virtual ~DNode() {
         delete dNet;
         delete memberNode;
         delete joinAddress;
+        delete multicast_queue;
     }
 };
 
 #endif /* DNODE_H */
-

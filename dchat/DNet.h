@@ -21,7 +21,7 @@ public:
     // DNet(DNet &anotherDNet);
     // DNet& operator = (DNet &anotherDNet);
     virtual ~DNet() {};
-
+    
     std::string DNinit();
     int DNsend(Address *toaddr, std::string data);
     int DNrecv(Address &fromaddr, std::string &data, int timeout);

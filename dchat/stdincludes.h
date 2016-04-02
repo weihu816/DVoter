@@ -52,12 +52,12 @@
 #define DEBUGLOG 1
 #define MAXBUFLEN 512
 #define TIMEOUT 10000
-#define HEARTFREQ 5000
+#define HEARTFREQ 3000
 
 #define D_CHAT "CHAT"                   // DCHAT:Name:Message - From node to sequencer
 #define D_MULTI "MULTI"                 // This is a multicast message from the sequencer
-                                        // MULTI:Seq#:{message}
-                                        //            {message} : can be like MSG:"Bob:: Hello"
+// MULTI:Seq#:{message}
+//            {message} : can be like MSG:"Bob:: Hello"
 // The following are for multicast
 #define D_MSG "MSG"                     // MSG:SEQ#:Message - From sequence to node
 #define D_ADDNODE "ADDNODE"             // JOINOK:ip1:port1:ip2:port2:...
