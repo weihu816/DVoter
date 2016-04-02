@@ -19,7 +19,7 @@ int DNode::recvLoop() {
     } else {
         Address addr;
         std::string data;
-        dNet->DNrecv(addr, data);
+        dNet->DNrecv(addr, data); // CODE COMMENT: add in current time stamp to allow heartbeat tracking? -> update heartbeatList or leaderHeartbeatTracker
         std::pair<Address, std::string> new_pair(addr, data);
         m_queue.push(new_pair);
     }
@@ -44,7 +44,7 @@ void DNode::nodeLoop() {
         return;
     }
     // ...then jump in and share your responsibilites!
-    nodeLoopOps();
+    nodeLoopOps(); // CODE COMMENT: no message recved would block forever: separate?
     return;
 }
 
@@ -111,6 +111,7 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " started a new chat, listening on ";
         std::cout << memberNode->getAddress() << std::endl;
         memberNode->inGroup = true;
+        memberNode->leaderAddr = memberNode->getAddress();
         addMember(join_addr, true);
     } else {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
@@ -166,7 +167,7 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
 }
 
 /**
- * FUNCTION NAME: initMemberList
+ * FUNCTION NAME: addMember
  *
  * DESCRIPTION:
  */
@@ -256,6 +257,7 @@ void DNode::checkMessages() {
  *              TODO: what if it receives CHAT:Bob:"Hello", but the current node is not the leader
  *              MSG:1:"Bob: Hello"
  *              CHAT:Bob:"Hello"
+ *              TODO: what if the heartbeat gets delayed: update the heartBeat book with any message recved?
  */
 void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
     Address fromAddr = addr_content.first;
@@ -291,7 +293,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         
     } else if (strcmp(msg_type, D_JOINREQ) == 0) {
         
-        if (memberNode->leaderAddr != nullptr) {
+        if (memberNode->leaderAddr == nullptr) { // I am the leader
             // send D_JOINLIST:ip1:port1:...
             // First need to add this member to the list (should not exist)
             addMember(fromAddr.getAddress(), false);
@@ -315,13 +317,67 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
  *
  * DESCRIPTION: Check if any node hasn't responded within a timeout period and then delete
  * 				the nodes
- * 				Propagate your membership list
+ * 				member: start election; leader: multicast LEAVE
  */
 void DNode::nodeLoopOps() {
+    // have the leader broadcast (members send) a heartbeat every x sec
+    sendHeartbeat();
     
-    /*
-     * TODO
-     */
+    // check a heartbeatList every x sec: for both leader and members
+    // leader: heartbeatist would be a hashmap<, every time it recved a msg, update corresboding entry<MemberEntry, time_t>, with key = member address and time_t being last time it recved a msg or a heartbeat
+    // member: keep a field for leader heartbest (last time it recved anything from the leader
     
+    // if any one heartbeat in the list is (2x) sec away from the current system time
+    
+    // leader: broadcast its leave (once a recvHandler recv a LEAVE message, it will update the membershipList accordingly
+    
+    // member: start a election
+    
+    // finish heartbeat check
     return;
+}
+
+/**
+ * FUNCTION NAME: sendHeartbeat
+ *
+ * DESCRIPTION: Send a heartbeat to the leader (called by members) 
+ *              Or Send a multicast heartbeat to members (called by the leader)
+ *              If the current node is the leader, call multicast directly
+ *              There is a thread continuing calling this method
+ */
+void DNode::sendHeartbeat() {
+    std::string leader_address = memberNode->getLeaderAddress();
+    std::string self_address = memberNode->address->getAddress();
+    if (leader_address.compare(self_address)) { // I'm the leader (sequencer)
+        //multicast heartbeat to every one
+        multicastHeartbeat();
+    } else { // send heartbeat to leader
+        std::stringstream ss;
+        ss << HEARTBEAT;
+        Address leader_addr(leader_address);
+        dNet->DNsend(&leader_addr, ss.str());
+#ifdef DEBUGLOG
+        std::cout << "Send heartbeat to (Leader): " << leader_addr.getAddress() << std::endl;
+#endif
+    }
+}
+
+/**
+ * FUNCTION NAME: multicastHeartbeat (maybe optimize into multipcastMsg later)
+ *
+ * DESCRIPTION: Multicast a heartbeat to all the members
+ *              TODO: only leaders can call this function
+ */
+void DNode::multicastHeartbeat() {
+    std::stringstream ss;
+    auto list = memberNode->memberList;
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        ss.clear();
+        ss << HEARTBEAT;
+        Address addr((*iter).getAddress());
+        dNet->DNsend(&addr, ss.str());
+#ifdef DEBUGLOG
+        std::cout << "Multicast heartbeat to: " << addr.getAddress() << std::endl;
+#endif
+    }
 }

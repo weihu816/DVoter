@@ -18,6 +18,11 @@ void usage(std::string msg) {
     std::cout << "       $ ./dchat USER ADDR:PORT (join a chat)" << std::endl;
 }
 
+/**
+ * FUNCTION NAME: sendMsg
+ * 
+ * DESCRIPTION: thread keep listening to user input
+ */
 void sendMsg(DNode * node) {
     while (1) {
         if (std::cin.eof()) {
@@ -32,9 +37,9 @@ void sendMsg(DNode * node) {
 }
 
 /**
- * FUNCTION NAME: 
+ * FUNCTION NAME: recvMsg
  *
- * DESCRIPTION:
+ * DESCRIPTION: thread keep listening to incoming messages
  */
 void recvMsg(DNode * node) {
     while (1) {
@@ -91,10 +96,13 @@ int main(int argc, const char * argv[]) {
     std::thread thread_sendMsg(sendMsg, node);
     // Thread: Receive chat messages
     std::thread thread_recvMsg(recvMsg, node);
+    // Thread: Keep looking at message queue and handles message
+    std::thread thread_handleMsg(handleMsg, node);
 
     thread_sendMsg.join();
-    thread_sendMsg.join();
-
+    thread_recvMsg.join();
+    thread_handleMsg.join();
+    
     // Clean up and quit
     node->finishUpThisNode();
     delete node;
