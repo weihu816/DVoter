@@ -41,7 +41,7 @@ bool Address::operator ==(const Address& anotherAddress) {
  * Constuctor: holds the member address; 
  * Main use: memberList addr track
  */
-MemberListEntry::MemberListEntry(std::string address) {
+MemberListEntry::MemberListEntry(std::string address, std::string username): username(username) {
     size_t pos = address.find(":");
     ip = address.substr(0, pos);
     port = stoi(address.substr(pos + 1, address.size()-pos-1));

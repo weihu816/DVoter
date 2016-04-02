@@ -111,7 +111,7 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " started a new chat, listening on ";
         std::cout << memberNode->getAddress() << std::endl;
         memberNode->inGroup = true;
-        addMember(join_addr, true);
+        addMember(join_addr, username, true);
     } else {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << memberNode->getAddress() << std::endl;
@@ -154,14 +154,16 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
     strcpy(cstr, member_list.c_str());
     std::string ip(strtok(cstr, ":"));
     std::string port(strtok(NULL, ":"));
+    std::string username(strtok(NULL, ":"));
     addr = ip + ":" + port;
-    addMember(addr, addr.compare(leaderAddr)==0);
+    addMember(addr, username, addr.compare(leaderAddr)==0);
     char * pch;;
     while ((pch = strtok(NULL, ":")) != NULL) {
         ip = std::string(pch);
         port = std::string(strtok(NULL, ":"));
+        username = std::string(strtok(NULL, ":"));
         addr = ip + ":" + port;
-        addMember(addr, addr.compare(leaderAddr)==0);
+        addMember(addr, username, addr.compare(leaderAddr)==0);
     }
 }
 
@@ -170,11 +172,11 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
  *
  * DESCRIPTION:
  */
-void DNode::addMember(std::string ip_port, bool isLeader){
+void DNode::addMember(std::string ip_port, std::string username, bool isLeader){
 #ifdef DEBUGLOG
     std::cout << "DNode::addMember: " << ip_port << std::endl;
 #endif
-    MemberListEntry entry(ip_port); // memberList with no such boolean?
+    MemberListEntry entry(ip_port, username); // memberList with no such boolean?
     memberNode->memberList.push_back(entry);
     if (isLeader) memberNode->leaderAddr = new Address(ip_port);
 }
@@ -296,7 +298,8 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         if (memberNode->leaderAddr == nullptr) { // I am the leader
             // send D_JOINLIST:ip1:port1:...
             // First need to add this member to the list (should not exist)
-            addMember(fromAddr.getAddress(), false);
+            // TODO : content is the username 
+            addMember(fromAddr.getAddress(), content, false);
             std::string message = std::string(D_JOINLIST) + ":" + memberNode->getMemberList();
             dNet->DNsend(&fromAddr, message);
             // Multicast addnode message
@@ -349,8 +352,8 @@ void DNode::nodeLoopOps() {
                 if(difftime(current, heartbeat) > TIMEOUT/1000) {
                     //exceed timeout limit
                     // TODO: broadcast leave..
-                    std::string message = std::string(D_LEAVE) + ":" + memberNode->;
-                    dNet->DNsend(&memberAddr, message);
+                    std::string message = std::string(D_LEAVE) + ":" ;
+                    //dNet->DNsend(&memberAddr, message);
                 }
             }
         }
