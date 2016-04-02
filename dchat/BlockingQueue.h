@@ -12,8 +12,7 @@
 #include <condition_variable>
 
 template <typename T>
-class blocking_queue
-{
+class blocking_queue {
 private:
     std::mutex d_mutex;
     std::condition_variable d_condition;
@@ -30,7 +29,6 @@ public:
         d_condition.notify_one();
     }
     T pop() {
-        std::unique_lock<std::mutex> lock(this->d_mutex);
         std::unique_lock<std::mutex> mlock(d_mutex);
         while (d_queue.empty()) {
             d_condition.wait(mlock);

@@ -276,7 +276,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         std::string message = std::string(D_MSG) + ":" + name_recv + ":: " + msg_recv;
         multicastMsg(message);
 
-    } else if (strcmp(msg_type, D_MSG)) {
+    } else if (strcmp(msg_type, D_MULTI)) {
         
         // Display message - MSG:1:"Bob: Hello"
         int seq_recv = atoi(strtok (NULL, ":"));
@@ -299,11 +299,14 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
             addMember(fromAddr.getAddress(), false);
             std::string message = std::string(D_JOINLIST) + ":" + memberNode->getMemberList();
             dNet->DNsend(&fromAddr, message);
+            // Multicast addnode message
+            // TODO: what if this message is lost - this message must be delivered once (at least onece)
+            std::string message_addmember = std::string(D_ADDNODE) + ":" + fromAddr.getAddress();
+            multicastMsg(message_addmember);
         } else {
             // send leader address
             std::string message = std::string(D_JOINLEADER) + ":" + memberNode->getLeaderAddress();
             dNet->DNsend(&fromAddr, message);
-            multicastMsg("");
         }
         
     } else {
