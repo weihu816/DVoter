@@ -103,10 +103,7 @@ public:
     
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg);
-    
-    void sendHeartbeat();
-    void multicastHeartbeat();
-    
+
     virtual ~DNode() {
         delete dNet;
         delete memberNode;
