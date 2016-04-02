@@ -20,6 +20,7 @@ std::string DNet::DNinit() {
     
     struct addrinfo hints, *servinfo, *p;
     int rv;
+    const int enable = 1;
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // IPv4
@@ -36,6 +37,11 @@ std::string DNet::DNinit() {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("listener: socket");
             continue;
+        }
+        //reuse address
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+            fprintf(stderr, "Fail to set socket options!\n");
+            exit(1);
         }
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
@@ -109,10 +115,10 @@ int DNet::DNsend(Address * addr, std::string data) {
 #ifdef DEBUGLOG
     std::cout << "DNsend: " << addr->getAddress() << std::endl;
 #endif
-    int sockfd_w = 0;
     struct addrinfo hints, *servinfo, *p;
     int rv;
     size_t numbytes;
+    const int enable = 1;
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -126,14 +132,19 @@ int DNet::DNsend(Address * addr, std::string data) {
     
     // loop through all the results and make a socket
     for (p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd_w = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-            perror("stub: socket error");
-            continue;
-        }
+//        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+//            perror("stub: socket error");
+//            continue;
+//        }
+//        //reuse address
+//        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+//            fprintf(stderr, "Fail to set socket options!\n");
+//            exit(1);
+//        }
         struct timeval tv;
         tv.tv_sec = 1;
         tv.tv_usec = 0;
-        if (setsockopt(sockfd_w, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
+        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
             perror("setsockopt");
             return FAILURE;
         }
@@ -145,7 +156,7 @@ int DNet::DNsend(Address * addr, std::string data) {
         return FAILURE;
     }
     
-    if ((numbytes = sendto(sockfd_w, data.c_str(), strlen(data.c_str()), 0, p->ai_addr, p->ai_addrlen)) == -1) {
+    if ((numbytes = sendto(sockfd, data.c_str(), strlen(data.c_str()), 0, p->ai_addr, p->ai_addrlen)) == -1) {
         perror("sendto");
         exit(1);
     }
@@ -155,7 +166,7 @@ int DNet::DNsend(Address * addr, std::string data) {
 #endif
     // Free resources
     freeaddrinfo(servinfo);
-    close(sockfd_w);
+    //close(sockfd);
     return SUCCESS;
 }
 
@@ -167,7 +178,6 @@ int DNet::DNsend(Address * addr, std::string data) {
  * RETURNS: Message received successfully or not
  */
 int DNet::DNrecv(Address & fromaddr, std::string & data) {
-    int sockfd_r = 0;
     size_t numbytes;
     struct sockaddr_storage their_addr;
     char buf[MAXBUFLEN];
@@ -175,6 +185,7 @@ int DNet::DNrecv(Address & fromaddr, std::string & data) {
     int rv;
     socklen_t addr_len;
     char s[INET6_ADDRSTRLEN];
+    const int enable = 1;
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -187,23 +198,28 @@ int DNet::DNrecv(Address & fromaddr, std::string & data) {
     
     // loop through all the results and make a scocket
     for(p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd_r = socket(p->ai_family, p->ai_socktype,
-                             p->ai_protocol)) == -1) {
-            perror("client: socket");
-            continue;
-        }
+//        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+//                             p->ai_protocol)) == -1) {
+//            perror("client: socket");
+//            continue;
+//        }
+//        //reuse address
+//        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+//            fprintf(stderr, "Fail to set socket options!\n");
+//            exit(1);
+//        }
         struct timeval tv;
         tv.tv_sec = 1;
         tv.tv_usec = 0;
-        if (setsockopt(sockfd_r, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
+        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
             perror("setsockopt");
             return FAILURE;
         }
-        if (bind(sockfd_r, p->ai_addr, p->ai_addrlen) == -1) {
-            close(sockfd_r);
-            perror("listener: bind");
-            continue;
-        }
+//        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+//            close(sockfd);
+//            perror("listener: bind");
+//            continue;
+//        }
         break;
     }
     if (p == NULL) {
@@ -214,7 +230,7 @@ int DNet::DNrecv(Address & fromaddr, std::string & data) {
     freeaddrinfo(servinfo);
     
     addr_len = sizeof their_addr;
-    if ((numbytes = recvfrom(sockfd_r, buf, MAXBUFLEN-1 , 0,
+    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
                              (struct sockaddr *)&their_addr, &addr_len)) == -1) {
         perror("recvfrom");
         exit(1);
@@ -237,7 +253,7 @@ int DNet::DNrecv(Address & fromaddr, std::string & data) {
 #endif
     
     data = std::string(buf);
-    close(sockfd_r);
+    //close(sockfd);
     
     return SUCCESS;
 }
