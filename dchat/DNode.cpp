@@ -352,7 +352,7 @@ void DNode::sendHeartbeat() {
         multicastHeartbeat();
     } else { // send heartbeat to leader
         std::stringstream ss;
-        ss << HEARTBEAT;
+        ss << D_HEARTBEAT;
         Address leader_addr(leader_address);
         dNet->DNsend(&leader_addr, ss.str());
 #ifdef DEBUGLOG
@@ -372,7 +372,7 @@ void DNode::multicastHeartbeat() {
     auto list = memberNode->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         ss.clear();
-        ss << HEARTBEAT;
+        ss << D_HEARTBEAT;
         Address addr((*iter).getAddress());
         dNet->DNsend(&addr, ss.str());
 #ifdef DEBUGLOG
