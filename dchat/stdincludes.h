@@ -52,7 +52,7 @@
 #define DEBUGLOG 1
 #define MAXBUFLEN 512
 #define TIMEOUT 10000
-#define HEARTFREQ 3000
+#define HEARTFREQ 5000
 
 #define D_CHAT "CHAT"                   // DCHAT:Name:Message - From node to sequencer
 #define D_MULTI "MULTI"                 // This is a multicast message from the sequencer
