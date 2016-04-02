@@ -10,8 +10,7 @@
 #include "stdincludes.h"
 #include "Member.h"
 
-class DNet
-{
+class DNet {
 private:
     int sockfd;
     std::queue<q_elt> queue;    //msg queue (better priority q)

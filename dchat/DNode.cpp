@@ -201,7 +201,8 @@ void DNode::sendMsg(std::string msg) {
     std::string leader_address = memberNode->getLeaderAddress();
     std::string self_address = memberNode->address->getAddress();
     if (leader_address.compare(self_address)) { // I'm the leader (sequencer)
-        multicastMsg(msg);
+        std::string new_msg = std::string(D_MSG) + ":" + msg;
+        multicastMsg(new_msg);
     } else { // Send Multicast request to the sequencer
         std::stringstream ss;
         ss << D_CHAT << ":" << username << ":" << msg;
@@ -226,7 +227,7 @@ void DNode::multicastMsg(std::string msg) {
     auto list = memberNode->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         ss.clear();
-        ss << D_MSG << ":" << seq << ":" << msg;
+        ss << D_MULTI << ":" << seq << ":" << msg;
         Address addr((*iter).getAddress());
         dNet->DNsend(&addr, ss.str());
 #ifdef DEBUGLOG
@@ -272,10 +273,10 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         // Multicast message - CHAT:Bob:"Hello"
         std::string name_recv(strtok (NULL, ":"));
         std::string msg_recv(strtok (NULL, ":"));
-        std::string message = name_recv + ":: " + msg_recv;
+        std::string message = std::string(D_MSG) + ":" + name_recv + ":: " + msg_recv;
         multicastMsg(message);
 
-    } else if (strcmp(msg_type, D_MSG)) {
+    } else if (strcmp(msg_type, D_MULTI)) {
         
         // Display message - MSG:1:"Bob: Hello"
         int seq_recv = atoi(strtok (NULL, ":"));
@@ -298,6 +299,10 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
             addMember(fromAddr.getAddress(), false);
             std::string message = std::string(D_JOINLIST) + ":" + memberNode->getMemberList();
             dNet->DNsend(&fromAddr, message);
+            // Multicast addnode message
+            // TODO: what if this message is lost - this message must be delivered once (at least onece)
+            std::string message_addmember = std::string(D_ADDNODE) + ":" + fromAddr.getAddress();
+            multicastMsg(message_addmember);
         } else {
             // send leader address
             std::string message = std::string(D_JOINLEADER) + ":" + memberNode->getLeaderAddress();
