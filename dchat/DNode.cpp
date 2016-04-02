@@ -154,16 +154,15 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
     strcpy(cstr, member_list.c_str());
     std::string ip(strtok(cstr, ":"));
     std::string port(strtok(NULL, ":"));
-    std::string username(strtok(NULL, ":"));
+    std::string name(strtok(NULL, ":"));
     addr = ip + ":" + port;
-    addMember(addr, username, addr.compare(leaderAddr)==0);
+    addMember(addr, name, addr.compare(leaderAddr)==0);
     char * pch;;
     while ((pch = strtok(NULL, ":")) != NULL) {
         ip = std::string(pch);
         port = std::string(strtok(NULL, ":"));
-        username = std::string(strtok(NULL, ":"));
-        addr = ip + ":" + port;
-        addMember(addr, username, addr.compare(leaderAddr)==0);
+        name = std::string(strtok(NULL, ":"));
+        addMember(ip + ":" + port, name, addr.compare(leaderAddr)==0);
     }
 }
 
@@ -172,11 +171,11 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
  *
  * DESCRIPTION:
  */
-void DNode::addMember(std::string ip_port, std::string username, bool isLeader){
+void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
 #ifdef DEBUGLOG
     std::cout << "DNode::addMember: " << ip_port << std::endl;
 #endif
-    MemberListEntry entry(ip_port, username); // memberList with no such boolean?
+    MemberListEntry entry(ip_port, name); // memberList with no such boolean?
     memberNode->memberList.push_back(entry);
     if (isLeader) memberNode->leaderAddr = new Address(ip_port);
 }
@@ -296,7 +295,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
     } else if (strcmp(msg_type, D_JOINREQ) == 0) {
         
         if (memberNode->leaderAddr == nullptr) { // I am the leader
-            // send D_JOINLIST:ip1:port1:...
+            // send D_JOINLIST:ip1:port1:name1:...
             // First need to add this member to the list (should not exist)
             // TODO : content is the username 
             addMember(fromAddr.getAddress(), content, false);
