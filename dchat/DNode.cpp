@@ -111,7 +111,6 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " started a new chat, listening on ";
         std::cout << memberNode->getAddress() << std::endl;
         memberNode->inGroup = true;
-        memberNode->leaderAddr = memberNode->getAddress();
         addMember(join_addr, true);
     } else {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
