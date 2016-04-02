@@ -91,9 +91,12 @@ public:
     
     int recvLoop();
     void nodeLoop();
-    
+   
     static int enqueueWrapper(void *env, char *buff, int size);
     void nodeLoopOps();
+    void multicastHeartbeat();
+    void sendHeartbeat();
+    
     
     void checkMessages();
     void recvHandler(std::pair<Address, std::string>);
