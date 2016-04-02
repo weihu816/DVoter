@@ -39,4 +39,39 @@ public:
     }
 };
 
+typedef std::pair<int, std::string> T;
+
+class holdback_queue {
+private:
+    class cmp {
+    public:
+        cmp() {}
+        bool operator() (const T & a, const T & b) const { return b.first < a.first; }
+    };
+    std::mutex d_mutex;
+    std::condition_variable d_condition;
+    std::priority_queue<T, std::vector<T>, cmp> d_queue;
+    int sequence_seen;
+
+public:
+    holdback_queue(int init_seen) : sequence_seen(init_seen) {}
+    holdback_queue(const holdback_queue&) = delete;
+    holdback_queue& operator=(const holdback_queue&) = delete;
+    void push(T const& value) {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        d_queue.push(value);
+        mlock.unlock();
+        d_condition.notify_one();
+    }
+    T pop() {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        while (d_queue.empty()) {
+            d_condition.wait(mlock);
+        }
+        T rc = d_queue.top();
+        d_queue.pop();
+        return rc;
+    }
+};
+
 #endif /* BLOCKINGQUEUE_H */

@@ -102,16 +102,17 @@ int DNode::initThisNode() {
  *
  * DESCRIPTION: Join the distributed system
  */
-int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
+int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
     std::string self_addr = memberNode->address->getAddress();
     std::string join_addr = joinaddr->getAddress();
 
     if (self_addr.compare(join_addr) == 0) {
+        
         // I am the group booter (first process to join the group). Boot up the group
         std::cout << username << " started a new chat, listening on ";
         std::cout << memberNode->getAddress() << std::endl;
-        memberNode->inGroup = true;
-        addMember(join_addr, username, true);
+        addMember(join_addr, username, true); // I'm the leader
+
     } else {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << memberNode->getAddress() << std::endl;
@@ -119,35 +120,49 @@ int DNode::introduceSelfToGroup(Address *joinaddr, bool isSureLeaderAddr) {
         std::string msg = std::string(D_JOINREQ) + ":" + std::to_string(joinaddr->port);
         if (dNet->DNsend(joinaddr, msg) != SUCCESS) return FAILURE;
         // Receive member lists from the leader, then save the leader address
+
         Address address;
         std::string message;
         // TODO: what if message lost blocking:timeout
         if (dNet->DNrecv(address, message) != SUCCESS) return FAILURE;
+
         // send JOINREQ message to introducer member
         size_t index = message.find(":");
         std::string msg_type = message.substr(0, index);
-        if (msg_type.compare(D_JOINLEADER) == 0) { // CHAT:Bob:"Hello"
+
+        if (msg_type.compare(D_JOINLEADER) == 0) {
+
             if (isSureLeaderAddr) return FAILURE; // Leader should return list
-            std::string ip_port = message.substr(index+1);
-            Address new_addr(ip_port);
-            this->introduceSelfToGroup(&new_addr, true); // Connect to leader
+            std::string ip_port = message.substr(index + 1);
+            memberNode->leaderAddr = new Address(ip_port);
+            return this->introduceSelfToGroup(memberNode->leaderAddr, true); // Connect to leader
+
         } else if (msg_type.compare(D_JOINLIST) == 0) {
-            std::string member_list = message.substr(index+1);
-            initMemberList(member_list, address.getAddress());
-            memberNode->inGroup = true;
+            
+            std::string recv_param = message.substr(index + 1);
+            std::string recv_init_seq = recv_param.substr(0, recv_param.find(":"));
+            std::string recv_member_list = recv_param.substr(recv_param.find(":") + 1);
+
+            multicast_queue = new holdback_queue(atoi(recv_init_seq.c_str()));
+            initMemberList(recv_member_list, address.getAddress());
+    
         } else {
             return FAILURE;
         }
     }
+    
+    memberNode->inGroup = true;
     return SUCCESS;
 }
 
 /**
  * FUNCTION NAME: initMemberList
  *
- * DESCRIPTION:
+ * DESCRIPTION: initialize member list given member_list like the following
+ *              ip1:port1:name1:ip2:port2:name2: ...
  */
 void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
+    
     if (member_list.empty()) return;
     char * cstr = new char[member_list.length() + 1];
     std::string addr;
@@ -156,14 +171,15 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
     std::string port(strtok(NULL, ":"));
     std::string name(strtok(NULL, ":"));
     addr = ip + ":" + port;
-    addMember(addr, name, addr.compare(leaderAddr)==0);
-    char * pch;;
+    addMember(addr, name, addr.compare(leaderAddr) == 0);
+    char * pch;
     while ((pch = strtok(NULL, ":")) != NULL) {
         ip = std::string(pch);
         port = std::string(strtok(NULL, ":"));
         name = std::string(strtok(NULL, ":"));
-        addMember(ip + ":" + port, name, addr.compare(leaderAddr)==0);
+        addMember(ip + ":" + port, name, addr.compare(leaderAddr) == 0);
     }
+
 }
 
 /**
@@ -256,40 +272,45 @@ void DNode::checkMessages() {
  *
  * DESCRIPTION: Message handler for different message types
  *              TODO: what if it receives CHAT:Bob:"Hello", but the current node is not the leader
- *              MSG:1:"Bob: Hello"
- *              CHAT:Bob:"Hello"
+ *
+ * MESSAGE:     CHAT : "Bob" : "Hello"
+ *              MULTI : Seq : MSG :  "Bob:: Hello"
+ *              MULTI : Seq : ADDNODE :" 0.0.0.0:8888:name"
+ *
  *              TODO: what if the heartbeat gets delayed: update the heartBeat book with any message recved?
  */
 void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
     Address fromAddr = addr_content.first;
     std::string content = addr_content.second;
+    
 #ifdef DEBUGLOG
     std::cout << "Handling message: " + content << " from: " << fromAddr.getAddress() << std::endl;
 #endif
+    
     char * cstr = new char[content.length() + 1];
     strcpy(cstr, content.c_str());
     char * msg_type = strtok(cstr, ":");
+    
     if (strcmp(msg_type, D_CHAT)) {
         
-        // Multicast message - CHAT:Bob:"Hello"
-        std::string name_recv(strtok (NULL, ":"));
-        std::string msg_recv(strtok (NULL, ":"));
-        std::string message = std::string(D_MSG) + ":" + name_recv + ":: " + msg_recv;
-        multicastMsg(message);
+        std::string recv_name(strtok (NULL, ":"));
+        std::string recv_msg(strtok (NULL, ":"));
+
+        if (memberNode->leaderAddr == nullptr) { // Only leader can multicast messages
+            std::string message = std::string(D_MSG) + ":" + recv_name + ":: " + recv_msg;
+            multicastMsg(message);
+        }
 
     } else if (strcmp(msg_type, D_MULTI)) {
         
-        // Display message - MSG:1:"Bob: Hello"
-        int seq_recv = atoi(strtok (NULL, ":"));
-        std::string msg_recv(strtok (NULL, ":"));
-        if (seq_recv == seq_num_seen - 1) {
-            // Deliver message
+        // MULTI : Seq : MSG :  "Bob:: Hello"
+        int recv_seq = atoi(strtok (NULL, ":"));
+        std::string recv_msg(strtok (NULL, ":"));
+        multicast_queue->push(std::make_pair(recv_seq, recv_msg));
+
+        if (recv_seq == seq_num_seen - 1) {
             seq_num_seen++;
-            message_chat_queue_ready.push(msg_recv);
-        } else {
-            // Suspend delivery of message
-            std::pair<int, std::string> _pair(seq_recv, msg_recv);
-            message_chat_queue.push(_pair);
+            
         }
         
     } else if (strcmp(msg_type, D_JOINREQ) == 0) {

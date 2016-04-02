@@ -56,8 +56,10 @@ private:
         return seq_num++;
     }
     blocking_queue<std::pair<Address, std::string>> m_queue;
-    blocking_queue<std::pair<int, std::string>> message_chat_queue;
     blocking_queue<std::string> message_chat_queue_ready;
+    
+    // multicst_queue will be initilized using a sequence number init_seen from the leader
+    holdback_queue * multicast_queue;
 
 public:
     DNode(std::string name) : username(name) {
@@ -108,6 +110,7 @@ public:
         delete dNet;
         delete memberNode;
         delete joinAddress;
+        delete multicast_queue;
     }
 };
 
