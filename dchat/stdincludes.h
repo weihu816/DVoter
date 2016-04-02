@@ -49,8 +49,8 @@
 
 // You can comment out the following line
 #define DEBUGLOG 1
-
 #define MAXBUFLEN 512
+#define TIMEOUT 10000
 
 #define D_CHAT "CHAT"                   // DCHAT:Name:Message - From node to sequencer
 #define D_MSG "MSG"                     // MSG:SEQ#:Message - From sequence to node
