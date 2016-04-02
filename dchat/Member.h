@@ -61,13 +61,19 @@ class MemberListEntry {
 public:
     std::string ip;
     int port;
+    std::string username;
     
-    MemberListEntry(std::string address);
+//    MemberListEntry(std::string address);
+    MemberListEntry(std::string address,std::string username);
     MemberListEntry(const MemberListEntry &anotherMLE);
     MemberListEntry& operator =(const MemberListEntry &anotherMLE);
 
     std::string getAddress() {
         return ip + ":" + std::to_string(port);
+    }
+    
+    std::string getEntry() {
+        return getAddress()+":"+username;
     }
 };
 
@@ -99,14 +105,25 @@ public:
     }
     
     // this is the member address list, without user name 
+//    std::string getMemberList() {
+//        std::string list;
+//        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+//            list += (*iter).getAddress();
+//            if (iter != memberList.end()-1) list += ":";
+//        }
+//        return list;
+//    }
+    
+    //with user name
     std::string getMemberList() {
         std::string list;
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            list += (*iter).getAddress();
+            list += (*iter).getEntry();
             if (iter != memberList.end()-1) list += ":";
         }
         return list;
     }
+
     
     std::string getAddress() {
         return address->getAddress();

@@ -350,7 +350,7 @@ void DNode::nodeLoopOps() {
                     //exceed timeout limit
                     // TODO: broadcast leave..
                     std::string message = std::string(D_LEAVE) + ":" + memberNode->;
-                    dNet->DNsend(&fromAddr, message);
+                    dNet->DNsend(&memberAddr, message);
                 }
             }
         }
