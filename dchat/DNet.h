@@ -13,25 +13,23 @@
 class DNet {
 private:
     int sockfd;
-    std::queue<q_elt> queue;    //msg queue (better priority q)
     int port;
     
 public:
     DNet() {};
-    // DNet(DNet &anotherDNet);
-    // DNet& operator = (DNet &anotherDNet);
-    virtual ~DNet() {};
+    DNet(DNet &anotherDNet);
+    DNet& operator = (DNet &anotherDNet);
+    virtual ~DNet() {
+        close(sockfd);
+    };
     
-    std::string DNinit();
-    int DNsend(Address *toaddr, std::string data);
-    int DNrecv(Address &fromaddr, std::string &data, int timeout);
+    int DNinit();
+    int DNinfo(std::string & addr);
+    int DNsend(Address * toaddr, std::string data);
+    int DNrecv(Address & fromaddr, std::string & data, int timeout);
     int DNcleanup();
     
-    bool enqueue(void *buffer, int size) {
-        q_elt element(buffer, size);
-        queue.emplace(element);
-        return true;
-    }
+    // TODO: For EC, we need to handle encrypt & decrypt
 };
 
 #endif /* DNET_H */

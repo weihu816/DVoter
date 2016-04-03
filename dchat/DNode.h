@@ -64,17 +64,21 @@ private:
 public:
     DNode(std::string name) : username(name) {
         dNet = new DNet();
-        std::string myAddr = dNet->DNinit();
-        memberNode = new Member(myAddr);        // Create Member node
-        joinAddress = new Address(myAddr);      // Join address
+        dNet->DNinit();
+        std::string my_addr;
+        dNet->DNinfo(my_addr);
+        memberNode = new Member(my_addr);        // Create Member node
+        joinAddress = new Address(my_addr);      // Join address
         std::cout << username << " started a new chat, listening on "
         << memberNode->getAddress() << std::endl;
     }
     
     DNode(std::string name, std::string addr) : username(name) {
         dNet = new DNet();
-        std::string myAddr = dNet->DNinit();
-        memberNode = new Member(myAddr);        // Create Member node
+        dNet->DNinit();
+        std::string my_addr;
+        dNet->DNinfo(my_addr);
+        memberNode = new Member(my_addr);        // Create Member node
         joinAddress = new Address(addr);        // JoimyAddressn address
         std::cout << username << " join an existing chat, listening on "
         << memberNode->getAddress() << std::endl;

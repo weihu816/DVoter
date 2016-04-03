@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <ifaddrs.h>
 #include <netdb.h>
 
 //using namespace std;

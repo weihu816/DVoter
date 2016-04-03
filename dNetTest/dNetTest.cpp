@@ -43,13 +43,16 @@ void testHoldBackQueue() {
 }
 
 void testDNet() {
+    std::string addr;
     DNet * dNet = new DNet;
-    cout << "Start listening on: " << dNet->DNinit() << endl;
-    std::string data;
-    Address addr;
-    while (dNet->DNrecv(addr, data, -1)) {
-        cout << "Recv: " << data << endl;
-    }
+    dNet->DNinit();
+    dNet->DNinfo(addr);
+    cout << addr << endl;
+//    std::string data;
+//    Address addr;
+//    while (dNet->DNrecv(addr, data, -1)) {
+//        cout << "Recv: " << data << endl;
+//    }
     delete dNet;
 }
 
