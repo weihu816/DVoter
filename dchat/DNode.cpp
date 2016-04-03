@@ -19,7 +19,7 @@ int DNode::recvLoop() {
     } else {
         Address addr;
         std::string data;
-        dNet->DNrecv(addr, data, -1); // CODE COMMENT: add in current time stamp to allow heartbeat tracking? -> update heartbeatList or leaderHeartbeatTracker
+        dNet->DNrecv(addr, data, -1);
         std::pair<Address, std::string> new_pair(addr, data);
         m_queue.push(new_pair);
     }
@@ -337,7 +337,11 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         time_t current;
         time(&current);
         memberNode->updateHeartBeat(fromAddr.getAddress(), current);
-    } else {
+    } else if (strcmp(msg_type, D_LEAVE) == 0) {
+        // TODO update member list
+        
+        // TODO push to message queue for display
+    }else {
         std::cout << "Fail : recvHandler" << std::endl;
     }
     
@@ -368,12 +372,10 @@ void DNode::nodeLoopOps() {
                 time_t current;
                 time(&current);
                 time_t heartbeat = memberNode->getHeartBeat(memberAddr);
-                double interval;
                 if(difftime(current, heartbeat) > TIMEOUT/1000) {
                     //exceed timeout limit
-                    // TODO: broadcast leave..
-                    std::string message = std::string(D_LEAVE) + ":" ;
-                    //dNet->DNsend(&memberAddr, message);
+                    std::string message_leave = std::string(D_LEAVE) + ":" + iter->username + ":" + memberAddr;
+                    multicastMsg(message_leave);
                 }
             }
         }
@@ -382,18 +384,15 @@ void DNode::nodeLoopOps() {
     } else { // I am a member
         // send a heart beat to the leader
         sendHeartbeat();
+        
+        // check leader heartbeat
+        time_t current;
+        time(&current);
+        time_t heartbeat_ledaer = memberNode->getHeartBeat(leader_address);
+        if(difftime(current, heartbeat_ledaer) > TIMEOUT/1000) {
+            //TODO startElection();
+        }
     }
-    
-    
-    // leader: heartbeatist would be a hashmap<, every time it recved a msg, update corresboding entry<MemberEntry, time_t>, with key = member address and time_t being last time it recved a msg or a heartbeat
-    // member: keep a field for leader heartbest (last time it recved anything from the leader
-    
-    // if any one heartbeat in the list is (2x) sec away from the current system time
-    
-    // leader: broadcast its leave (once a recvHandler recv a LEAVE message, it will update the membershipList accordingly
-    
-    // member: start a election
-    
     // finish heartbeat check
     return;
 }
@@ -409,10 +408,8 @@ void DNode::nodeLoopOps() {
 void DNode::sendHeartbeat() {
     std::string leader_address = memberNode->getLeaderAddress();
     // send heartbeat to leader
-    std::stringstream ss;
-    ss << D_HEARTBEAT;
     Address leader_addr(leader_address);
-    dNet->DNsend(&leader_addr, ss.str());
+    dNet->DNsend(&leader_addr, D_HEARTBEAT);
 #ifdef DEBUGLOG
     std::cout << "Send heartbeat to (Leader): " << leader_addr.getAddress() << std::endl;
 #endif
@@ -426,13 +423,10 @@ void DNode::sendHeartbeat() {
  *              TODO: only leaders can call this function
  */
 void DNode::multicastHeartbeat() {
-    std::stringstream ss;
     auto list = memberNode->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
-        ss.clear();
-        ss << D_HEARTBEAT;
         Address addr((*iter).getAddress());
-        dNet->DNsend(&addr, ss.str());
+        dNet->DNsend(&addr, D_HEARTBEAT);
 #ifdef DEBUGLOG
         std::cout << "Multicast heartbeat to: " << addr.getAddress() << std::endl;
 #endif
