@@ -17,8 +17,8 @@ private:
     
 public:
     DNet() {};
-    DNet(DNet &anotherDNet);
-    DNet& operator = (DNet &anotherDNet);
+    DNet(DNet &anotherDNet) = delete;
+    DNet& operator = (DNet &anotherDNet) = delete;
     virtual ~DNet() {
         close(sockfd);
     };

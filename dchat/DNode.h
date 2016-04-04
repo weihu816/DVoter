@@ -13,7 +13,6 @@
 #include "DNet.h"
 #include "BlockingQueue.h"
 
-class Parser;
 
 /**
  * CLASS NAME: DNode
@@ -22,10 +21,13 @@ class Parser;
  */
 class DNode {
 private:
+    static DNode * dNode;
+    DNode(std::string name);
+    DNode(std::string name, std::string addr);
+
     Member * memberNode;
     DNet * dNet;
     Address * joinAddress = nullptr;
-    Parser * parser;
     std::string username;
 
     int seq_num = 0;
@@ -40,12 +42,8 @@ private:
     holdback_queue * multicast_queue;
     
 public:
-    DNode(std::string name);
-    DNode(std::string name, std::string addr);
-    
-    Member * getMemberNode() {
-        return memberNode;
-    }
+    static DNode * getInstance(std::string name);
+    static DNode * getInstance(std::string name, std::string addr);
     
     int nodeStart();
     int initThisNode();
@@ -61,8 +59,7 @@ public:
     void nodeLoopOps();
     void multicastHeartbeat();
     void sendHeartbeat();
-    
-    
+
     void checkMessages();
     void recvHandler(std::pair<Address, std::string>);
     
@@ -75,20 +72,6 @@ public:
         delete joinAddress;
         delete multicast_queue;
     }
-};
-
-/**
- * CLASS NAME: Parser
- *
- * DESCRIPTION:
- */
-class Parser {
-private:
-    DNode * node;
-    
-public:
-    Parser(DNode * node) : node(node) {}
-    void process(std::string msg);
 };
 
 #endif /* DNODE_H */

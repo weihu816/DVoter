@@ -23,7 +23,7 @@ int DNet::DNinit() {
     int rv;
     
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;        // set to AF_INET to force IPv4
+    hints.ai_family = AF_INET;          // AF_UNSPEC: set to AF_INET to force IPv4
     hints.ai_socktype = SOCK_DGRAM;     // UDP datagram
     hints.ai_flags = AI_PASSIVE;        // use my IP
     
@@ -128,7 +128,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
 //    char s[INET6_ADDRSTRLEN];
     
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = AF_INET; // AF_UNSPEC/AF_INET
     hints.ai_socktype = SOCK_DGRAM;
     
     const char * addr_ip = addr->ip.c_str();
@@ -223,6 +223,8 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     data = std::string(buf, numbytes);
     
     // send ack back
+    std::string recv_msg(buf);
+    
     strcpy(buf, "OK");
     if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
                            (struct sockaddr *) &their_addr, addr_len)) == -1) {

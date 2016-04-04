@@ -13,16 +13,7 @@
 using namespace std;
 
 int main(int argc, const char * argv[]) {
-    DNet * dNet = new DNet;
-    dNet->DNinit();
-    std::string addr;
-    dNet->DNinfo(addr);
-    cout << addr << endl;
-    Address send_addr("172.20.20.20:20314");
-    std::string data("huweiwoaini"), ack;
-    dNet->DNsend(&send_addr, data, ack, 1);
-    cout << ack << endl;
-    delete dNet;
+
 }
 
 void testQueuePop(blocking_queue<string> * q) {

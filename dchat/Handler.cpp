@@ -4,8 +4,8 @@
  * DESCRIPTION: Parser class
  **********************************/
 
-#include "DNode.h"
+#include "Handler.h"
 
-void Parser::process(std::string msg) {
-    
+std::string Handler::process(std::string msg) {
+    return "";
 }

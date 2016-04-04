@@ -8,9 +8,23 @@
 #include "DNode.h"
 
 /**
+ * Singleton Patter
+ */
+DNode * DNode::getInstance(std::string name) {
+    if (!dNode) dNode = new DNode(name);
+    return nullptr;
+}
+
+DNode * DNode::getInstance(std::string name, std::string addr) {
+    if (!dNode) dNode = new DNode(name, addr);
+    return nullptr;
+}
+
+/**
  * CONSTRUCTOR
  */
 DNode::DNode(std::string name) : username(name) {
+//    handler = new Handler(this);
     dNet = new DNet();
     dNet->DNinit();
     std::string my_addr;
@@ -25,6 +39,7 @@ DNode::DNode(std::string name) : username(name) {
  * CONSTRUCTOR
  */
 DNode::DNode(std::string name, std::string addr) : username(name) {
+//    handler = new Handler(this);
     dNet = new DNet();
     dNet->DNinit();
     std::string my_addr;

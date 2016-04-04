@@ -87,7 +87,7 @@ int main(int argc, const char * argv[]) {
     
     if (argc == 2) { // Start a new chat group
         std::string name(argv[1]);
-        node = new DNode(name);
+        node = DNode::getInstance(name);
     } else { // Join an existing chat group
         std::string name(argv[1]);
         std::string ip_port(argv[2]);
@@ -95,7 +95,7 @@ int main(int argc, const char * argv[]) {
             usage("Error parsing ADDR:PORT");
             exit(EXIT_FAILURE);
         }
-        node = new DNode(name, ip_port);
+        node = DNode::getInstance(name, ip_port);
     }
 
     // Node is up, introduced to the group

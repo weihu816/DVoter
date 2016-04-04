@@ -4,7 +4,7 @@ GCC	= gcc
 
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-GCC_FLAGS	= -c -g -Wall
+GCC_FLAGS	= -std=c++11 -g -Wall
 LD_FLAGS	= -g -Wall
 
 #
@@ -13,16 +13,16 @@ LD_FLAGS	= -g -Wall
 dchat: $(EXE)
 
 #
-# Server executable
+# executable
 #
-server-tcp:	xxx.o xxx.h
+dchat:	xxx.o xxx.h
 	@echo "Linking all object modules ..."
-	$(GCC) -o server-tcp $(LD_FLAGS) server-tcp.o
+	$(GCC) -o dchat $(LD_FLAGS) dchat.o
 	@echo ""
 	@echo "Done."
 
 #
-# Client executable
+# Test executable
 #
 # change-password-tcp:	change-password-tcp.c
 # 	@echo "Compiling change-password-tcp.c"
