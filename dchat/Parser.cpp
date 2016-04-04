@@ -1,17 +1,11 @@
 /**********************************
- * FILE NAME: Parser.h
+ * FILE NAME: Parser.cpp
  *
  * DESCRIPTION: Parser class
  **********************************/
 
-#include "Parser.h"
 #include "DNode.h"
 
-class Parser{
-private:
-    DNode * node;
+void Parser::process(std::string msg) {
     
-public:
-    Parser(DNode * node) : node(node) {}
-    
-};
+}

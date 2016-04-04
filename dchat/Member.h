@@ -63,7 +63,6 @@ public:
     int port;
     std::string username;
     
-//    MemberListEntry(std::string address);
     MemberListEntry(std::string address,std::string username);
     MemberListEntry(const MemberListEntry &anotherMLE);
     MemberListEntry& operator =(const MemberListEntry &anotherMLE);
@@ -73,7 +72,7 @@ public:
     }
     
     std::string getEntry() {
-        return getAddress()+":"+username;
+        return getAddress() + ":" + username;
     }
 };
 
@@ -97,8 +96,8 @@ public:
 //    int timeOutCounter;             // counter for ping timeout
     std::unordered_map<std::string, time_t> heartBeatList; //member will track leader; leader will track every one
     
-    std::vector<MemberListEntry> memberList;            // Membership table
-    // std::vector<MemberListEntry>::iterator myPos;       // My position in the membership table
+    std::vector<MemberListEntry> memberList;                // Membership table
+    // std::vector<MemberListEntry>::iterator myPos;        // My position in the membership table
     
     std::string getLeaderAddress() {
         return  leaderAddr->getAddress();
@@ -142,18 +141,12 @@ public:
             return got->second;
         }
     }
-    
-    /**
-     * Constructor
-     */
+
     Member(std::string addr): inited(false), inGroup(false), bFailed(false), nnb(0){
         this->address = new Address(addr);
     }
-    
-    // copy constructor
-    Member(const Member &anotherMember);
-    // Assignment operator overloading
-    Member& operator =(const Member &anotherMember);
+    Member(const Member &anotherMember);                // copy constructor
+    Member& operator =(const Member &anotherMember);    // Assignment operator overloading
     
     virtual ~Member() {
         delete address;

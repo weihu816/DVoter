@@ -8,6 +8,34 @@
 #include "DNode.h"
 
 /**
+ * CONSTRUCTOR
+ */
+DNode::DNode(std::string name) : username(name) {
+    dNet = new DNet();
+    dNet->DNinit();
+    std::string my_addr;
+    dNet->DNinfo(my_addr);
+    memberNode = new Member(my_addr);        // Create Member node
+    joinAddress = new Address(my_addr);      // Join address
+    std::cout << username << " started a new chat, listening on "
+    << memberNode->getAddress() << std::endl;
+}
+
+/**
+ * CONSTRUCTOR
+ */
+DNode::DNode(std::string name, std::string addr) : username(name) {
+    dNet = new DNet();
+    dNet->DNinit();
+    std::string my_addr;
+    dNet->DNinfo(my_addr);
+    memberNode = new Member(my_addr);        // Create Member node
+    joinAddress = new Address(addr);        // JoimyAddressn address
+    std::cout << username << " join an existing chat, listening on "
+    << memberNode->getAddress() << std::endl;
+}
+
+/**
  * FUNCTION NAME: recvLoop
  *
  * DESCRIPTION: This function receives message from the network and pushes into the queue

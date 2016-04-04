@@ -124,7 +124,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof their_addr;
     char buf[MAXBUFLEN];
-    char s[INET6_ADDRSTRLEN];
+//    char s[INET6_ADDRSTRLEN];
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;

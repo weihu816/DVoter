@@ -10,34 +10,10 @@
 
 #include "stdincludes.h"
 #include "Member.h"
-#include "DNode.h"
 #include "DNet.h"
 #include "BlockingQueue.h"
 
-/**
- * Macros
- */
-#define TREMOVE 20
-#define TFAIL 5
-
-/**
- * Message Types
- */
-enum MsgTypes {
-    JOINREQ,
-    JOINREP,
-    DUMMYLASTMSGTYPE
-};
-
-/**
- * STRUCT NAME: MessageHdr
- *
- * DESCRIPTION: Header and content of a message
- */
-typedef struct MessageHdr {
-    enum MsgTypes msgType;
-}MessageHdr;
-
+class Parser;
 
 /**
  * CLASS NAME: DNode
@@ -49,7 +25,9 @@ private:
     Member * memberNode;
     DNet * dNet;
     Address * joinAddress = nullptr;
+    Parser * parser;
     std::string username;
+
     int seq_num = 0;
     int seq_num_seen = 0;
     int getNextSeqNum() {
@@ -62,27 +40,8 @@ private:
     holdback_queue * multicast_queue;
     
 public:
-    DNode(std::string name) : username(name) {
-        dNet = new DNet();
-        dNet->DNinit();
-        std::string my_addr;
-        dNet->DNinfo(my_addr);
-        memberNode = new Member(my_addr);        // Create Member node
-        joinAddress = new Address(my_addr);      // Join address
-        std::cout << username << " started a new chat, listening on "
-        << memberNode->getAddress() << std::endl;
-    }
-    
-    DNode(std::string name, std::string addr) : username(name) {
-        dNet = new DNet();
-        dNet->DNinit();
-        std::string my_addr;
-        dNet->DNinfo(my_addr);
-        memberNode = new Member(my_addr);        // Create Member node
-        joinAddress = new Address(addr);        // JoimyAddressn address
-        std::cout << username << " join an existing chat, listening on "
-        << memberNode->getAddress() << std::endl;
-    }
+    DNode(std::string name);
+    DNode(std::string name, std::string addr);
     
     Member * getMemberNode() {
         return memberNode;
@@ -116,6 +75,20 @@ public:
         delete joinAddress;
         delete multicast_queue;
     }
+};
+
+/**
+ * CLASS NAME: Parser
+ *
+ * DESCRIPTION:
+ */
+class Parser {
+private:
+    DNode * node;
+    
+public:
+    Parser(DNode * node) : node(node) {}
+    void process(std::string msg);
 };
 
 #endif /* DNODE_H */
