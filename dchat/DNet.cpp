@@ -72,13 +72,13 @@ int DNet::DNinit() {
  *
  * DESCRIPTION: get sockaddr, IPv4 or IPv6
  */
-void * get_in_addr(struct sockaddr *sa)
+void * DNet::get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
         return &(((struct sockaddr_in*)sa)->sin_addr);
+    } else {
+        return &(((struct sockaddr_in6*)sa)->sin6_addr);
     }
-    
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 /**
@@ -93,65 +93,97 @@ in_port_t get_in_port(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
         return (((struct sockaddr_in*)sa)->sin_port);
+    } else {
+        return (((struct sockaddr_in6*)sa)->sin6_port);
     }
-    
-    return (((struct sockaddr_in6*)sa)->sin6_port);
 }
+
 
 /**
  * FUNCTION NAME: DNsend
  *
- * DESCRIPTION: send msg
- *
- * RETURNS: Message send successfully or not
+ * DESCRIPTION: Message send successfully or not
+ *              Receive ACK using at least once semantic
  */
-int DNet::DNsend(Address * addr, std::string data) {
+int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times) {
 #ifdef DEBUGLOG
-    std::cout << "DNsend: " << addr->getAddress() << std::endl;
+    std::cout << "DNet::DNsend: " << addr->getAddress() << std::endl;
 #endif
 
+    int sockfd_w = 0;
     struct addrinfo hints, *servinfo, *p;
     int rv;
     size_t numbytes;
+    
+    // set timeout val
+    struct timeval tv;
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+    
+    // receive msg from server, for ack
+    struct sockaddr_storage their_addr;
+    socklen_t addr_len = sizeof their_addr;
+    char buf[MAXBUFLEN];
+    char s[INET6_ADDRSTRLEN];
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     
-    if ((rv = getaddrinfo(addr->ip.c_str(), std::to_string(addr->port).c_str(),
-                          &hints, &servinfo)) != 0) {
+    const char * addr_ip = addr->ip.c_str();
+    const char * addr_port = std::to_string(addr->port).c_str();
+    if ((rv = getaddrinfo(addr_ip, addr_port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return FAILURE;
     }
     
     // loop through all the results and make a socket
     for (p = servinfo; p != NULL; p = p->ai_next) {
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
+        if ((sockfd_w = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+            perror("stub: socket error");
+            continue;
+        }
+        if (setsockopt(sockfd_w, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
             perror("setsockopt");
             return FAILURE;
         }
         break;
     }
+
+    freeaddrinfo(servinfo);
     
     if (p == NULL) {
         fprintf(stderr, "stub: failed to create socket.\n");
+        close(sockfd_w);
         return FAILURE;
     }
     
-    if ((numbytes = sendto(sockfd, data.c_str(), strlen(data.c_str()), 0, p->ai_addr, p->ai_addrlen)) == -1) {
+    // Send message
+    if ((numbytes = sendto(sockfd_w, data.c_str(), strlen(data.c_str()) + 1,
+                           0, p->ai_addr, p->ai_addrlen)) == -1) {
         perror("sendto");
-        exit(1);
+        close(sockfd_w);
+        return FAILURE;
     }
     
+    // To receive ACK from the server
+    if ((numbytes = recvfrom(sockfd_w, buf, MAXBUFLEN - 1, 0,
+                             (struct sockaddr *) &their_addr, &addr_len)) == -1) {
+        perror("recvfrom");
+        // not getting ack within timeout
+        close(sockfd_w);
+        if (times == 0) {
+            return FAILURE;
+        } else {
+            return DNsend(addr, data, ack, times - 1);
+        }
+    }
+
 #ifdef DEBUGLOG
-    std::cout << "Send " << numbytes << " bytes to " << addr->getAddress() << std::endl;
+    std::cout << "DNet::DNsend: " << numbytes << " bytes to " << addr->getAddress() << std::endl;
 #endif
-    // Free resources
-    freeaddrinfo(servinfo);
-    //close(sockfd);
+    ack = std::string(buf, 0, numbytes);
+    close(sockfd_w);
     return SUCCESS;
 }
 
@@ -161,81 +193,45 @@ int DNet::DNsend(Address * addr, std::string data) {
  * DESCRIPTION: Receives msg and returns SUCCESS or FAILURE
  *              If timeout < 0, no timeout
  */
-int DNet::DNrecv(Address & fromaddr, std::string & data, int timeout) {
+int DNet::DNrecv(Address &fromaddr, std::string &data) {
 
     size_t numbytes;
     struct sockaddr_storage their_addr;
-    
+    socklen_t addr_len = sizeof their_addr;
     char buf[MAXBUFLEN];
-    struct addrinfo hints, *servinfo, *p;
-    int rv;
-    socklen_t addr_len;
     char s[INET6_ADDRSTRLEN];
+
+//    struct addrinfo hints, *servinfo, *p;
+//    memset(&hints, 0, sizeof hints);
+//    hints.ai_family = AF_UNSPEC;
+//    hints.ai_socktype = SOCK_DGRAM;
+
+//    int rv;
+//    if ((rv = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &servinfo)) != 0) {
+//        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+//        return FAILURE;
+//    }
     
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    
-    if ((rv = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &servinfo)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return FAILURE;
-    }
-    
-    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
-                             (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN - 1 , 0,
+                             (struct sockaddr *) &their_addr, &addr_len)) == -1) {
         perror("recvfrom");
-        exit(1);
+        return FAILURE;
     }
 
-    for(p = servinfo; p != NULL; p = p->ai_next) {
-        if (timeout > 0) {
-            struct timeval tv;
-            tv.tv_sec = timeout/1000;
-            tv.tv_usec = timeout % 1000;
-            if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
-                perror("setsockopt");
-                return FAILURE;
-            }
-        } else {
-            if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, NULL, NULL) == -1) {
-                perror("setsockopt");
-                return FAILURE;
-            }
-        }
-        break;
-    }
-    if (p == NULL) {
-        fprintf(stderr, "listener: failed to bind socket\n");
-        return FAILURE;
-    }
-    
-    freeaddrinfo(servinfo);
-    
-    addr_len = sizeof their_addr;
-    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
-                             (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-        perror("recvfrom");
-        exit(1);
-    }
-    
     //copy their_addr to fromaddr
-    fromaddr.ip = inet_ntop(their_addr.ss_family,
-                            get_in_addr((struct sockaddr *)&their_addr),
-                            s, sizeof s);
-    fromaddr.port = ntohs(get_in_port((struct sockaddr *)&their_addr));
+    fromaddr.ip = std::string(inet_ntop(their_addr.ss_family,
+                            get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
+    fromaddr.port = ntohs(get_in_port((struct sockaddr *) &their_addr));
     
     buf[numbytes] = '\0';
 #ifdef DEBUGLOG
     printf("listener: got packet from %s\n",
-           inet_ntop(their_addr.ss_family,
-                     get_in_addr((struct sockaddr *)&their_addr),
-                     s, sizeof s));
+           inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s));
     printf("listener: packet is %d bytes long\n", (int)numbytes);
     printf("listener: packet contains \"%s\"\n", buf);
 #endif
     
     data = std::string(buf);
-    //close(sockfd);
     
     return SUCCESS;
 }

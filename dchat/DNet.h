@@ -25,9 +25,10 @@ public:
     
     int DNinit();
     int DNinfo(std::string & addr);
-    int DNsend(Address * toaddr, std::string data);
-    int DNrecv(Address & fromaddr, std::string & data, int timeout);
+    int DNsend(Address * toaddr, std::string data, std::string & ack, int times);
+    int DNrecv(Address & fromaddr, std::string & data);
     int DNcleanup();
+    void * get_in_addr(struct sockaddr *sa);
     
     // TODO: For EC, we need to handle encrypt & decrypt
 };
