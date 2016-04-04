@@ -74,4 +74,38 @@ public:
     }
 };
 
+class blocking_priority_queue {
+private:
+    class cmp {
+    public:
+        cmp() {}
+        bool operator() (const T & a, const T & b) const { return a.first < b.first; } // Descending
+    };
+    std::mutex d_mutex;
+    std::condition_variable d_condition;
+    std::priority_queue<T, std::vector<T>, cmp> d_queue;
+    
+public:
+    blocking_priority_queue() {}
+    blocking_priority_queue(const blocking_priority_queue&) = delete;
+    blocking_priority_queue& operator=(const blocking_priority_queue&) = delete;
+
+    void push(T const& value) {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        d_queue.push(value);
+        mlock.unlock();
+        d_condition.notify_one();
+    }
+
+    T pop() {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        while (d_queue.empty()) {
+            d_condition.wait(mlock);
+        }
+        T rc = d_queue.top();
+        d_queue.pop();
+        return rc;
+    }
+};
+
 #endif /* BLOCKINGQUEUE_H */
