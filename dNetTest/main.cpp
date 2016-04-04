@@ -12,6 +12,19 @@
 
 using namespace std;
 
+int main(int argc, const char * argv[]) {
+    DNet * dNet = new DNet;
+    dNet->DNinit();
+    std::string addr;
+    dNet->DNinfo(addr);
+    cout << addr << endl;
+    Address send_addr("172.20.20.20:20314");
+    std::string data("huweiwoaini"), ack;
+    dNet->DNsend(&send_addr, data, ack, 1);
+    cout << ack << endl;
+    delete dNet;
+}
+
 void testQueuePop(blocking_queue<string> * q) {
     cout << q->pop() << endl;
     cout << q->pop() << endl;
@@ -42,21 +55,6 @@ void testHoldBackQueue() {
     cout << pq.pop().first << endl;
 }
 
-void testDNet() {
-    std::string addr;
-    DNet * dNet = new DNet;
-    dNet->DNinit();
-    dNet->DNinfo(addr);
-    cout << addr << endl;
-//    std::string data;
-//    Address addr;
-//    while (dNet->DNrecv(addr, data, -1)) {
-//        cout << "Recv: " << data << endl;
-//    }
-    delete dNet;
-}
 
-int main(int argc, const char * argv[]) {
-    testHoldBackQueue();
-}
+
 

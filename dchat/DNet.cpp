@@ -109,6 +109,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
 #ifdef DEBUGLOG
     std::cout << "DNet::DNsend: " << addr->getAddress() << std::endl;
 #endif
+    if (times <= 0) return FAILURE;
 
     int sockfd_w = 0;
     struct addrinfo hints, *servinfo, *p;
@@ -172,17 +173,14 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
         perror("recvfrom");
         // not getting ack within timeout
         close(sockfd_w);
-        if (times == 0) {
-            return FAILURE;
-        } else {
-            return DNsend(addr, data, ack, times - 1);
-        }
+        return DNsend(addr, data, ack, times - 1);
     }
 
 #ifdef DEBUGLOG
     std::cout << "DNet::DNsend: " << numbytes << " bytes to " << addr->getAddress() << std::endl;
 #endif
-    ack = std::string(buf, 0, numbytes);
+
+    ack = std::string(buf, numbytes);
     close(sockfd_w);
     return SUCCESS;
 }
@@ -222,16 +220,23 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     fromaddr.ip = std::string(inet_ntop(their_addr.ss_family,
                             get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
     fromaddr.port = ntohs(get_in_port((struct sockaddr *) &their_addr));
+    data = std::string(buf, numbytes);
     
-    buf[numbytes] = '\0';
+    // send ack back
+    strcpy(buf, "OK");
+    if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
+                           (struct sockaddr *) &their_addr, addr_len)) == -1) {
+        perror("sendto");
+        return FAILURE;
+    }
+
 #ifdef DEBUGLOG
     printf("listener: got packet from %s\n",
            inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s));
-    printf("listener: packet is %d bytes long\n", (int)numbytes);
+    printf("listener: packet is %d bytes long\n", (int) numbytes);
     printf("listener: packet contains \"%s\"\n", buf);
+    std::cout << "data: " << data << std::endl;
 #endif
-    
-    data = std::string(buf);
     
     return SUCCESS;
 }
