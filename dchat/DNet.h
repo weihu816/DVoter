@@ -19,7 +19,8 @@ private:
     DNode *dNode;
     
 public:
-    DNet() {  };
+    //DNet() {  };
+    DNet();
     DNet(DNet &anotherDNet) = delete;
     DNet& operator = (DNet &anotherDNet) = delete;
     virtual ~DNet() {
