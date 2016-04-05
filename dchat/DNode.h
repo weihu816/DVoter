@@ -37,10 +37,10 @@ private:
 //    blocking_queue<std::pair<Address, std::string>> m_queue;
     blocking_queue<std::string> message_chat_queue_ready;
     
+public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
     holdback_queue * multicast_queue;
-    
-public:
+
     DNode(std::string name, std::string join_addr);
     int nodeStart();
     int initThisNode();
@@ -62,12 +62,12 @@ public:
     void recvHandler(std::pair<Address, std::string>);
     
     void sendMsg(std::string msg);
-    void multicastMsg(std::string msg);
+    void multicastMsg(std::string msg, std::string type);
     
     Member* getMember();
     DNet* getDNet();
     int getSeqNum();
-    string getUsername();
+    std::string getUsername();
     
     virtual ~DNode() {
         delete dNet;

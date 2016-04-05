@@ -159,8 +159,7 @@ void DNode::deleteMember(MemberListEntry toRemove){
 #ifdef DEBUGLOG
     std::cout << "DNode::deleteMember: " << toRemove.username << std::endl;
 #endif
-    auto list = member_node->memberList;
-    list.erase(std::remove(list.begin(), list.end(), toRemove), list.end());
+    member_node->deleteMember(toRemove);
 }
 
 
@@ -250,7 +249,7 @@ void DNode::sendMsg(std::string msg) {
     std::string self_address = member_node->address->getAddress();
     if (leader_address.compare(self_address)) { // I'm the leader (sequencer)
         std::string new_msg = std::string(D_M_MSG) + "#" + msg;
-        multicastMsg(new_msg);
+        multicastMsg(new_msg, D_M_MSG);
     } else { // Send Multicast request to the sequencer
         std::string str_to = std::string(D_CHAT) + "#" + username + "#" + msg;
         std::string str_ack;
@@ -269,13 +268,13 @@ void DNode::sendMsg(std::string msg) {
  * DESCRIPTION: Multicast the message to all the members
  *              TODO: only leaders can call this function
  */
-void DNode::multicastMsg(std::string msg) {
+void DNode::multicastMsg(std::string msg, std::string type) {
     int seq = this->getNextSeqNum();
     std::stringstream ss;
     auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         ss.clear();
-        ss << D_M_MSG << "#" << seq << "#" << msg;
+        ss << "#" << type << "#" << seq << "#" << msg;
         Address addr((*iter).getAddress());
         std::string ack;
         if (dNet->DNsend(&addr, ss.str(), ack, 3) == FAILURE) {
@@ -286,6 +285,7 @@ void DNode::multicastMsg(std::string msg) {
 #endif
     }
 }
+
 
 ///////////////////////////////////// HEARTBEAT FUNC /////////////////////////////////////
 

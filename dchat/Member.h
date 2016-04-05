@@ -109,7 +109,15 @@ public:
         }
         memberList.push_back(entry);
     }
-    
+
+    void deleteMember(MemberListEntry entry) {
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            if ((*iter).getEntry() ==  entry.getEntry()) {
+                memberList.erase(iter);
+            }
+        }
+    }
+
     // with user name
     std::string getMemberList() {
         std::string list;

@@ -50,18 +50,18 @@ void recvMsg(DNode * node) {
 }
 
 
-/**
- * FUNCTION NAME: heartBeatRoutine
- *
- * DESCRIPTION: send and check heartbeat
- */
-void heartBeatRoutine(DNode * node) {
-    while (1) {
-        std::chrono::milliseconds sleepTime(HEARTFREQ); // check every 3 seconds
-        std::this_thread::sleep_for(sleepTime);
-        node->nodeLoopOps();
-    }
-}
+///**
+// * FUNCTION NAME: heartBeatRoutine
+// *
+// * DESCRIPTION: send and check heartbeat
+// */
+//void heartBeatRoutine(DNode * node) {
+//    while (1) {
+//        std::chrono::milliseconds sleepTime(HEARTFREQ); // check every 3 seconds
+//        std::this_thread::sleep_for(sleepTime);
+//        node->nodeLoopOps();
+//    }
+//}
 
 //////////////////////////////// MAIN: START ////////////////////////////////
 
@@ -104,11 +104,11 @@ int main(int argc, const char * argv[]) {
     // Thread: Receive chat messages
     std::thread thread_recvMsg(recvMsg, node);
     // Thread: Track heartbeat
-    std::thread thread_heartbeat(heartBeatRoutine,node);
+    // std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
-    thread_heartbeat.join();
+    // thread_heartbeat.join();
     
     // Clean up and quit
     node->finishUpThisNode();
