@@ -47,16 +47,16 @@ void recvMsg(DNode * node) {
     }
 }
 
-/**
- * FUNCTION NAME: handleMsg
- *
- * DESCRIPTION: pop message out of queue and process
- */
-void handleMsg(DNode * node) {
-    while (1) {
-        node->nodeLoop();
-    }
-}
+///**
+// * FUNCTION NAME: handleMsg
+// *
+// * DESCRIPTION: pop message out of queue and process
+// */
+//void handleMsg(DNode * node) {
+//    while (1) {
+//        node->nodeLoop();
+//    }
+//}
 
 /**
  * FUNCTION NAME: heartBeatRoutine
@@ -110,13 +110,13 @@ int main(int argc, const char * argv[]) {
     // Thread: Receive chat messages
     std::thread thread_recvMsg(recvMsg, node);
     // Thread: Keep looking at message queue and handles message
-    std::thread thread_handleMsg(handleMsg, node);
+//    std::thread thread_handleMsg(handleMsg, node);
     // Thread: Track heartbeat
     std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
-    thread_handleMsg.join();
+//    thread_handleMsg.join();
     thread_heartbeat.join();
     
     // Clean up and quit

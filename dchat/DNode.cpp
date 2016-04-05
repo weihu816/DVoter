@@ -25,6 +25,8 @@ DNode::DNode(std::string name, std::string join_addr) : username(name) {
     std::cout << username << " join an existing chat, listening on " << member_node->getAddress() << std::endl;
 }
 
+//////////////////////////////// THREAD FUNC ////////////////////////////////
+
 /**
  * FUNCTION NAME: recvLoop
  *
@@ -63,6 +65,8 @@ void DNode::nodeLoop() {
     nodeLoopOps(); // CODE COMMENT: no message recved would block forever: separate?
     return;
 }
+
+//////////////////////////////// NODE FUNC ////////////////////////////////
 
 
 /**
@@ -111,6 +115,8 @@ int DNode::initThisNode() {
     member_node->memberList.clear();
     return SUCCESS;
 }
+
+//////////////////////////////// CLIENT RES FUNC ////////////////////////////////
 
 
 /**
@@ -167,6 +173,8 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
     return SUCCESS;
 }
 
+//////////////////////////////// MEMBER LIST FUNC ////////////////////////////////
+
 /**
  * FUNCTION NAME: initMemberList
  *
@@ -217,6 +225,8 @@ int DNode::finishUpThisNode() {
     
     return 0;
 }
+
+//////////////////////////////// SEND MSG FUNC ////////////////////////////////
 
 
 /**
@@ -269,21 +279,14 @@ void DNode::multicastMsg(std::string msg) {
 }
 
 
-/**
- * FUNCTION NAME: checkMessages
- *
- * DESCRIPTION: Check messages in the queue and call the respective message handler
- */
-void DNode::checkMessages() {
-    // Pop waiting messages from DNode's queue
-    // std::pair<Address, std::string> _pair = m_queue.pop();
-    // recvHandler(_pair);
-    return;
-}
-
+///////////////////////////////////////////////////////////////////
+////////////                                 //////////////////////
+////////////  MAIN FUNCTION (MOVE->handler)  //////////////////////
+////////////                                 //////////////////////
+///////////////////////////////////////////////////////////////////
 
 /**
- * FUNCTION NAME: recvMsg
+ * FUNCTION NAME: recvHandler
  *
  * DESCRIPTION: Message handler for different message types
  *              TODO: what if it receives CHAT:Bob:"Hello", but the current node is not the leader
@@ -365,6 +368,8 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
     delete [] cstr;
 }
 
+///////////////////////////////////// HEARTBEAT FUNC /////////////////////////////////////
+
 /**
  * FUNCTION NAME: nodeLoopOps
  *
@@ -396,8 +401,6 @@ void DNode::nodeLoopOps() {
                 }
             }
         }
-        
-        
     } else { // I am a member
         // send a heart beat to the leader
         sendHeartbeat();
@@ -407,7 +410,9 @@ void DNode::nodeLoopOps() {
         time(&current);
         time_t heartbeat_ledaer = member_node->getHeartBeat(leader_address);
         if(difftime(current, heartbeat_ledaer) > TIMEOUT/1000) {
-            //TODO startElection();
+            ///////////////////////////
+            // TODO startElection();
+            ///////////////////////////
         }
     }
     // finish heartbeat check

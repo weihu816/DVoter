@@ -52,7 +52,7 @@ public:
     void nodeLoop();
     
     static int enqueueWrapper(void *env, char *buff, int size);
-    void nodeLoopOps();
+    void nodeLoopOps(); // this is the operation for heartbeat
     void multicastHeartbeat();
     void sendHeartbeat();
 
