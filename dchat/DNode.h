@@ -61,7 +61,7 @@ public:
     
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg);
-    
+        
     virtual ~DNode() {
         delete dNet;
         delete member_node;

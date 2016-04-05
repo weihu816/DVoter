@@ -55,8 +55,9 @@
 #define TIMEOUT     10000
 #define HEARTFREQ   3000
 
-#define D_M_MSG         "#MSG"                      // ?#SEQ#Message, multicast from the sequencer
-#define D_M_ADDNODE     "#ADDNODE"                  // ?#SEQ#ip#port, multicast from the sequencer
+// Multicast messages, start with a #
+#define D_M_MSG         "MSG"                      // #MSG#SEQ#Message, multicast from the sequencer
+#define D_M_ADDNODE     "ADDNODE"                  // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
 
 #define D_CHAT          "CHAT"                      // ?#Name#Message - From node to sequencer
 #define D_JOINREQ       "JOINREQ"                   // JOINREQ:PORT

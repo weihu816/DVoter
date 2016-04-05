@@ -13,7 +13,16 @@
 using namespace std;
 
 int main(int argc, const char * argv[]) {
-
+    string recv_msg = "HELLO#WORLD#KKK";
+    char * cstr = new char[recv_msg.length() + 1];
+    strcpy(cstr, recv_msg.c_str());
+    cout << " " << recv_msg << endl;
+    char * msg_type = strtok(cstr, "#");
+    cout << msg_type << endl;
+    cout << " " << recv_msg << endl;
+    cout << strtok(NULL, "#") << endl;
+    cout << " " << recv_msg << endl;
+    cout << strtok(NULL, "#") << endl;
 }
 
 void testQueuePop(blocking_queue<string> * q) {

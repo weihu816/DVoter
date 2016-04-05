@@ -174,7 +174,7 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
  *              ip1:port1:name1:ip2:port2:name2: ...
  */
 void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
-    
+
     if (member_list.empty()) return;
     char * cstr = new char[member_list.length() + 1];
     std::string addr;
@@ -316,7 +316,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
             multicastMsg(message);
         }
         
-    } else if (strcmp(msg_type, "?")) {
+    } else if (strcmp(msg_type, "???")) {
         
         // MULTI : Seq : MSG :  "Bob:: Hello"
         int recv_seq = atoi(strtok (NULL, "#"));
