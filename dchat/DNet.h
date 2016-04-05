@@ -10,10 +10,13 @@
 #include "stdincludes.h"
 #include "Member.h"
 
+class DNode;
+
 class DNet {
 private:
     int sockfd;
     int port;
+    DNode *dNode;
     
 public:
     DNet() {  };
