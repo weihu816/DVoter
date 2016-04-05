@@ -7,7 +7,7 @@
 #include "DNet.h"
 #include "DNode.h"
 
-DNet::DNet() { dNode = DNode::getInstance(""); }
+DNet::DNet(DNode * dNode) { this->dNode = dNode; }
 
 /**
  * FUNCTION NAME: ENinit

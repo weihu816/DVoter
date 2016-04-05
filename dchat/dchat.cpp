@@ -83,41 +83,41 @@ int main(int argc, const char * argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    DNode *node;
+    DNode *node = DNode::getInstance("bbb");
     
-    if (argc == 2) { // Start a new chat group
-        std::string name(argv[1]);
-        node = DNode::getInstance(name);
-    } else { // Join an existing chat group
-        std::string name(argv[1]);
-        std::string ip_port(argv[2]);
-        if (ip_port.find(":") == std::string::npos) {
-            usage("Error parsing ADDR:PORT");
-            exit(EXIT_FAILURE);
-        }
-        node = DNode::getInstance(name, ip_port);
-    }
-
-    // Node is up, introduced to the group
-    if (!node->nodeStart()) {
-        delete node;
-        std::cout << "Fail to start the node" << std::endl;
-        std::exit(1);
-    }
-    
-    // Thread: Listening for input
-    std::thread thread_sendMsg(sendMsg, node);
-    // Thread: Receive chat messages
-    std::thread thread_recvMsg(recvMsg, node);
-    // Thread: Keep looking at message queue and handles message
-    std::thread thread_handleMsg(handleMsg, node);
-    // Thread: Track heartbeat
-    std::thread thread_heartbeat(heartBeatRoutine,node);
-
-    thread_sendMsg.join();
-    thread_recvMsg.join();
-    thread_handleMsg.join();
-    thread_heartbeat.join();
+//    if (argc == 2) { // Start a new chat group
+//        std::string name(argv[1]);
+//        node = DNode::getInstance(name);
+//    } else { // Join an existing chat group
+//        std::string name(argv[1]);
+//        std::string ip_port(argv[2]);
+//        if (ip_port.find(":") == std::string::npos) {
+//            usage("Error parsing ADDR:PORT");
+//            exit(EXIT_FAILURE);
+//        }
+//        node = DNode::getInstance(name, ip_port);
+//    }
+//
+//    // Node is up, introduced to the group
+//    if (!node->nodeStart()) {
+//        delete node;
+//        std::cout << "Fail to start the node" << std::endl;
+//        std::exit(1);
+//    }
+//    
+//    // Thread: Listening for input
+//    std::thread thread_sendMsg(sendMsg, node);
+//    // Thread: Receive chat messages
+//    std::thread thread_recvMsg(recvMsg, node);
+//    // Thread: Keep looking at message queue and handles message
+//    std::thread thread_handleMsg(handleMsg, node);
+//    // Thread: Track heartbeat
+//    std::thread thread_heartbeat(heartBeatRoutine,node);
+//
+//    thread_sendMsg.join();
+//    thread_recvMsg.join();
+//    thread_handleMsg.join();
+//    thread_heartbeat.join();
     
     // Clean up and quit
     node->finishUpThisNode();

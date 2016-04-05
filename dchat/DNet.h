@@ -20,7 +20,7 @@ private:
     
 public:
     //DNet() {  };
-    DNet();
+    DNet(DNode * dNode);
     DNet(DNet &anotherDNet) = delete;
     DNet& operator = (DNet &anotherDNet) = delete;
     virtual ~DNet() {

@@ -21,7 +21,7 @@ DNode * DNode::getInstance(std::string name, std::string addr) {
  * CONSTRUCTOR
  */
 DNode::DNode(std::string name, std::string join_addr) : username(name) {
-    dNet = new DNet();
+    dNet = new DNet(this);
     dNet->DNinit();
     std::string my_addr;
     dNet->DNinfo(my_addr);
