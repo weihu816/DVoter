@@ -59,10 +59,10 @@
 #define D_M_MSG         "MSG"                      // #MSG#SEQ#Message, multicast from the sequencer
 #define D_M_ADDNODE     "ADDNODE"                  // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
 
-#define D_CHAT          "CHAT"                      // ?#Name#Message - From node to sequencer
-#define D_JOINREQ       "JOINREQ"                   // JOINREQ:PORT
-#define D_JOINLEADER    "JOINLEADER"                // JOINLEADER
-#define D_JOINLIST      "JOINLIST"                  // JOINOK:initSeq:ip1:port1:ip2:port2:...
+#define D_CHAT          "CHAT"                      // CHAT#Name#Message - From node to sequencer
+#define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT
+#define D_JOINLEADER    "JOINLEADER"                // JOINLEADER#LEADERIP#LEADERPORT
+#define D_JOINLIST      "JOINLIST"                  // JOINLIST#initSeq#ip1:port1:ip2:port2:...
 #define D_LEAVE         "LEAVE"
 #define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT: () : detect failed node
 
