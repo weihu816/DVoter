@@ -211,8 +211,7 @@ void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
 #ifdef DEBUGLOG
     std::cout << "DNode::addMember: " << ip_port << std::endl;
 #endif
-    MemberListEntry entry(ip_port, name); // memberList with no such boolean?
-    member_node->memberList.push_back(entry);
+    member_node->addMember(ip_port, name);
     if (isLeader) member_node->leaderAddr = new Address(ip_port);
 }
 

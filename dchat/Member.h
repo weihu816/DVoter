@@ -89,17 +89,16 @@ public:
         return  leaderAddr->getAddress();
     }
     
-    // this is the member address list, without user name 
-//    std::string getMemberList() {
-//        std::string list;
-//        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-//            list += (*iter).getAddress();
-//            if (iter != memberList.end()-1) list += ":";
-//        }
-//        return list;
-//    }
+    // this is the member address list, without user name
+    void addMember(std::string ip_port, std::string name) {
+        MemberListEntry entry(ip_port, name);
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            if ((*iter).getEntry() ==  entry.getEntry()) return;
+        }
+        memberList.push_back(entry);
+    }
     
-    //with user name
+    // with user name
     std::string getMemberList() {
         std::string list;
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
