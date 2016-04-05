@@ -33,6 +33,7 @@ private:
     int getNextSeqNum() {
         return seq_num++;
     }
+    
 //    blocking_queue<std::pair<Address, std::string>> m_queue;
     blocking_queue<std::string> message_chat_queue_ready;
     

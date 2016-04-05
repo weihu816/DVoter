@@ -54,24 +54,32 @@ private:
     int sequence_seen;
 
 public:
-    holdback_queue(int init_seen) : sequence_seen(init_seen) {}
+    holdback_queue(int init_seen) : sequence_seen(init_seen) { }
     holdback_queue(const holdback_queue&) = delete;
     holdback_queue& operator=(const holdback_queue&) = delete;
     void push(T const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
+        mlock.lock();
         d_queue.push(value);
         mlock.unlock();
         d_condition.notify_one();
     }
     T pop() {
         std::unique_lock<std::mutex> mlock(d_mutex);
-        while (d_queue.empty()) {
-            d_condition.wait(mlock);
+        mlock.lock();
+        while (!d_queue.empty() && d_queue.top().first <= sequence_seen) {
+            d_queue.pop();
         }
+        if (d_queue.empty()) return std::make_pair(-1, "");
         T rc = d_queue.top();
-        d_queue.pop();
-        return rc;
+        if (rc.first == sequence_seen + 1) {
+            d_queue.pop();
+            return rc;
+        } else {
+            return std::make_pair(-1, "");
+        }
     }
+    
 };
 
 class blocking_priority_queue {
