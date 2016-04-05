@@ -63,7 +63,12 @@ public:
     
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg);
-        
+    
+    Member* getMember();
+    DNet* getDNet();
+    int getSeqNum();
+    string getUsername();
+    
     virtual ~DNode() {
         delete dNet;
         delete member_node;

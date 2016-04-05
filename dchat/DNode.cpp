@@ -375,3 +375,31 @@ void DNode::multicastHeartbeat() {
 #endif
     }
 }
+
+/***
+ * dNode getter
+ ***/
+DNet * DNode::getDNet(){
+    return dNet;
+}
+
+/***
+ * member_node getter
+ ***/
+Member * DNode::getMember() {
+    return member_node;
+}
+
+/***
+ * sequence number getter
+ ***/
+int DNode::getSeqNum() {
+    return seq_num;
+}
+
+/***
+ * username getter
+ ***/
+std::string DNode::getUsername() {
+    return username;
+}

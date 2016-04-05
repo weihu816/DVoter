@@ -32,6 +32,12 @@ public:
     std::string getAddress() {
         return ip + ":" + std::to_string(port);
     }
+    std::string getAddressIp() {
+        return ip;
+    }
+    std::string getAddressPort() {
+        return std::to_string(port);
+    }
     void init() {
         ip.clear();
     }
@@ -87,6 +93,13 @@ public:
     std::string getLeaderAddress() {
         return  leaderAddr->getAddress();
     }
+    std::string getLeaderAddressIp() {
+        return leaderAddr->getAddressIp();
+    }
+    std::string getLeaderAddressPort() {
+        return leaderAddr->getAddressPort();
+    }
+
     
     // this is the member address list, without user name
     void addMember(std::string ip_port, std::string name) {
