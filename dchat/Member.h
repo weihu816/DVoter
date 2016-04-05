@@ -9,20 +9,6 @@
 
 #include "stdincludes.h"
 
-
-/**
- * CLASS NAME: q_elt
- *
- * DESCRIPTION: Entry in the queue
- */
-class q_elt {
-public:
-    void *elt;
-    int size;
-    q_elt(void *elt, int size);
-};
-
-
 /**
  * CLASS NAME: Address
  *
