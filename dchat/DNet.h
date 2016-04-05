@@ -16,7 +16,7 @@ private:
     int port;
     
 public:
-    DNet() {};
+    DNet() {  };
     DNet(DNet &anotherDNet) = delete;
     DNet& operator = (DNet &anotherDNet) = delete;
     virtual ~DNet() {

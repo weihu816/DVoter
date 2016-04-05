@@ -6,6 +6,8 @@
 
 #include "Handler.h"
 
-std::string Handler::process(std::string msg) {
-    return "";
-}
+//Handler * Handler::handler = NULL;
+//
+//std::string Handler::process(std::string msg) {
+//    return "";
+//}

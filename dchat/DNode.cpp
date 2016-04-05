@@ -7,14 +7,11 @@
 
 #include "DNode.h"
 
-/**
- * Singleton Patter
- */
-DNode * DNode::getInstance(std::string name) {
-    if (!dNode) dNode = new DNode(name);
-    return nullptr;
-}
+DNode * DNode::dNode = NULL;
 
+/**
+ * Singleton Pattern
+ */
 DNode * DNode::getInstance(std::string name, std::string addr) {
     if (!dNode) dNode = new DNode(name, addr);
     return nullptr;
@@ -23,31 +20,18 @@ DNode * DNode::getInstance(std::string name, std::string addr) {
 /**
  * CONSTRUCTOR
  */
-DNode::DNode(std::string name) : username(name) {
-//    handler = new Handler(this);
+DNode::DNode(std::string name, std::string join_addr) : username(name) {
     dNet = new DNet();
     dNet->DNinit();
     std::string my_addr;
     dNet->DNinfo(my_addr);
-    memberNode = new Member(my_addr);        // Create Member node
-    joinAddress = new Address(my_addr);      // Join address
-    std::cout << username << " started a new chat, listening on "
-    << memberNode->getAddress() << std::endl;
-}
-
-/**
- * CONSTRUCTOR
- */
-DNode::DNode(std::string name, std::string addr) : username(name) {
-//    handler = new Handler(this);
-    dNet = new DNet();
-    dNet->DNinit();
-    std::string my_addr;
-    dNet->DNinfo(my_addr);
-    memberNode = new Member(my_addr);        // Create Member node
-    joinAddress = new Address(addr);        // JoimyAddressn address
-    std::cout << username << " join an existing chat, listening on "
-    << memberNode->getAddress() << std::endl;
+    member_node = new Member(my_addr);        // Create Member node
+    if (!join_addr.empty()) {
+        join_address = new Address(join_addr);
+    } else {
+        join_address = new Address(my_addr);
+    }
+    std::cout << username << " join an existing chat, listening on " << member_node->getAddress() << std::endl;
 }
 
 /**
@@ -57,7 +41,7 @@ DNode::DNode(std::string name, std::string addr) : username(name) {
  * 				This function is called by a node to receive messages currently waiting for it
  */
 int DNode::recvLoop() {
-    if ( memberNode->bFailed ) {
+    if ( member_node->bFailed ) {
         return false;
     } else {
         Address addr;
@@ -77,13 +61,13 @@ int DNode::recvLoop() {
  * 				Check your messages in queue and perform membership protocol duties
  */
 void DNode::nodeLoop() {
-    if (memberNode->bFailed) {
+    if (member_node->bFailed) {
         return;
     }
     // Check my messages
     checkMessages();
     // Wait until you're in the group...
-    if( !memberNode->inGroup ) {
+    if( !member_node->inGroup ) {
         return;
     }
     // ...then jump in and share your responsibilites!
@@ -105,16 +89,16 @@ int DNode::nodeStart() {
         std::cout << "init_thisnode failed. Exit." << std::endl;
         return FAILURE;
     }
-    if( !introduceSelfToGroup(joinAddress, false) ) {
+    if( !introduceSelfToGroup(join_address, false) ) {
         finishUpThisNode();
         // TODO
-        std::cout << "Sorry no chat is active on " << memberNode->getAddress()
+        std::cout << "Sorry no chat is active on " << member_node->getAddress()
         << ", try again later." << std::endl;
         return FAILURE;
     }
     std::cout << "Succeed, current users:" << std::endl; // TODO
     //    printMembers();
-    // std::cout << username << memberNode->getAddress() << " (Leader)"; // TODO: who is leader
+    // std::cout << username << member_node->getAddress() << " (Leader)"; // TODO: who is leader
     // std::cout << "Waiting for others to join" << std::endl;
     return SUCCESS;
 }
@@ -125,17 +109,17 @@ int DNode::nodeStart() {
  * DESCRIPTION: Find out who I am and start up
  */
 int DNode::initThisNode() {
-    // std::string ip = memberNode->address->ip;
-    // int port = memberNode->address->port;
-    memberNode->bFailed = false;
-    memberNode->inited = true;
-    memberNode->inGroup = false;
+    // std::string ip = member_node->address->ip;
+    // int port = member_node->address->port;
+    member_node->bFailed = false;
+    member_node->inited = true;
+    member_node->inGroup = false;
     // node is up!
-    memberNode->nnb = 0;
-    //    memberNode->heartbeat = 0;
-    //    memberNode->pingCounter = TFAIL;
-    //    memberNode->timeOutCounter = -1;
-    memberNode->memberList.clear();
+    member_node->nnb = 0;
+    //    member_node->heartbeat = 0;
+    //    member_node->pingCounter = TFAIL;
+    //    member_node->timeOutCounter = -1;
+    member_node->memberList.clear();
     return SUCCESS;
 }
 
@@ -146,19 +130,19 @@ int DNode::initThisNode() {
  * DESCRIPTION: Join the distributed system
  */
 int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
-    std::string self_addr = memberNode->address->getAddress();
+    std::string self_addr = member_node->address->getAddress();
     std::string join_addr = joinaddr->getAddress();
     
     if (self_addr.compare(join_addr) == 0) {
         
         // I am the group booter (first process to join the group). Boot up the group
         std::cout << username << " started a new chat, listening on ";
-        std::cout << memberNode->getAddress() << std::endl;
+        std::cout << member_node->getAddress() << std::endl;
         addMember(join_addr, username, true); // I'm the leader
         
     } else {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
-        std::cout << memberNode->getAddress() << std::endl;
+        std::cout << member_node->getAddress() << std::endl;
         // Requst to join by contacting the member
         std::string msg_to = std::string(D_JOINREQ) + ":" + std::to_string(joinaddr->port);
         std::string msg_ack;
@@ -173,8 +157,8 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
             
             if (isSureLeaderAddr) return FAILURE; // Leader should return list
             std::string ip_port = msg_ack.substr(index + 1);
-            memberNode->leaderAddr = new Address(ip_port);
-            return this->introduceSelfToGroup(memberNode->leaderAddr, true); // Connect to leader
+            member_node->leaderAddr = new Address(ip_port);
+            return this->introduceSelfToGroup(member_node->leaderAddr, true); // Connect to leader
             
         } else if (msg_type.compare(D_JOINLIST) == 0) {
             
@@ -190,7 +174,7 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
         }
     }
     
-    memberNode->inGroup = true;
+    member_node->inGroup = true;
     return SUCCESS;
 }
 
@@ -231,8 +215,8 @@ void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
     std::cout << "DNode::addMember: " << ip_port << std::endl;
 #endif
     MemberListEntry entry(ip_port, name); // memberList with no such boolean?
-    memberNode->memberList.push_back(entry);
-    if (isLeader) memberNode->leaderAddr = new Address(ip_port);
+    member_node->memberList.push_back(entry);
+    if (isLeader) member_node->leaderAddr = new Address(ip_port);
 }
 
 /**
@@ -254,8 +238,8 @@ int DNode::finishUpThisNode() {
  *              There is a thread continuing calling this method
  */
 void DNode::sendMsg(std::string msg) {
-    std::string leader_address = memberNode->getLeaderAddress();
-    std::string self_address = memberNode->address->getAddress();
+    std::string leader_address = member_node->getLeaderAddress();
+    std::string self_address = member_node->address->getAddress();
     if (leader_address.compare(self_address)) { // I'm the leader (sequencer)
         std::string new_msg = std::string(D_MSG) + ":" + msg;
         multicastMsg(new_msg);
@@ -280,7 +264,7 @@ void DNode::sendMsg(std::string msg) {
 void DNode::multicastMsg(std::string msg) {
     int seq = this->getNextSeqNum();
     std::stringstream ss;
-    auto list = memberNode->memberList;
+    auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         ss.clear();
         ss << D_MULTI << ":" << seq << ":" << msg;
@@ -338,7 +322,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         std::string recv_name(strtok (NULL, ":"));
         std::string recv_msg(strtok (NULL, ":"));
         
-        if (memberNode->leaderAddr == nullptr) { // Only leader can multicast messages
+        if (member_node->leaderAddr == nullptr) { // Only leader can multicast messages
             std::string message = std::string(D_MSG) + ":" + recv_name + ":: " + recv_msg;
             multicastMsg(message);
         }
@@ -357,12 +341,12 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         
     } else if (strcmp(msg_type, D_JOINREQ) == 0) {
         
-        if (memberNode->leaderAddr == nullptr) { // I am the leader
+        if (member_node->leaderAddr == nullptr) { // I am the leader
             // send D_JOINLIST:ip1:port1:name1:...
             // First need to add this member to the list (should not exist)
             // TODO : content is the username
             addMember(fromAddr.getAddress(), content, false);
-            std::string message = std::string(D_JOINLIST) + ":" + memberNode->getMemberList();
+            std::string message = std::string(D_JOINLIST) + ":" + member_node->getMemberList();
             std::string str_ack;
             dNet->DNsend(&fromAddr, message, str_ack, 3);
             // Multicast addnode message
@@ -371,7 +355,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
             multicastMsg(message_addmember);
         } else {
             // send leader address
-            std::string message = std::string(D_JOINLEADER) + ":" + memberNode->getLeaderAddress();
+            std::string message = std::string(D_JOINLEADER) + ":" + member_node->getLeaderAddress();
             std::string str_ack;
             dNet->DNsend(&fromAddr, message, str_ack, 3);
         }
@@ -380,7 +364,7 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
         //update list for now, with fromAddr check
         time_t current;
         time(&current);
-        memberNode->updateHeartBeat(fromAddr.getAddress(), current);
+        member_node->updateHeartBeat(fromAddr.getAddress(), current);
     } else if (strcmp(msg_type, D_LEAVE) == 0) {
         // TODO update member list
         
@@ -400,22 +384,22 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
  * 				member: start election; leader: multicast LEAVE
  */
 void DNode::nodeLoopOps() {
-    std::string leader_address = memberNode->getLeaderAddress();
-    std::string self_address = memberNode->address->getAddress();
+    std::string leader_address = member_node->getLeaderAddress();
+    std::string self_address = member_node->address->getAddress();
     if(leader_address.compare(self_address) == 0) { // I am the leader
         // have the leader broadcast a heartbeat
         multicastHeartbeat();
         
         // check every one's heartbeat in the memberlist (except myself)
-        auto list = memberNode->memberList;
-        auto heartBook = memberNode->heartBeatList;
+        auto list = member_node->memberList;
+        auto heartBook = member_node->heartBeatList;
         for (auto iter = list.begin(); iter != list.end(); iter++) {
             std::string memberAddr = iter->getAddress();
             if(!memberAddr.compare(self_address)) {
                 //check heartbeat
                 time_t current;
                 time(&current);
-                time_t heartbeat = memberNode->getHeartBeat(memberAddr);
+                time_t heartbeat = member_node->getHeartBeat(memberAddr);
                 if(difftime(current, heartbeat) > TIMEOUT/1000) {
                     //exceed timeout limit
                     std::string message_leave = std::string(D_LEAVE) + ":" + iter->username + ":" + memberAddr;
@@ -432,7 +416,7 @@ void DNode::nodeLoopOps() {
         // check leader heartbeat
         time_t current;
         time(&current);
-        time_t heartbeat_ledaer = memberNode->getHeartBeat(leader_address);
+        time_t heartbeat_ledaer = member_node->getHeartBeat(leader_address);
         if(difftime(current, heartbeat_ledaer) > TIMEOUT/1000) {
             //TODO startElection();
         }
@@ -450,7 +434,7 @@ void DNode::nodeLoopOps() {
  *              There is a thread continuing calling this method
  */
 void DNode::sendHeartbeat() {
-    std::string leader_address = memberNode->getLeaderAddress();
+    std::string leader_address = member_node->getLeaderAddress();
     // send heartbeat to leader
     Address leader_addr(leader_address);
     std::string str_ack;
@@ -468,7 +452,7 @@ void DNode::sendHeartbeat() {
  *              TODO: only leaders can call this function
  */
 void DNode::multicastHeartbeat() {
-    auto list = memberNode->memberList;
+    auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         Address addr((*iter).getAddress());
         std::string str_ack;

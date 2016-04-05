@@ -13,7 +13,6 @@
 #include "DNet.h"
 #include "BlockingQueue.h"
 
-
 /**
  * CLASS NAME: DNode
  *
@@ -22,12 +21,11 @@
 class DNode {
 private:
     static DNode * dNode;
-    DNode(std::string name);
-    DNode(std::string name, std::string addr);
-
-    Member * memberNode;
+    DNode(std::string name, std::string join_addr);
+    
+    Member * member_node;
     DNet * dNet;
-    Address * joinAddress = nullptr;
+    Address * join_address = nullptr;
     std::string username;
 
     int seq_num = 0;
@@ -42,8 +40,8 @@ private:
     holdback_queue * multicast_queue;
     
 public:
-    static DNode * getInstance(std::string name);
-    static DNode * getInstance(std::string name, std::string addr);
+//    static DNode * getInstance(std::string name);
+    static DNode * getInstance(std::string name, std::string addr = "");
     
     int nodeStart();
     int initThisNode();
@@ -68,8 +66,8 @@ public:
     
     virtual ~DNode() {
         delete dNet;
-        delete memberNode;
-        delete joinAddress;
+        delete member_node;
+        delete join_address;
         delete multicast_queue;
     }
 };

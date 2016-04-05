@@ -198,17 +198,6 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     socklen_t addr_len = sizeof their_addr;
     char buf[MAXBUFLEN];
     char s[INET6_ADDRSTRLEN];
-
-//    struct addrinfo hints, *servinfo, *p;
-//    memset(&hints, 0, sizeof hints);
-//    hints.ai_family = AF_UNSPEC;
-//    hints.ai_socktype = SOCK_DGRAM;
-
-//    int rv;
-//    if ((rv = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &servinfo)) != 0) {
-//        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-//        return FAILURE;
-//    }
     
     if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN - 1 , 0,
                              (struct sockaddr *) &their_addr, &addr_len)) == -1) {
@@ -224,7 +213,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     
     // send ack back
     std::string recv_msg(buf);
-    
+
     strcpy(buf, "OK");
     if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
                            (struct sockaddr *) &their_addr, addr_len)) == -1) {
