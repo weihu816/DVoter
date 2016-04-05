@@ -33,15 +33,13 @@ DNode::DNode(std::string name, std::string join_addr) : username(name) {
  */
 int DNode::recvLoop() {
     if ( member_node->bFailed ) {
-        return false;
+        return FAILURE;
     } else {
         Address addr;
         std::string data;
         dNet->DNrecv(addr, data);
-        std::pair<Address, std::string> new_pair(addr, data);
-        m_queue.push(new_pair);
     }
-    return false;
+    return SUCCESS;
 }
 
 
@@ -135,13 +133,13 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << member_node->getAddress() << std::endl;
         // Requst to join by contacting the member
-        std::string msg_to = std::string(D_JOINREQ) + ":" + std::to_string(joinaddr->port);
+        std::string msg_to = std::string(D_JOINREQ) + "#" + std::to_string(joinaddr->port);
         std::string msg_ack;
         if (dNet->DNsend(joinaddr, msg_to, msg_ack, 3) != SUCCESS) return FAILURE;
         // Receive member lists from the leader, then save the leader address
 
         // send JOINREQ message to introducer member
-        size_t index = msg_ack.find(":");
+        size_t index = msg_ack.find("#");
         std::string msg_type = msg_ack.substr(0, index);
         
         if (msg_type.compare(D_JOINLEADER) == 0) {
@@ -154,8 +152,8 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
         } else if (msg_type.compare(D_JOINLIST) == 0) {
             
             std::string recv_param = msg_ack.substr(index + 1);
-            std::string recv_init_seq = recv_param.substr(0, recv_param.find(":"));
-            std::string recv_member_list = recv_param.substr(recv_param.find(":") + 1);
+            std::string recv_init_seq = recv_param.substr(0, recv_param.find("#"));
+            std::string recv_member_list = recv_param.substr(recv_param.find("#") + 1);
             
             multicast_queue = new holdback_queue(atoi(recv_init_seq.c_str()));
             initMemberList(recv_member_list, joinaddr->getAddress());
@@ -181,17 +179,17 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
     char * cstr = new char[member_list.length() + 1];
     std::string addr;
     strcpy(cstr, member_list.c_str());
-    std::string ip(strtok(cstr, ":"));
-    std::string port(strtok(NULL, ":"));
-    std::string name(strtok(NULL, ":"));
-    addr = ip + ":" + port;
+    std::string ip(strtok(cstr, "#"));
+    std::string port(strtok(NULL, "#"));
+    std::string name(strtok(NULL, "#"));
+    addr = ip + "#" + port;
     addMember(addr, name, addr.compare(leaderAddr) == 0);
     char * pch;
-    while ((pch = strtok(NULL, ":")) != NULL) {
+    while ((pch = strtok(NULL, "#")) != NULL) {
         ip = std::string(pch);
-        port = std::string(strtok(NULL, ":"));
-        name = std::string(strtok(NULL, ":"));
-        addMember(ip + ":" + port, name, addr.compare(leaderAddr) == 0);
+        port = std::string(strtok(NULL, "#"));
+        name = std::string(strtok(NULL, "#"));
+        addMember(ip + "#" + port, name, addr.compare(leaderAddr) == 0);
     }
     
 }
@@ -232,10 +230,10 @@ void DNode::sendMsg(std::string msg) {
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
     if (leader_address.compare(self_address)) { // I'm the leader (sequencer)
-        std::string new_msg = std::string(D_MSG) + ":" + msg;
+        std::string new_msg = std::string(D_M_MSG) + "#" + msg;
         multicastMsg(new_msg);
     } else { // Send Multicast request to the sequencer
-        std::string str_to = std::string(D_CHAT) + ":" + username + ":" + msg;
+        std::string str_to = std::string(D_CHAT) + "#" + username + "#" + msg;
         std::string str_ack;
         Address leader_addr(leader_address);
         dNet->DNsend(&leader_addr, str_to, str_ack, 3);
@@ -258,7 +256,7 @@ void DNode::multicastMsg(std::string msg) {
     auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         ss.clear();
-        ss << D_MULTI << ":" << seq << ":" << msg;
+        ss << D_M_MSG << "#" << seq << "#" << msg;
         Address addr((*iter).getAddress());
         std::string ack;
         if (dNet->DNsend(&addr, ss.str(), ack, 3) == FAILURE) {
@@ -278,8 +276,8 @@ void DNode::multicastMsg(std::string msg) {
  */
 void DNode::checkMessages() {
     // Pop waiting messages from DNode's queue
-    std::pair<Address, std::string> _pair = m_queue.pop();
-    recvHandler(_pair);
+    // std::pair<Address, std::string> _pair = m_queue.pop();
+    // recvHandler(_pair);
     return;
 }
 
@@ -306,23 +304,23 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
     
     char * cstr = new char[content.length() + 1];
     strcpy(cstr, content.c_str());
-    char * msg_type = strtok(cstr, ":");
+    char * msg_type = strtok(cstr, "#");
     
     if (strcmp(msg_type, D_CHAT)) {
         
-        std::string recv_name(strtok (NULL, ":"));
-        std::string recv_msg(strtok (NULL, ":"));
+        std::string recv_name(strtok (NULL, "#"));
+        std::string recv_msg(strtok (NULL, "#"));
         
         if (member_node->leaderAddr == nullptr) { // Only leader can multicast messages
-            std::string message = std::string(D_MSG) + ":" + recv_name + ":: " + recv_msg;
+            std::string message = std::string(D_M_MSG) + "#" + recv_name + ":: " + recv_msg;
             multicastMsg(message);
         }
         
-    } else if (strcmp(msg_type, D_MULTI)) {
+    } else if (strcmp(msg_type, "?")) {
         
         // MULTI : Seq : MSG :  "Bob:: Hello"
-        int recv_seq = atoi(strtok (NULL, ":"));
-        std::string recv_msg(strtok (NULL, ":"));
+        int recv_seq = atoi(strtok (NULL, "#"));
+        std::string recv_msg(strtok (NULL, "#"));
         multicast_queue->push(std::make_pair(recv_seq, recv_msg));
         
         if (recv_seq == seq_num_seen - 1) {
@@ -337,16 +335,16 @@ void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
             // First need to add this member to the list (should not exist)
             // TODO : content is the username
             addMember(fromAddr.getAddress(), content, false);
-            std::string message = std::string(D_JOINLIST) + ":" + member_node->getMemberList();
+            std::string message = std::string(D_JOINLIST) + "#" + member_node->getMemberList();
             std::string str_ack;
             dNet->DNsend(&fromAddr, message, str_ack, 3);
             // Multicast addnode message
             // TODO: what if this message is lost - this message must be delivered once (at least onece)
-            std::string message_addmember = std::string(D_ADDNODE) + ":" + fromAddr.getAddress();
+            std::string message_addmember = std::string(D_M_ADDNODE) + "#" + fromAddr.getAddress();
             multicastMsg(message_addmember);
         } else {
             // send leader address
-            std::string message = std::string(D_JOINLEADER) + ":" + member_node->getLeaderAddress();
+            std::string message = std::string(D_JOINLEADER) + "#" + member_node->getLeaderAddress();
             std::string str_ack;
             dNet->DNsend(&fromAddr, message, str_ack, 3);
         }
@@ -393,7 +391,7 @@ void DNode::nodeLoopOps() {
                 time_t heartbeat = member_node->getHeartBeat(memberAddr);
                 if(difftime(current, heartbeat) > TIMEOUT/1000) {
                     //exceed timeout limit
-                    std::string message_leave = std::string(D_LEAVE) + ":" + iter->username + ":" + memberAddr;
+                    std::string message_leave = std::string(D_LEAVE) + "#" + iter->username + "#" + memberAddr;
                     multicastMsg(message_leave);
                 }
             }

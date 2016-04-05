@@ -208,16 +208,21 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
         return FAILURE;
     }
 
-    //copy their_addr to fromaddr
+    // copy their_addr to fromaddr
     fromaddr.ip = std::string(inet_ntop(their_addr.ss_family,
                             get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
     fromaddr.port = ntohs(get_in_port((struct sockaddr *) &their_addr));
     data = std::string(buf, numbytes);
     
-    // send ack back
+    // Handle received message
     std::string recv_msg(buf);
+    std::string send_msg = handler->process(fromaddr, buf);
 
-    strcpy(buf, "OK");
+    // Fail to handle message, simply no sending back, let the send timeout
+    if (send_msg.empty()) return FAILURE;
+
+    // Send ack back
+    strcpy(buf, send_msg.c_str());
     if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
                            (struct sockaddr *) &their_addr, addr_len)) == -1) {
         perror("sendto");

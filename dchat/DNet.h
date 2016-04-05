@@ -23,6 +23,7 @@ public:
     DNet(DNet &anotherDNet) = delete;
     DNet& operator = (DNet &anotherDNet) = delete;
     virtual ~DNet() {
+        delete handler;
         close(sockfd);
     };
     

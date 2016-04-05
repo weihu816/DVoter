@@ -50,24 +50,19 @@
 //using namespace std;
 
 // You can comment out the following line
-#define DEBUGLOG 1
-#define MAXBUFLEN 512
-#define TIMEOUT 10000
-#define HEARTFREQ 3000
+#define DEBUGLOG    1
+#define MAXBUFLEN   512
+#define TIMEOUT     10000
+#define HEARTFREQ   3000
 
-#define D_CHAT "CHAT"                   // DCHAT:Name:Message - From node to sequencer
-#define D_MULTI "MULTI"                 // This is a multicast message from the sequencer
-// MULTI:Seq#:{message}
-//            {message} : can be like MSG:"Bob:: Hello"
-// The following are for multicast
-#define D_MSG "MSG"                     // MSG:SEQ#:Message - From sequence to node
-#define D_ADDNODE "ADDNODE"             // JOINOK:ip1:port1:ip2:port2:...
+#define D_M_MSG         "#MSG"                      // ?#SEQ#Message, multicast from the sequencer
+#define D_M_ADDNODE     "#ADDNODE"                  // ?#SEQ#ip#port, multicast from the sequencer
 
-#define D_JOINREQ "JOINREQ"             // JOINREQ:PORT
-#define D_JOINLEADER "JOINLEADER"       // JOINOK:ip:port
-#define D_JOINLIST "JOINLIST"           // JOINOK:initSeq:ip1:port1:ip2:port2:...
-
-#define D_LEAVE "LEAVE"
-#define D_HEARTBEAT "HEARTBEAT"         // HEARTBEAT: () : detect failed node
+#define D_CHAT          "CHAT"                      // ?#Name#Message - From node to sequencer
+#define D_JOINREQ       "JOINREQ"                   // JOINREQ:PORT
+#define D_JOINLEADER    "JOINLEADER"                // JOINLEADER
+#define D_JOINLIST      "JOINLIST"                  // JOINOK:initSeq:ip1:port1:ip2:port2:...
+#define D_LEAVE         "LEAVE"
+#define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT: () : detect failed node
 
 #endif /* STDINCLUDES_H */
