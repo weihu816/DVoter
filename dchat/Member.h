@@ -80,8 +80,7 @@ public:
 //    long heartbeat;                 // the node's own heartbeat
 //    int pingCounter;                // counter for next ping
 //    int timeOutCounter;             // counter for ping timeout
-    std::unordered_map<std::string, time_t> heartBeatList; //member will track leader; leader will track every one
-    
+    std::unordered_map<std::string, time_t> heartBeatList;
     std::vector<MemberListEntry> memberList;                // Membership table
     // std::vector<MemberListEntry>::iterator myPos;        // My position in the membership table
     

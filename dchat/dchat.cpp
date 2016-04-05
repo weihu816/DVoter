@@ -8,7 +8,7 @@
 #include "DNode.h"
 
 /**
- * FUNCTION NAME: recvLoop
+ * FUNCTION NAME: usage
  *
  * DESCRIPTION: Print out usage to stdout
  */
@@ -17,6 +17,8 @@ void usage(std::string msg) {
     std::cout << "Usage: $ ./dchat USER (start a chat)" << std::endl;
     std::cout << "       $ ./dchat USER ADDR:PORT (join a chat)" << std::endl;
 }
+
+//////////////////////////////// THREAD FUNC ////////////////////////////////
 
 /**
  * FUNCTION NAME: sendMsg
@@ -47,16 +49,6 @@ void recvMsg(DNode * node) {
     }
 }
 
-///**
-// * FUNCTION NAME: handleMsg
-// *
-// * DESCRIPTION: pop message out of queue and process
-// */
-//void handleMsg(DNode * node) {
-//    while (1) {
-//        node->nodeLoop();
-//    }
-//}
 
 /**
  * FUNCTION NAME: heartBeatRoutine
@@ -70,6 +62,8 @@ void heartBeatRoutine(DNode * node) {
         node->nodeLoopOps();
     }
 }
+
+//////////////////////////////// MAIN: START ////////////////////////////////
 
 /**
  * FUNCTION NAME: main
@@ -109,14 +103,11 @@ int main(int argc, const char * argv[]) {
     std::thread thread_sendMsg(sendMsg, node);
     // Thread: Receive chat messages
     std::thread thread_recvMsg(recvMsg, node);
-    // Thread: Keep looking at message queue and handles message
-//    std::thread thread_handleMsg(handleMsg, node);
     // Thread: Track heartbeat
     std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
-//    thread_handleMsg.join();
     thread_heartbeat.join();
     
     // Clean up and quit

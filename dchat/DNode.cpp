@@ -44,29 +44,7 @@ int DNode::recvLoop() {
     return SUCCESS;
 }
 
-
-/**
- * FUNCTION NAME: nodeLoop
- *
- * DESCRIPTION: Executed periodically at each member
- * 				Check your messages in queue and perform membership protocol duties
- */
-void DNode::nodeLoop() {
-    if (member_node->bFailed) {
-        return;
-    }
-    // Check my messages
-    checkMessages();
-    // Wait until you're in the group...
-    if( !member_node->inGroup ) {
-        return;
-    }
-    // ...then jump in and share your responsibilites!
-    nodeLoopOps(); // CODE COMMENT: no message recved would block forever: separate?
-    return;
-}
-
-//////////////////////////////// NODE FUNC ////////////////////////////////
+//////////////////////////////// NODE INIT AND CLEAN FUNC ////////////////////////////////
 
 
 /**
@@ -116,7 +94,77 @@ int DNode::initThisNode() {
     return SUCCESS;
 }
 
-//////////////////////////////// CLIENT RES FUNC ////////////////////////////////
+
+/**
+ * FUNCTION NAME: finishUpThisNode
+ *
+ * DESCRIPTION: Wind up this node and clean up state
+ */
+int DNode::finishUpThisNode() {
+    
+    return 0;
+}
+
+
+
+//////////////////////////////// MEMBER LIST UPDATE FUNC ////////////////////////////////
+
+/**
+ * FUNCTION NAME: initMemberList
+ *
+ * DESCRIPTION: initialize member list given member_list like the following
+ *              ip1:port1:name1:ip2:port2:name2: ...
+ */
+void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
+    
+    if (member_list.empty()) return;
+    char * cstr = new char[member_list.length() + 1];
+    std::string addr;
+    strcpy(cstr, member_list.c_str());
+    std::string ip(strtok(cstr, "#"));
+    std::string port(strtok(NULL, "#"));
+    std::string name(strtok(NULL, "#"));
+    addr = ip + "#" + port;
+    addMember(addr, name, addr.compare(leaderAddr) == 0);
+    char * pch;
+    while ((pch = strtok(NULL, "#")) != NULL) {
+        ip = std::string(pch);
+        port = std::string(strtok(NULL, "#"));
+        name = std::string(strtok(NULL, "#"));
+        addMember(ip + "#" + port, name, addr.compare(leaderAddr) == 0);
+    }
+    
+}
+
+///**
+// * FUNCTION NAME: addMember
+// *
+// * DESCRIPTION: add member to the memberList
+// */
+//void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
+//#ifdef DEBUGLOG
+//    std::cout << "DNode::addMember: " << ip_port << std::endl;
+//#endif
+//    MemberListEntry entry(ip_port, name); // memberList with no such boolean?
+//    member_node->memberList.push_back(entry);
+//    if (isLeader) member_node->leaderAddr = new Address(ip_port);
+//}
+
+/**
+ * FUNCTION NAME: deleteMember //or done by index? TODO
+ *
+ * DESCRIPTION: delete member from the memberList
+ */
+void DNode::deleteMember(MemberListEntry toRemove){
+#ifdef DEBUGLOG
+    std::cout << "DNode::deleteMember: " << toRemove.username << std::endl;
+#endif
+    auto list = member_node->memberList;
+    list.erase(std::remove(list.begin(), list.end(), toRemove), list.end());
+}
+
+
+//////////////////////////////// CLIENT: OPERATIONS FUNC ////////////////////////////////
 
 
 /**
@@ -173,35 +221,6 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
     return SUCCESS;
 }
 
-//////////////////////////////// MEMBER LIST FUNC ////////////////////////////////
-
-/**
- * FUNCTION NAME: initMemberList
- *
- * DESCRIPTION: initialize member list given member_list like the following
- *              ip1:port1:name1:ip2:port2:name2: ...
- */
-void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
-
-    if (member_list.empty()) return;
-    char * cstr = new char[member_list.length() + 1];
-    std::string addr;
-    strcpy(cstr, member_list.c_str());
-    std::string ip(strtok(cstr, "#"));
-    std::string port(strtok(NULL, "#"));
-    std::string name(strtok(NULL, "#"));
-    addr = ip + "#" + port;
-    addMember(addr, name, addr.compare(leaderAddr) == 0);
-    char * pch;
-    while ((pch = strtok(NULL, "#")) != NULL) {
-        ip = std::string(pch);
-        port = std::string(strtok(NULL, "#"));
-        name = std::string(strtok(NULL, "#"));
-        addMember(ip + "#" + port, name, addr.compare(leaderAddr) == 0);
-    }
-    
-}
-
 /**
  * FUNCTION NAME: addMember
  *
@@ -215,15 +234,6 @@ void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
     if (isLeader) member_node->leaderAddr = new Address(ip_port);
 }
 
-/**
- * FUNCTION NAME: finishUpThisNode
- *
- * DESCRIPTION: Wind up this node and clean up state
- */
-int DNode::finishUpThisNode() {
-    
-    return 0;
-}
 
 //////////////////////////////// SEND MSG FUNC ////////////////////////////////
 
@@ -269,102 +279,12 @@ void DNode::multicastMsg(std::string msg) {
         Address addr((*iter).getAddress());
         std::string ack;
         if (dNet->DNsend(&addr, ss.str(), ack, 3) == FAILURE) {
-            // TODO ?????????????????
+            // TODO: BROADCAST LEAVE OF MEMBER:  MemberListEntry iter (ip_port,and name)
         }
 #ifdef DEBUGLOG
         std::cout << "Multicast message: " + ss.str() << " to: " << addr.getAddress() << std::endl;
 #endif
     }
-}
-
-
-///////////////////////////////////////////////////////////////////
-////////////                                 //////////////////////
-////////////  MAIN FUNCTION (MOVE->handler)  //////////////////////
-////////////                                 //////////////////////
-///////////////////////////////////////////////////////////////////
-
-/**
- * FUNCTION NAME: recvHandler
- *
- * DESCRIPTION: Message handler for different message types
- *              TODO: what if it receives CHAT:Bob:"Hello", but the current node is not the leader
- *
- * MESSAGE:     CHAT : "Bob" : "Hello"
- *              MULTI : Seq : MSG :  "Bob:: Hello"
- *              MULTI : Seq : ADDNODE :" 0.0.0.0:8888:name"
- *
- *              TODO: what if the heartbeat gets delayed: update the heartBeat book with any message recved?
- */
-void DNode::recvHandler(std::pair<Address, std::string> addr_content) {
-    Address fromAddr = addr_content.first;
-    std::string content = addr_content.second;
-    
-#ifdef DEBUGLOG
-    std::cout << "Handling message: " + content << " from: " << fromAddr.getAddress() << std::endl;
-#endif
-    
-    char * cstr = new char[content.length() + 1];
-    strcpy(cstr, content.c_str());
-    char * msg_type = strtok(cstr, "#");
-    
-    if (strcmp(msg_type, D_CHAT)) {
-        
-        std::string recv_name(strtok (NULL, "#"));
-        std::string recv_msg(strtok (NULL, "#"));
-        
-        if (member_node->leaderAddr == nullptr) { // Only leader can multicast messages
-            std::string message = std::string(D_M_MSG) + "#" + recv_name + ":: " + recv_msg;
-            multicastMsg(message);
-        }
-        
-    } else if (strcmp(msg_type, "???")) {
-        
-        // MULTI : Seq : MSG :  "Bob:: Hello"
-        int recv_seq = atoi(strtok (NULL, "#"));
-        std::string recv_msg(strtok (NULL, "#"));
-        multicast_queue->push(std::make_pair(recv_seq, recv_msg));
-        
-        if (recv_seq == seq_num_seen - 1) {
-            seq_num_seen++;
-            
-        }
-        
-    } else if (strcmp(msg_type, D_JOINREQ) == 0) {
-        
-        if (member_node->leaderAddr == nullptr) { // I am the leader
-            // send D_JOINLIST:ip1:port1:name1:...
-            // First need to add this member to the list (should not exist)
-            // TODO : content is the username
-            addMember(fromAddr.getAddress(), content, false);
-            std::string message = std::string(D_JOINLIST) + "#" + member_node->getMemberList();
-            std::string str_ack;
-            dNet->DNsend(&fromAddr, message, str_ack, 3);
-            // Multicast addnode message
-            // TODO: what if this message is lost - this message must be delivered once (at least onece)
-            std::string message_addmember = std::string(D_M_ADDNODE) + "#" + fromAddr.getAddress();
-            multicastMsg(message_addmember);
-        } else {
-            // send leader address
-            std::string message = std::string(D_JOINLEADER) + "#" + member_node->getLeaderAddress();
-            std::string str_ack;
-            dNet->DNsend(&fromAddr, message, str_ack, 3);
-        }
-        
-    } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
-        //update list for now, with fromAddr check
-        time_t current;
-        time(&current);
-        member_node->updateHeartBeat(fromAddr.getAddress(), current);
-    } else if (strcmp(msg_type, D_LEAVE) == 0) {
-        // TODO update member list
-        
-        // TODO push to message queue for display
-    }else {
-        std::cout << "Fail : recvHandler" << std::endl;
-    }
-    
-    delete [] cstr;
 }
 
 ///////////////////////////////////// HEARTBEAT FUNC /////////////////////////////////////
@@ -409,9 +329,9 @@ void DNode::nodeLoopOps() {
         time(&current);
         time_t heartbeat_ledaer = member_node->getHeartBeat(leader_address);
         if(difftime(current, heartbeat_ledaer) > TIMEOUT/1000) {
-            ///////////////////////////
-            // TODO startElection();
-            ///////////////////////////
+            ////////////////////////////
+            // TODO startElection(); ///
+            ////////////////////////////
         }
     }
     // finish heartbeat check

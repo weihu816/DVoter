@@ -47,6 +47,7 @@ public:
     int finishUpThisNode(); // Wind up this node and clean up state
     void initMemberList(std::string member_list, std::string leaderAddr);
     void addMember(std::string ip_port, std::string name, bool isLeader);
+    void deleteMember(MemberListEntry member); // delete a member
     
     int recvLoop();
     void nodeLoop();
