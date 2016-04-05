@@ -9,18 +9,17 @@
 
 #include "stdincludes.h"
 #include "Member.h"
-
-class DNode;
+#include "Handler.h"
 
 class DNet {
 private:
     int sockfd;
     int port;
-    DNode *dNode;
+    Handler * handler;
     
 public:
     //DNet() {  };
-    DNet(DNode * dNode);
+    DNet(Handler * handler);
     DNet(DNet &anotherDNet) = delete;
     DNet& operator = (DNet &anotherDNet) = delete;
     virtual ~DNet() {

@@ -5,9 +5,8 @@
  **********************************/
 
 #include "Handler.h"
+#include "DNode.h"
 
-//Handler * Handler::handler = NULL;
-//
-//std::string Handler::process(std::string msg) {
-//    return "";
-//}
+std::string Handler::process(std::string msg) {
+    return "";
+}

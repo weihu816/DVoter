@@ -13,6 +13,8 @@
 #include "DNet.h"
 #include "BlockingQueue.h"
 
+class Handler;
+
 /**
  * CLASS NAME: DNode
  *
@@ -20,8 +22,6 @@
  */
 class DNode {
 private:
-    static DNode * dNode;
-    DNode(std::string name, std::string join_addr);
     
     Member * member_node;
     DNet * dNet;
@@ -40,9 +40,7 @@ private:
     holdback_queue * multicast_queue;
     
 public:
-//    static DNode * getInstance(std::string name);
-    static DNode * getInstance(std::string name, std::string addr = "");
-    
+    DNode(std::string name, std::string join_addr);
     int nodeStart();
     int initThisNode();
     int introduceSelfToGroup(Address *joinAddress, bool isSureLeaderAddr);

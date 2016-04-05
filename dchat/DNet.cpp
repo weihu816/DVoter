@@ -5,9 +5,10 @@
  **********************************/
 
 #include "DNet.h"
-#include "DNode.h"
 
-DNet::DNet(DNode * dNode) { this->dNode = dNode; }
+DNet::DNet(Handler * handler) {
+    this->handler = handler;
+}
 
 /**
  * FUNCTION NAME: ENinit

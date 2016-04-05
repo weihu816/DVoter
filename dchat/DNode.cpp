@@ -6,22 +6,13 @@
  **********************************/
 
 #include "DNode.h"
-
-DNode * DNode::dNode = NULL;
-
-/**
- * Singleton Pattern
- */
-DNode * DNode::getInstance(std::string name, std::string addr) {
-    if (!dNode) dNode = new DNode(name, addr);
-    return nullptr;
-}
+#include "Handler.h"
 
 /**
  * CONSTRUCTOR
  */
 DNode::DNode(std::string name, std::string join_addr) : username(name) {
-    dNet = new DNet(this);
+    dNet = new DNet(new Handler(this));
     dNet->DNinit();
     std::string my_addr;
     dNet->DNinfo(my_addr);
