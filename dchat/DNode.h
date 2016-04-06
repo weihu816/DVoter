@@ -63,9 +63,8 @@ public:
     
     Member* getMember();
     DNet* getDNet();
-//    int getSeqNum();
     std::string getUsername();
-    
+
     virtual ~DNode() {
         delete dNet;
         delete member_node;

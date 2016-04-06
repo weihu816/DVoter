@@ -33,8 +33,6 @@ string Handler::process(Address from_addr, string recv_msg) {
     char * msg_type = strtok(cstr, "#");
     
     Member * nodeMember = node->getMember();
-    DNet * nodeDNet = node->getDNet();
-    string nodeUsername = node->getUsername();
     
     if (recv_msg.find("#") == 0) { // Start with a #
         
@@ -92,19 +90,21 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // If it's a multi-threaded server, seq number should be sync with other message handling
                 std::string recv_port(strtok (NULL, "#"));
                 std::string recv_name(strtok (NULL, "#"));
-                std::string member_addr = from_addr.getAddressIp() + ":" + recv_port;
-                node->addMember(member_addr, recv_name, false);
-                int initSeq = node->m_queue->getSequenceSeen();
-                
-                // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
-                std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
-                "#" + nodeMember->getMemberList();
 
                 // #ADDNODE#SEQ#ip#port#name, multicast addnode message from the sequencer
                 // This message must be delivered once (at least onece)
                 std::string message_addmember = from_addr.getAddressIp() + "#" + recv_port + "#" + recv_name;
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
 
+                std::string member_addr = from_addr.getAddressIp() + ":" + recv_port;
+                std::string member_name = recv_name;
+                node->addMember(member_addr, member_name, false);
+                int initSeq = node->m_queue->getSequenceSeen();
+                
+                // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
+                std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
+                "#" + nodeMember->getMemberList();
+                
                 return message;
                 
             } else {
@@ -156,26 +156,12 @@ string Handler::process(Address from_addr, string recv_msg) {
             //node->handleElection(from_addr, D_COOR);
             return "OK";
             
+        } else {
+#ifdef DEBUGLOG
+            std::cout << "\tReceive Unexpecte: " << recv_msg << std::endl;
+#endif
         }
-        
-        //        else if (recv_msg.compare(D_JOINLEADER) == 0) {
-        //
-        //            // received: JOINLEADER#LEADERIP#LEADERPORT
-        //            // need to introduce self to leader
-        //            std::string leader_ip(strtok(NULL, "#"));
-        //            std::string leader_port(strtok(NULL, "#"));
-        //            Address leaderAddr = Address(leader_ip + ":" + leader_port);
-        //            node->introduceSelfToGroup(&leaderAddr, true);
-        //            return "OK";
-        //
-        //        } else if (recv_msg.compare(D_JOINLIST) == 0) {
-        //
-        //            // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
-        //            std::string memberList(strtok(NULL, "#"));
-        //            node->initMemberList(memberList, nodeMember->getLeaderAddress());
-        //            return "OK";
-        //            
-        //        }
+
     }
 
     return "";

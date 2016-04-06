@@ -306,7 +306,7 @@ void DNode::multicastNotice(std::string notice) {
         std::string str_ack;
         dNet->DNsend(&addr, notice, str_ack, 1);
 #ifdef DEBUGLOG
-        std::cout << "Multicast notice to: " << addr.getAddress() << std::endl;
+        std::cout << "\tMulticast notice to: " << addr.getAddress() << std::endl;
 #endif
     }
 }
