@@ -59,6 +59,10 @@ string Handler::process(Address from_addr, string recv_msg) {
             node->multicast_queue->push(std::make_pair(param_seq, param_value));
             
             return "OK";
+        } else if ( strcmp(msg_type, D_LEAVEANNO) == 0){
+            
+            //TODO: received: 
+            
         }
         
     } else {
@@ -75,6 +79,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 std::to_string(node->getSeqNum()) + "#" + recv_msg;
                 node->multicastMsg(message, D_M_MSG);
             }
+            return "OK";
             
         } else if (recv_msg.compare(D_JOINREQ) == 0) {
             // received: JOINREQ#PORT
@@ -97,6 +102,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 "#" + from_addr.getAddressPort() + "#" + nodeUsername;
                 
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
+                return "OK";
                 
             } else {
                 // send leader address
@@ -106,6 +112,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 std::string str_ack;
                 
                 nodeDNet->DNsend(&from_addr, message, str_ack, 3);
+                return "OK";
             }
         } else if (recv_msg.compare(D_JOINLEADER) == 0) {
             
@@ -116,6 +123,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             Address leaderAddr = Address(leaderIp+":"+leaderPort);
            
             node->introduceSelfToGroup(&leaderAddr, true);
+            return "OK";
             
         } else if (recv_msg.compare(D_JOINLIST) == 0) {
             // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
@@ -131,6 +139,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             
             // delete leaving node from member_list
             node->deleteMember(leave_entry);
+            return "OK";
             
         } else if (recv_msg.compare(D_HEARTBEAT) == 0) {
             
@@ -140,6 +149,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             time_t timev;
             time(&timev);
             nodeMember->updateHeartBeat(node_addr, timev);
+            return "OK";
             
         }
         
