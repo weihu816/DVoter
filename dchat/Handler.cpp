@@ -39,6 +39,7 @@ string Handler::process(Address from_addr, string recv_msg) {
     if (recv_msg.find("#") == 0) { // Start with a #
         
         if (strcmp(msg_type, D_M_ADDNODE) == 0) {
+            
             // received: #ADDNODE#SEQ#ip#port#name
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_ip(strtok(NULL, "#"));
@@ -47,12 +48,16 @@ string Handler::process(Address from_addr, string recv_msg) {
             std::string param_key(msg_type);
             std::string param_value(param_ip + ":" + param_port + ":" + param_name);
             node->multicast_queue->push(std::make_pair(param_seq, param_value));
+            
             return "OK";
+            
         } else if (strcmp(msg_type, D_M_MSG) == 0) {
-            // TODO: received: #MSG#SEQ#Message
+            
+            // received: #MSG#SEQ#Message
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_value(strtok(NULL, "#"));
             node->multicast_queue->push(std::make_pair(param_seq, param_value));
+            
             return "OK";
         }
         
@@ -70,6 +75,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 std::to_string(node->getSeqNum()) + "#" + recv_msg;
                 node->multicastMsg(message, D_M_MSG);
             }
+            
         } else if (recv_msg.compare(D_JOINREQ) == 0) {
             // received: JOINREQ#PORT
             if (nodeMember->leaderAddr == nullptr) { // I am the leader
@@ -77,42 +83,57 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // First need to add this member to the list (should not exist)
                 int initSeq = node->multicast_queue->getSequenceSeen();
                 node->addMember(from_addr.getAddress(), nodeUsername, false);
+                
                 std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
                 "#" + nodeMember->getMemberList();
                 std::string str_ack;
                 nodeDNet->DNsend(&from_addr, message, str_ack, 3);
+                
                 // Multicast addnode message
                 // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
                 // TODO: what if this message is lost - this message must be delivered once (at least onece)
                 std::string message_addmember = "#" + std::string(D_M_ADDNODE) + "#" +
                 std::to_string(node->getSeqNum())+ from_addr.getAddressIp() +
                 "#" + from_addr.getAddressPort() + "#" + nodeUsername;
+                
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
+                
             } else {
                 // send leader address
                 // received: JOINLEADER#LEADERIP#LEADERPORT
                 std::string message = std::string(D_JOINLEADER) + "#" + nodeMember->getLeaderAddressIp()
                 + "#" + nodeMember->getLeaderAddressPort();
                 std::string str_ack;
+                
                 nodeDNet->DNsend(&from_addr, message, str_ack, 3);
             }
         } else if (recv_msg.compare(D_JOINLEADER) == 0) {
-            //TODO: received: JOINLEADER#LEADERIP#LEADERPORT
-            std::string
+            
+            // received: JOINLEADER#LEADERIP#LEADERPORT
+            // need to introduce self to leader
+            std::string leaderIp(strtok(NULL, "#"));
+            std::string leaderPort(strtok(NULL, "#"));
+            Address leaderAddr = Address(leaderIp+":"+leaderPort);
+           
+            node->introduceSelfToGroup(&leaderAddr, true);
+            
         } else if (recv_msg.compare(D_JOINLIST) == 0) {
-            //TODO: received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
+            
+            // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
+            std::string memberList(strtok (NULL, "#"));
+            node->initMemberList(memberList, nodeMember->getLeaderAddress());
+            
         } else if (recv_msg.compare(D_LEAVE)) {
-            //TODO: received:
+            
+            // TODO: received:
+            
         } else if (recv_msg.compare(D_HEARTBEAT) == 0) {
+            
+            // TODO: received:
             
         }
         
     }
-    
-    
-    
-    
-    
-    
+
     return "";
 }
