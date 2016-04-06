@@ -60,14 +60,14 @@ public:
     int checkHeartbeat(std::string address);
     
     void startElection();
-    void handleElection(Address fromAddr, std::string notice);
+    void handleElection(Address fromAddr, std::string type);
 
     void checkMessages();
     void recvHandler(std::pair<Address, std::string>);
     
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg, std::string type);
-    void sendNotice(std::string type);
+    void sendNotice(std::string type, std::string addr);
     void multicastNotice(std::string type);
     
     Member* getMember();

@@ -252,9 +252,9 @@ void DNode::multicastMsg(std::string msg, std::string type) {
         Address addr((*iter).getAddress());
         std::string ack;
         if (dNet->DNsend(&addr, ss.str(), ack, 3) == FAILURE) {
-            // TODO: BROADCAST LEAVE OF MEMBER:
             //exceed timeout limit
-            
+            // TODO: BROADCAST LEAVE OF MEMBER:
+            multicastMsg(iter->getAddress(), D_LEAVEANNO);
         }
 #ifdef DEBUGLOG
         std::cout << "Multicast message: " + ss.str() << " to: " << addr.getAddress() << std::endl;
@@ -268,14 +268,12 @@ void DNode::multicastMsg(std::string msg, std::string type) {
  *
  * DESCRIPTION: Send a single notice
  */
-void DNode::sendNotice(std::string notice) {
-    std::string leader_address = member_node->getLeaderAddress();
-    // send heartbeat to leader
-    Address leader_addr(leader_address);
+void DNode::sendNotice(std::string notice, std::string destAddress) {
+    Address addr(destAddress);
     std::string str_ack;
-    dNet->DNsend(&leader_addr, notice, str_ack, 1);
+    dNet->DNsend(&addr, notice, str_ack, 1);
 #ifdef DEBUGLOG
-    std::cout << "Send notice to (leader): " << leader_addr.getAddress() << std::endl;
+    std::cout << "Send notice to (leader): " << addr.getAddress() << std::endl;
 #endif
     
 }
@@ -310,50 +308,65 @@ void DNode::multicastNotice(std::string notice) {
 void DNode::startElection() {
     // send D_ELECTION to all other processes with higher IDs, expecting D_ANSWER
     auto list = member_node->memberList;
-    std::string myAddr = member_node->getAddress();
     for (auto iter = list.begin(); iter != list.end(); iter++) {
-        if(iter->getAddress().compare(myAddr) > 0) {
-            sendNotice(D_ELECTION);
+        if(iter->getAddress().compare(member_node->getAddress()) > 0) {
+            sendNotice(D_ELECTION,iter->getAddress());
         }
     }
     
     // wait for some ANSWER, sleep? RECV in another thread so we are okay?
     election_status = E_WAITANS;
-    std::chrono::milliseconds sleepTime(HEARTFREQ);
+    std::chrono::milliseconds sleepTime(ELECTIONTIME);
     // if hears from no process with higher IDs, then it broadcasts D_COOR.
     if(election_status == E_WAITANS) {
         multicastNotice(D_COOR);
     }
 }
 
-
 /**
- * FUNCTION NAME: handle election message (D_ANSWER, D_ELECTION, D_COOR)
+ * FUNCTION NAME: handle election related message
  *
- * DESCRIPTION: Check if any node hasn't responded within a timeout period and then delete
- * 				the nodes
- * 				member: start election; leader: multicast LEAVE
+ * DESCRIPTION: handle a election msg
  */
-void DNode::handleElection(Address fromAddr, std::string notice)
-{
-    std::string heardFrom = fromAddr.getAddress();
-    
-    // hears a D_ELECTION
-        // delete leader from member list
-        // display: leader (username) left the chat
-    // If hears D_ELECTION from a process with a higher ID,
-    // waits some time for D_COOR
-        // update the leader_list
-        //
-        // If it does not receive this message in time, it re-broadcasts the D_ELECTION
-    
-    // If hears D_ELECTION from a process with a lower ID
-    // send back D_ANSWER and startElection myself
-    
+void DNode::handleElection(Address fromAddr, std::string type) {
+    if(type == D_ELECTION) {
+        std::string heardFrom = fromAddr.getAddress();
+        // delete leader from member list TODO OOoOOOOOOoOOOOOO
+        // member_node->deleteMember(MemberListEntry entry)
+        
+        // display: leader (username) left the chat,  immediately? TODO
+        std::cout << " Leader Something Something Something MSG" << std::endl;
+        
+        // If hears D_ELECTION from a process with a higher ID,
+        if(fromAddr.getAddress().compare(member_node->getAddress()) > 0) {
+            // waits some time for D_COOR
+            election_status = E_WAITCOOR;
+            std::chrono::milliseconds sleepTime(ELECTIONTIME);
+            if(election_status == E_NONE) {// recv
+                // update the leader_list
+                member_node->leaderAddr = &fromAddr; // TODO : check
+            } else {
+                // If it does not receive this message in time, it re-broadcasts the D_ELECTION
+                startElection();
+            }
+        } else {
+            // If hears D_ELECTION from a process with a lower ID
+            // send back D_ANSWER and startElection myself
+            sendNotice(D_ANSWER, fromAddr.getAddress());
+            startElection();
+        }
+    } else if(type == D_ANSWER) {
+        if(fromAddr.getAddress().compare(member_node->getAddress()) > 0 && election_status == E_WAITANS) {
+            election_status = E_WAITCOOR;
+        }
+    } else if(type == D_COOR) {
+        if(election_status == E_WAITCOOR)
+        election_status = E_NONE;
+        // member_node->updateLeaderAddr(fromAddr);
+        // seqNum expected roll back
+    }
 
 }
-
-
 
 ///////////////////////////////////// HEARTBEAT FUNC /////////////////////////////////////
 
@@ -375,9 +388,9 @@ void DNode::nodeLoopOps() {
         auto list = member_node->memberList;
         for (auto iter = list.begin(); iter != list.end(); iter++) {
             std::string memberAddr = iter->getAddress();
-            if(!memberAddr.compare(self_address)) {
+            if(memberAddr.compare(self_address) != 0) {
                 //check heartbeat
-                if(!checkHeartbeat(memberAddr)) {
+                if(checkHeartbeat(memberAddr) == FAILURE) {
                     //exceed timeout limit
                     std::string message_leave = memberAddr;
                     multicastMsg(message_leave, D_LEAVEANNO);
@@ -385,10 +398,11 @@ void DNode::nodeLoopOps() {
             }
         }
     } else { // I am a member
-        // send a heart beat to the leader
-        sendNotice(D_HEARTBEAT);
+        // send heartbeat to leader
+        std::string leader_address = member_node->getLeaderAddress();
+        sendNotice(D_HEARTBEAT, leader_address);
         // check leader heartbeat
-        if(!checkHeartbeat(leader_address)) {
+        if(checkHeartbeat(leader_address) == FAILURE) {
             startElection();
         }
     }
