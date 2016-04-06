@@ -87,22 +87,25 @@ string Handler::process(Address from_addr, string recv_msg) {
             
         } else if (recv_msg.compare(D_JOINREQ) == 0) {
 
-            // received: JOINREQ#PORT
+            
             if (nodeMember->leaderAddr == nullptr) { // I am the leader
 
-                // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
+                // received: JOINREQ#PORT#name
                 // First need to add this member to the list (should not exist)
                 // If it's a multi-threaded server, seq number should be sync with other message handling
-                node->addMember(from_addr.getAddress(), nodeUsername, false);
+                std::string recv_port(strtok (NULL, "#"));
+                std::string recv_name(strtok (NULL, "#"));
+                node->addMember(from_addr.getAddress(), recv_name, false);
                 int initSeq = node->multicast_queue->getSequenceSeen();
                 
+                // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
                 std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
                 "#" + nodeMember->getMemberList();
 
                 // #ADDNODE#SEQ#ip#port#name, multicast addnode message from the sequencer
                 // TODO: what if this message is lost - this message must be delivered once (at least onece)
                 std::string message_addmember = std::to_string(node->getSeqNum()) + from_addr.getAddressIp()
-                + "#" + from_addr.getAddressPort() + "#" + nodeUsername;
+                + "#" + from_addr.getAddressPort() + "#" + recv_name;
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
 
                 return message;
