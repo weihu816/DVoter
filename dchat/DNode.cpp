@@ -316,7 +316,7 @@ void DNode::nodeLoopOps() {
                 if(difftime(current, heartbeat) > TIMEOUT/1000) {
                     //exceed timeout limit
                     std::string message_leave = std::string(D_LEAVE) + "#" + iter->username + "#" + memberAddr;
-                    multicastMsg(message_leave);
+                    multicastMsg(message_leave, D_LEAVE);
                 }
             }
         }
