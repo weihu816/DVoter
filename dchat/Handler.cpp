@@ -59,10 +59,12 @@ string Handler::process(Address from_addr, string recv_msg) {
             node->multicast_queue->push(std::make_pair(param_seq, param_value));
             
             return "OK";
-        } else if (recv_msg.compare(D_LEAVEANNO) == 0) {
-            
+        } else if (recv_msg.compare(D_LEAVEANNO) == 0) { //# D_LEAVEANNO is leader broadcast member leaving
+            // this needs to be in the queue and process in order of seq #
+        
             // TODO: received: #LEAVEANNO#seq#ip:port sent by leader
-            node->startElection();
+            // node->startElection();
+            // TODO: delete the member from the memberList and display message accrodingly.
             
             return "OK";
         }
@@ -134,13 +136,14 @@ string Handler::process(Address from_addr, string recv_msg) {
             
         } else if (recv_msg.compare(D_LEAVE) == 0) {
             // TODO: received: LEAVE#name#ip:port
+            
             std::string leave_name(strtok(NULL, "#"));
             std::string leave_addr(strtok(NULL, "#"));
 
             MemberListEntry leave_entry(leave_addr, leave_name);
-            
             // delete leaving node from member_list
             node->deleteMember(leave_entry);
+            // TODO: D_LEAVE is sent to the leader, and leader should send out LEAVEANNO
             return "OK";
             
         } else if (recv_msg.compare(D_HEARTBEAT) == 0) {
@@ -155,20 +158,20 @@ string Handler::process(Address from_addr, string recv_msg) {
             
         } else if (recv_msg.compare(D_ELECTION) == 0) {
             
-            // TODO: received: ELECTION
-            node->handleElection(from_addr, D_ELECTION);
+            // TODO: received: ELECTION (put it in a queue to be built soon)
+            //node->handleElection(from_addr, D_ELECTION);
             return "OK";
             
         } else if (recv_msg.compare(D_ANSWER) == 0) {
             
-            // TODO: received: ANSWER
-            node->handleElection(from_addr, D_ANSWER);
+            // TODO: received: ANSWER  (put it in a queue)
+            //node->handleElection(from_addr, D_ANSWER);
             return "OK";
             
         } else if (recv_msg.compare(D_COOR) == 0) {
             
-            // TODO: received: COOR
-            node->handleElection(from_addr, D_COOR);
+            // TODO: received: COOR (put it in a queue)
+            //node->handleElection(from_addr, D_COOR);
             return "OK";
             
         }

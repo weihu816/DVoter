@@ -329,42 +329,42 @@ void DNode::startElection() {
  * DESCRIPTION: handle a election msg
  */
 void DNode::handleElection(Address fromAddr, std::string type) {
-    if(type.compare(D_ELECTION) == 0) {
-        std::string heardFrom = fromAddr.getAddress();
-        // delete leader from member list TODO OOoOOOOOOoOOOOOO
-        // member_node->deleteMember(MemberListEntry entry)
-        
-        // display: leader (username) left the chat,  immediately? TODO
-        std::cout << " Leader Something Something Something MSG" << std::endl;
-        
-        // If hears D_ELECTION from a process with a higher ID,
-        if(fromAddr.getAddress().compare(member_node->getAddress()) > 0) {
-            // waits some time for D_COOR
-            election_status = E_WAITCOOR;
-            std::chrono::milliseconds sleepTime(ELECTIONTIME);
-            if(election_status == E_NONE) {// recv
-                // update the leader_list
-                member_node->leaderAddr = &fromAddr; // TODO : check
-            } else {
-                // If it does not receive this message in time, it re-broadcasts the D_ELECTION
-                startElection();
-            }
-        } else {
-            // If hears D_ELECTION from a process with a lower ID
-            // send back D_ANSWER and startElection myself
-            sendNotice(D_ANSWER, fromAddr.getAddress());
-            startElection();
-        }
-    } else if(type.compare(D_ANSWER) == 0) {
-        if(fromAddr.getAddress().compare(member_node->getAddress()) > 0 && election_status == E_WAITANS) {
-            election_status = E_WAITCOOR;
-        }
-    } else if(type.compare(D_COOR) == 0) {
-        if(election_status == E_WAITCOOR)
-        election_status = E_NONE;
-        // member_node->updateLeaderAddr(fromAddr);
-        // seqNum expected roll back
-    }
+//    if(type.compare(D_ELECTION) == 0) {
+//        std::string heardFrom = fromAddr.getAddress();
+//        // delete leader from member list TODO OOoOOOOOOoOOOOOO
+//        // member_node->deleteMember(MemberListEntry entry)
+//        
+//        // display: leader (username) left the chat,  immediately? TODO
+//        std::cout << " Leader Something Something Something MSG" << std::endl;
+//        
+//        // If hears D_ELECTION from a process with a higher ID,
+//        if(fromAddr.getAddress().compare(member_node->getAddress()) > 0) {
+//            // waits some time for D_COOR
+//            election_status = E_WAITCOOR;
+//            std::chrono::milliseconds sleepTime(ELECTIONTIME);
+//            if(election_status == E_NONE) {// recv
+//                // update the leader_list
+//                member_node->leaderAddr = &fromAddr; // TODO : check
+//            } else {
+//                // If it does not receive this message in time, it re-broadcasts the D_ELECTION
+//                startElection();
+//            }
+//        } else {
+//            // If hears D_ELECTION from a process with a lower ID
+//            // send back D_ANSWER and startElection myself
+//            sendNotice(D_ANSWER, fromAddr.getAddress());
+//            startElection();
+//        }
+//    } else if(type.compare(D_ANSWER) == 0) {
+//        if(fromAddr.getAddress().compare(member_node->getAddress()) > 0 && election_status == E_WAITANS) {
+//            election_status = E_WAITCOOR;
+//        }
+//    } else if(type.compare(D_COOR) == 0) {
+//        if(election_status == E_WAITCOOR)
+//        election_status = E_NONE;
+//        // member_node->updateLeaderAddr(fromAddr);
+//        // seqNum expected roll back
+//    }
 
 }
 
