@@ -159,19 +159,24 @@ void DNode::deleteMember(MemberListEntry toRemove){
  * DESCRIPTION: Join the distributed system
  */
 int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
+
     std::string self_addr = member_node->address->getAddress();
     std::string join_addr = joinaddr->getAddress();
+
 #ifdef DEBUGLOG
     std::cout << "DNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
 #endif
+
     if (self_addr.compare(join_addr) == 0) {
         
         // I am the group booter (first process to join the group). Boot up the group
         std::cout << username << " started a new chat, listening on ";
         std::cout << member_node->getAddress() << std::endl;
         addMember(join_addr, username, true); // I'm the leader
+        multicast_queue = new holdback_queue(0);
         
     } else {
+
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << member_node->getAddress() << std::endl;
         // Requst to join by contacting the member
@@ -182,21 +187,25 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
 
         // send JOINREQ message to introducer member
         size_t index = msg_ack.find("#");
+        if (index == std::string::npos) return FAILURE;
         std::string msg_type = msg_ack.substr(0, index);
         
         if (msg_type.compare(D_JOINLEADER) == 0) {
             
-            if (isSureLeaderAddr) return FAILURE; // Leader should return list
+            // received: JOINLEADER#LEADERIP#LEADERPORT
+            if (isSureLeaderAddr) return FAILURE;
             std::string ip_port = msg_ack.substr(index + 1);
-            member_node->leaderAddr = new Address(ip_port);
-            return this->introduceSelfToGroup(member_node->leaderAddr, true); // Connect to leader
+            std::string ip = ip_port.substr(0, ip_port.find("#"));
+            std::string port = ip_port.substr(ip_port.find("#") + 1);
+            member_node->leaderAddr = new Address(ip + ":" + port);
+            return this->introduceSelfToGroup(member_node->leaderAddr, true);
             
         } else if (msg_type.compare(D_JOINLIST) == 0) {
             
+            // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
             std::string recv_param = msg_ack.substr(index + 1);
             std::string recv_init_seq = recv_param.substr(0, recv_param.find("#"));
             std::string recv_member_list = recv_param.substr(recv_param.find("#") + 1);
-            
             multicast_queue = new holdback_queue(atoi(recv_init_seq.c_str()));
             initMemberList(recv_member_list, joinaddr->getAddress());
             

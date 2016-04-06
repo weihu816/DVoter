@@ -86,57 +86,39 @@ string Handler::process(Address from_addr, string recv_msg) {
             return "OK";
             
         } else if (recv_msg.compare(D_JOINREQ) == 0) {
+
             // received: JOINREQ#PORT
             if (nodeMember->leaderAddr == nullptr) { // I am the leader
+
                 // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
                 // First need to add this member to the list (should not exist)
-                int initSeq = node->multicast_queue->getSequenceSeen();
+                // If it's a multi-threaded server, seq number should be sync with other message handling
                 node->addMember(from_addr.getAddress(), nodeUsername, false);
+                int initSeq = node->multicast_queue->getSequenceSeen();
                 
                 std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
                 "#" + nodeMember->getMemberList();
-                std::string str_ack;
-                nodeDNet->DNsend(&from_addr, message, str_ack, 3);
-                
-                // Multicast addnode message
-                // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
+
+                // #ADDNODE#SEQ#ip#port#name, multicast addnode message from the sequencer
                 // TODO: what if this message is lost - this message must be delivered once (at least onece)
-                std::string message_addmember = "#" + std::string(D_M_ADDNODE) + "#" +
-                std::to_string(node->getSeqNum())+ from_addr.getAddressIp() +
-                "#" + from_addr.getAddressPort() + "#" + nodeUsername;
-                
+                std::string message_addmember = std::to_string(node->getSeqNum()) + from_addr.getAddressIp()
+                + "#" + from_addr.getAddressPort() + "#" + nodeUsername;
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
-                return "OK";
+
+                return message;
                 
             } else {
-                // send leader address
+
                 // received: JOINLEADER#LEADERIP#LEADERPORT
+                // send back leader address - don't care failure, they can retry
                 std::string message = std::string(D_JOINLEADER) + "#" + nodeMember->getLeaderAddressIp()
                 + "#" + nodeMember->getLeaderAddressPort();
-                std::string str_ack;
-                
-                nodeDNet->DNsend(&from_addr, message, str_ack, 3);
                 return "OK";
+
             }
-        } else if (recv_msg.compare(D_JOINLEADER) == 0) {
-            
-            // received: JOINLEADER#LEADERIP#LEADERPORT
-            // need to introduce self to leader
-            std::string leaderIp(strtok(NULL, "#"));
-            std::string leaderPort(strtok(NULL, "#"));
-            Address leaderAddr = Address(leaderIp+":"+leaderPort);
-           
-            node->introduceSelfToGroup(&leaderAddr, true);
-            return "OK";
-            
-        } else if (recv_msg.compare(D_JOINLIST) == 0) {
-            // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
-            std::string memberList(strtok (NULL, "#"));
-            node->initMemberList(memberList, nodeMember->getLeaderAddress());
-            
         } else if (recv_msg.compare(D_LEAVE) == 0) {
-            // TODO: received: LEAVE#name#ip:port
             
+            // TODO: received: LEAVE#name#ip:port
             std::string leave_name(strtok(NULL, "#"));
             std::string leave_addr(strtok(NULL, "#"));
 
@@ -176,6 +158,24 @@ string Handler::process(Address from_addr, string recv_msg) {
             
         }
         
+        //        else if (recv_msg.compare(D_JOINLEADER) == 0) {
+        //
+        //            // received: JOINLEADER#LEADERIP#LEADERPORT
+        //            // need to introduce self to leader
+        //            std::string leader_ip(strtok(NULL, "#"));
+        //            std::string leader_port(strtok(NULL, "#"));
+        //            Address leaderAddr = Address(leader_ip + ":" + leader_port);
+        //            node->introduceSelfToGroup(&leaderAddr, true);
+        //            return "OK";
+        //
+        //        } else if (recv_msg.compare(D_JOINLIST) == 0) {
+        //
+        //            // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
+        //            std::string memberList(strtok(NULL, "#"));
+        //            node->initMemberList(memberList, nodeMember->getLeaderAddress());
+        //            return "OK";
+        //            
+        //        }
     }
 
     return "";
