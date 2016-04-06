@@ -121,7 +121,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
     // set timeout val
     struct timeval tv;
-    tv.tv_sec = 3;
+    tv.tv_sec = 6;
     tv.tv_usec = 0;
     
     // receive msg from server, for ack

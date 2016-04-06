@@ -77,23 +77,28 @@ public:
 class Member {
     
 public:
-    Address * address;              // This member's Address
-    Address * leaderAddr = nullptr; // The leader's Address
-    bool inited = false;            // boolean indicating if this member is up
-    bool inGroup;                   // boolean indicating if this member is in the group
-    int nnb;                        // number of my neighbors (distributed)
+    Address * address;                      // This member's Address
+    bool inited = false;                    // boolean indicating if this member is up
+    bool inGroup;                           // boolean indicating if this member is in the group
+    int nnb;                                // number of my neighbors (distributed)
     std::unordered_map<std::string, time_t> heartBeatList;
     std::vector<MemberListEntry> memberList;                // Membership table
-    // std::vector<MemberListEntry>::iterator myPos;        // My position in the membership table
-    
+    std::vector<MemberListEntry>::iterator leaderPos;       // My position in the membership table
+
+    MemberListEntry * leaderEntry;                          // The leader
+
     std::string getLeaderAddress() {
-        return  leaderAddr->getAddress();
+        return  leaderEntry->getAddress();
     }
     std::string getLeaderAddressIp() {
-        return leaderAddr->getAddressIp();
+        return leaderEntry->ip;
     }
     std::string getLeaderAddressPort() {
-        return leaderAddr->getAddressPort();
+        return std::to_string(leaderEntry->port);
+    }
+    
+    bool isLeader() {
+        return (getLeaderAddress().compare(address->getAddress()) == 0);
     }
 
     
@@ -155,7 +160,7 @@ public:
     
     virtual ~Member() {
         delete address;
-        delete leaderAddr;
+        delete leaderEntry;
     }
 };
 

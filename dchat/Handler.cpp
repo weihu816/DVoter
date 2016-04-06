@@ -73,7 +73,7 @@ string Handler::process(Address from_addr, string recv_msg) {
 
             // received: CHAT#Message - From node to sequencer
             std::string recv_msg(strtok (NULL, "#"));
-            if (nodeMember->leaderAddr == nullptr) { // Only leader can multicast messages
+            if (nodeMember->isLeader()) { // Only leader can multicast messages
                 // msg to be sent: #MSG#SEQ#Message
                 std::string message = recv_msg;
                 node->multicastMsg(message, D_M_MSG);
@@ -82,8 +82,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             
         } else if (strcmp(msg_type, D_JOINREQ) == 0) {
 
-            
-            if (nodeMember->leaderAddr == nullptr) { // I am the leader
+            if (nodeMember->isLeader()) { // I am the leader
 
                 // received: JOINREQ#PORT#name
                 // First need to add this member to the list (should not exist)

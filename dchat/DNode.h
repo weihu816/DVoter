@@ -25,7 +25,7 @@ private:
     
     Member * member_node;
     DNet * dNet;
-    Address * join_address = nullptr;
+    std::string join_address;
     std::string username;
     int election_status = E_NONE; //not in election
     blocking_queue<std::string> message_chat_queue_ready;
@@ -37,7 +37,7 @@ public:
     DNode(std::string name, std::string join_addr="");
     int nodeStart(); // introduce and start functions
     int initThisNode(); // parameter initialization
-    int introduceSelfToGroup(Address *joinAddress, bool isSureLeaderAddr);
+    int introduceSelfToGroup(std::string joinAddress, bool isSureLeaderAddr);
     int finishUpThisNode(); // Wind up this node and clean up state
     void initMemberList(std::string member_list, std::string leaderAddr);
     void addMember(std::string ip_port, std::string name, bool isLeader);
@@ -68,7 +68,6 @@ public:
     virtual ~DNode() {
         delete dNet;
         delete member_node;
-        delete join_address;
         delete m_queue;
     }
 };
