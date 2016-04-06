@@ -132,7 +132,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             std::string memberList(strtok (NULL, "#"));
             node->initMemberList(memberList, nodeMember->getLeaderAddress());
             
-        } else if (recv_msg.compare(D_LEAVE)) {
+        } else if (recv_msg.compare(D_LEAVE) == 0) {
             // TODO: received: LEAVE#name#ip:port
             std::string leave_name(strtok(NULL, "#"));
             std::string leave_addr(strtok(NULL, "#"));
