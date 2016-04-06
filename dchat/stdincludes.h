@@ -64,7 +64,7 @@
 #define D_JOINLEADER    "JOINLEADER"                // JOINLEADER#LEADERIP#LEADERPORT
 #define D_JOINLIST      "JOINLIST"                  // JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
 #define D_LEAVE         "LEAVE"                     // LEAVE#name#ip:port
-#define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT: () : detect failed node
+#define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT detect failed node
 #define D_LEAVEANNO     "LEAVEANNO"                 // LEAVEANNO#ADDR sent by leader
 #define D_ELECTION      "ELECTION"                  // ELECTION, start election
 #define D_ANSWER        "ANSWER"                    // ANSWER, answer to election message
