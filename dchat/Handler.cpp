@@ -22,7 +22,7 @@ vector<string> splitstr(string ori, char deli) {
 string Handler::process(Address from_addr, string recv_msg) {
     
 #ifdef DEBUGLOG
-    std::cout << "Handling message: " + recv_msg << " from: " << from_addr.getAddress() << std::endl;
+    std::cout << "\tHandling message: " + recv_msg << " from: " << from_addr.getAddress() << std::endl;
 #endif
     
     std::string send_msg;
@@ -113,7 +113,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // send back leader address - don't care failure, they can retry
                 std::string message = std::string(D_JOINLEADER) + "#" + nodeMember->getLeaderAddressIp()
                 + "#" + nodeMember->getLeaderAddressPort();
-                return "OK";
+                return message;
 
             }
         } else if (strcmp(msg_type, D_LEAVE) == 0) {

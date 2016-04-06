@@ -133,7 +133,7 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
  */
 void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
 #ifdef DEBUGLOG
-    std::cout << "DNode::addMember: " << ip_port << std::endl;
+    std::cout << "\tDNode::addMember: " << ip_port << std::endl;
 #endif
     member_node->addMember(ip_port, name);
     if (isLeader) member_node->leaderAddr = new Address(ip_port);
