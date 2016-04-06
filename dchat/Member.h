@@ -55,7 +55,7 @@ public:
     int port;
     std::string username;
     
-    MemberListEntry(std::string address,std::string username);
+    MemberListEntry(std::string address, std::string username);
     MemberListEntry(const MemberListEntry &anotherMLE);
     MemberListEntry& operator =(const MemberListEntry &anotherMLE);
 

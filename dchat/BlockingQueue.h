@@ -52,9 +52,10 @@ private:
     std::condition_variable d_condition;
     std::priority_queue<T, std::vector<T>, cmp> d_queue;
     int sequence_seen;
+    int sequence_next;
 
 public:
-    holdback_queue(int init_seen) : sequence_seen(init_seen) { }
+    holdback_queue(int init_seen) : sequence_seen(init_seen), sequence_next(init_seen + 1) { }
     holdback_queue(const holdback_queue&) = delete;
     holdback_queue& operator=(const holdback_queue&) = delete;
     int getSequenceSeen() {return sequence_seen;}
@@ -80,7 +81,10 @@ public:
             return std::make_pair(-1, "");
         }
     }
-    
+    int getNextSequence() {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        return sequence_next++;
+    }
 };
 
 class blocking_priority_queue {

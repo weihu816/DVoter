@@ -47,16 +47,16 @@ string Handler::process(Address from_addr, string recv_msg) {
             std::string param_name(strtok(NULL, "#"));
             std::string param_key(msg_type);
             std::string param_value(param_ip + ":" + param_port + ":" + param_name);
-            node->multicast_queue->push(std::make_pair(param_seq, param_value));
+            node->m_queue->push(std::make_pair(param_seq, param_value));
             
             return "OK";
-            
+
         } else if (strcmp(msg_type, D_M_MSG) == 0) {
             
             // received: #MSG#SEQ#Message
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_value(strtok(NULL, "#"));
-            node->multicast_queue->push(std::make_pair(param_seq, param_value));
+            node->m_queue->push(std::make_pair(param_seq, param_value));
             
             return "OK";
         } else if (recv_msg.compare(D_LEAVEANNO) == 0) { //# D_LEAVEANNO is leader broadcast member leaving
@@ -72,15 +72,12 @@ string Handler::process(Address from_addr, string recv_msg) {
     } else {
         
         if (recv_msg.compare(D_CHAT) == 0) {
-            // received: CHAT#Name#Message - From node to sequencer
-            std::string recv_name(strtok (NULL, "#"));
+
+            // received: CHAT#Message - From node to sequencer
             std::string recv_msg(strtok (NULL, "#"));
-            
             if (nodeMember->leaderAddr == nullptr) { // Only leader can multicast messages
-                // I am the leader
                 // msg to be sent: #MSG#SEQ#Message
-                std::string message = "#" + std::string(D_M_MSG) + "#" +
-                std::to_string(node->getSeqNum()) + "#" + recv_msg;
+                std::string message = recv_msg;
                 node->multicastMsg(message, D_M_MSG);
             }
             return "OK";
@@ -97,16 +94,15 @@ string Handler::process(Address from_addr, string recv_msg) {
                 std::string recv_name(strtok (NULL, "#"));
                 std::string member_addr = from_addr.getAddressIp() + ":" + recv_port;
                 node->addMember(member_addr, recv_name, false);
-                int initSeq = node->multicast_queue->getSequenceSeen();
+                int initSeq = node->m_queue->getSequenceSeen();
                 
                 // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
                 std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
                 "#" + nodeMember->getMemberList();
 
                 // #ADDNODE#SEQ#ip#port#name, multicast addnode message from the sequencer
-                // TODO: what if this message is lost - this message must be delivered once (at least onece)
-                std::string message_addmember = std::to_string(node->getSeqNum()) + from_addr.getAddressIp()
-                + "#" + from_addr.getAddressPort() + "#" + recv_name;
+                // This message must be delivered once (at least onece)
+                std::string message_addmember = from_addr.getAddressIp() + "#" + recv_port + "#" + recv_name;
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
 
                 return message;

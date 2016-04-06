@@ -173,7 +173,8 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " started a new chat, listening on ";
         std::cout << member_node->getAddress() << std::endl;
         addMember(join_addr, username, true); // I'm the leader
-        multicast_queue = new holdback_queue(0);
+        
+        m_queue = new holdback_queue(0);
         
     } else {
 
@@ -206,7 +207,7 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
             std::string recv_param = msg_ack.substr(index + 1);
             std::string recv_init_seq = recv_param.substr(0, recv_param.find("#"));
             std::string recv_member_list = recv_param.substr(recv_param.find("#") + 1);
-            multicast_queue = new holdback_queue(atoi(recv_init_seq.c_str()));
+            m_queue = new holdback_queue(atoi(recv_init_seq.c_str()));
             initMemberList(recv_member_list, joinaddr->getAddress());
             
         } else {
@@ -240,7 +241,7 @@ void DNode::sendMsg(std::string msg) {
         Address leader_addr(leader_address);
         dNet->DNsend(&leader_addr, str_to, str_ack, 3);
 #ifdef DEBUGLOG
-        std::cout << "Send message: " + str_to << " to (Leader): " << leader_addr.getAddress() << std::endl;
+        std::cout << "\tSend message: " + str_to << " to (Leader): " << leader_addr.getAddress() << std::endl;
 #endif
     }
 }
@@ -252,22 +253,27 @@ void DNode::sendMsg(std::string msg) {
  *              TODO: only leaders can call this function
  */
 void DNode::multicastMsg(std::string msg, std::string type) {
-    int seq = this->getNextSeqNum();
-    std::stringstream ss;
+    int seq = m_queue->getNextSequence();
+
+#ifdef DEBUGLOG
+    std::cout << "\tmulticastMsg: seq: " << seq << " msg: " << msg << " " << type << std::endl;
+#endif
+    
     auto list = member_node->memberList;
+    std::string send_msg =  "#" + type + "#" + std::to_string(seq) + "#" + msg;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
-        ss.clear();
-        ss << "#" << type << "#" << seq << "#" << msg;
         Address addr((*iter).getAddress());
         std::string ack;
-        if (dNet->DNsend(&addr, ss.str(), ack, 3) == FAILURE) {
-            //exceed timeout limit
-            // TODO: BROADCAST LEAVE OF MEMBER:
+        if (dNet->DNsend(&addr, send_msg, ack, 3) == FAILURE) {
+            // Remove first then recursively multicastMsg
+            member_node->deleteMember(*iter);
             multicastMsg(iter->getAddress(), D_LEAVEANNO);
         }
+        
 #ifdef DEBUGLOG
-        std::cout << "Multicast message: " + ss.str() << " to: " << addr.getAddress() << std::endl;
+        std::cout << "\tMulticast: " << send_msg << " to: " << addr.getAddress() << std::endl;
 #endif
+
     }
 }
 
@@ -444,13 +450,6 @@ DNet * DNode::getDNet(){
  ***/
 Member * DNode::getMember() {
     return member_node;
-}
-
-/***
- * sequence number getter
- ***/
-int DNode::getSeqNum() {
-    return seq_num;
 }
 
 /***

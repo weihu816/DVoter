@@ -28,20 +28,11 @@ private:
     Address * join_address = nullptr;
     std::string username;
     int election_status = E_NONE; //not in election
-
-    int seq_num = 0;
-    int seq_num_seen = 0;
-    int getNextSeqNum() {
-        return seq_num++;
-    }
-    
-//    blocking_queue<std::pair<Address, std::string>> m_queue;
     blocking_queue<std::string> message_chat_queue_ready;
-    
+
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
-    holdback_queue * multicast_queue;
-    
+    holdback_queue * m_queue;
 
     DNode(std::string name, std::string join_addr="");
     int nodeStart(); // introduce and start functions
@@ -72,14 +63,14 @@ public:
     
     Member* getMember();
     DNet* getDNet();
-    int getSeqNum();
+//    int getSeqNum();
     std::string getUsername();
     
     virtual ~DNode() {
         delete dNet;
         delete member_node;
         delete join_address;
-        delete multicast_queue;
+        delete m_queue;
     }
 };
 
