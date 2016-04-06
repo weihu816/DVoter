@@ -81,7 +81,7 @@ int main(int argc, const char * argv[]) {
     
     if (argc == 2) { // Start a new chat group
         std::string name(argv[1]);
-        node = new DNode(name, "");
+        node = new DNode(name);
     } else { // Join an existing chat group
         std::string name(argv[1]);
         std::string ip_port(argv[2]);

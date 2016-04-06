@@ -43,7 +43,7 @@ public:
     holdback_queue * multicast_queue;
     
 
-    DNode(std::string name, std::string join_addr);
+    DNode(std::string name, std::string join_addr="");
     int nodeStart(); // introduce and start functions
     int initThisNode(); // parameter initialization
     int introduceSelfToGroup(Address *joinAddress, bool isSureLeaderAddr);
@@ -60,7 +60,7 @@ public:
     int checkHeartbeat(std::string address);
     
     void startElection();
-    void handleElection(Address fromAddr, string notice);
+    void handleElection(Address fromAddr, std::string notice);
 
     void checkMessages();
     void recvHandler(std::pair<Address, std::string>);

@@ -56,7 +56,7 @@ int DNode::nodeStart() {
         std::cout << "init_thisnode failed. Exit." << std::endl;
         return FAILURE;
     }
-    if( !introduceSelfToGroup(join_address, false) ) {
+    if( introduceSelfToGroup(join_address, false) == FAILURE ) {
         finishUpThisNode();
         // TODO
         std::cout << "Sorry no chat is active on " << member_node->getAddress()
@@ -161,7 +161,9 @@ void DNode::deleteMember(MemberListEntry toRemove){
 int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
     std::string self_addr = member_node->address->getAddress();
     std::string join_addr = joinaddr->getAddress();
-    
+#ifdef DEBUGLOG
+    std::cout << "DNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
+#endif
     if (self_addr.compare(join_addr) == 0) {
         
         // I am the group booter (first process to join the group). Boot up the group
