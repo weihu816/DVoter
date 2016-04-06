@@ -54,6 +54,7 @@
 #define MAXBUFLEN   512
 #define TIMEOUT     10000
 #define HEARTFREQ   3000
+#define ELECTIONTIME 1000
 
 // Multicast messages, start with a #
 #define D_M_MSG         "MSG"                      // #MSG#SEQ#Message, multicast from the sequencer
@@ -68,5 +69,10 @@
 #define D_ELECTION      "ELECTION"                  // ELECTION, start election
 #define D_ANSWER        "ANSWER"                    // ANSWER, answer to election message
 #define D_COOR          "COOR"                      // COOR, announce leadership
+
+// Election status
+#define E_NONE  0       // not in election
+#define E_WAITANS   1   // wait for higher process's D_ANSWER
+#define E_WAITCOOR  2   // wait for higher process's D_COOR
 
 #endif /* STDINCLUDES_H */

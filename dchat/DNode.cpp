@@ -261,24 +261,93 @@ void DNode::multicastMsg(std::string msg, std::string type) {
 }
 
 
-//////////////////////////////// LEADER ELECTION ////////////////////////////////
-
-void DNode::startElection() {
-    // broadcasts D_ELECTION to all other processes with higher IDs, expecting D_ANSWER
-    // wait for it....
-    // if hears from no process with higher IDs, then it broadcasts D_COOR.
+/**
+ * FUNCTION NAME: sendNotice (send non-chat, notice message without sequence num)
+ *
+ * DESCRIPTION: Send a single notice
+ */
+void DNode::sendNotice(std::string notice) {
+    std::string leader_address = member_node->getLeaderAddress();
+    // send heartbeat to leader
+    Address leader_addr(leader_address);
+    std::string str_ack;
+    dNet->DNsend(&leader_addr, notice, str_ack, 1);
+#ifdef DEBUGLOG
+    std::cout << "Send notice to (leader): " << leader_addr.getAddress() << std::endl;
+#endif
     
-   
 }
 
-void DNode::handleElection(Address fromAddr)
+/**
+ * FUNCTION NAME: multicastNotice (multicast non-chat message without sequence num)
+ *
+ * DESCRIPTION: Multicast a notice to all the members
+ *              TODO: only leaders can call this function
+ */
+void DNode::multicastNotice(std::string notice) {
+    auto list = member_node->memberList;
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        Address addr((*iter).getAddress());
+        std::string str_ack;
+        dNet->DNsend(&addr, notice, str_ack, 1);
+#ifdef DEBUGLOG
+        std::cout << "Multicast notice to: " << addr.getAddress() << std::endl;
+#endif
+    }
+}
+
+
+//////////////////////////////// LEADER ELECTION ////////////////////////////////
+
+
+/**
+ * FUNCTION NAME: startElection, called by a member
+ *
+ * DESCRIPTION: member start a election
+ */
+void DNode::startElection() {
+    // send D_ELECTION to all other processes with higher IDs, expecting D_ANSWER
+    auto list = member_node->memberList;
+    std::string myAddr = member_node->getAddress();
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        if(iter->getAddress().compare(myAddr) > 0) {
+            sendNotice(D_ELECTION);
+        }
+    }
+    
+    // wait for some ANSWER, sleep? RECV in another thread so we are okay?
+    election_status = E_WAITANS;
+    std::chrono::milliseconds sleepTime(HEARTFREQ);
+    // if hears from no process with higher IDs, then it broadcasts D_COOR.
+    if(election_status == E_WAITANS) {
+        multicastNotice(D_COOR);
+    }
+}
+
+
+/**
+ * FUNCTION NAME: handle election message (D_ANSWER, D_ELECTION, D_COOR)
+ *
+ * DESCRIPTION: Check if any node hasn't responded within a timeout period and then delete
+ * 				the nodes
+ * 				member: start election; leader: multicast LEAVE
+ */
+void DNode::handleElection(Address fromAddr, std::string notice)
 {
+    std::string heardFrom = fromAddr.getAddress();
+    
+    // hears a D_ELECTION
+        // delete leader from member list
+        // display: leader (username) left the chat
     // If hears D_ELECTION from a process with a higher ID,
     // waits some time for D_COOR
-    // If it does not receive this message in time, it re-broadcasts the D_ELECTION
+        // update the leader_list
+        //
+        // If it does not receive this message in time, it re-broadcasts the D_ELECTION
     
     // If hears D_ELECTION from a process with a lower ID
-    // send back D_ANSWER and startElectionit
+    // send back D_ANSWER and startElection myself
+    
 
 }
 
@@ -291,14 +360,14 @@ void DNode::handleElection(Address fromAddr)
  *
  * DESCRIPTION: Check if any node hasn't responded within a timeout period and then delete
  * 				the nodes
- * 				member: start election; leader: multicast LEAVE
+ * 				member: start election; leader: multicast LEAVEANNO
  */
 void DNode::nodeLoopOps() {
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
     if(leader_address.compare(self_address) == 0) { // I am the leader
         // have the leader broadcast a heartbeat
-        multicastHeartbeat();
+        multicastNotice(D_HEARTBEAT);
         
         // check every one's heartbeat in the memberlist (except myself)
         auto list = member_node->memberList;
@@ -315,7 +384,7 @@ void DNode::nodeLoopOps() {
         }
     } else { // I am a member
         // send a heart beat to the leader
-        sendHeartbeat();
+        sendNotice(D_HEARTBEAT);
         // check leader heartbeat
         if(!checkHeartbeat(leader_address)) {
             startElection();
@@ -334,44 +403,6 @@ int DNode::checkHeartbeat(std::string address)
         return FAILURE;
     }
     return SUCCESS;
-}
-
-/**
- * FUNCTION NAME: sendHeartbeat
- *
- * DESCRIPTION: Send a heartbeat to the leader (called by members)
- *              Or Send a multicast heartbeat to members (called by the leader)
- *              If the current node is the leader, call multicast directly
- *              There is a thread continuing calling this method
- */
-void DNode::sendHeartbeat() {
-    std::string leader_address = member_node->getLeaderAddress();
-    // send heartbeat to leader
-    Address leader_addr(leader_address);
-    std::string str_ack;
-    dNet->DNsend(&leader_addr, D_HEARTBEAT, str_ack, 1);
-#ifdef DEBUGLOG
-    std::cout << "Send heartbeat to (Leader): " << leader_addr.getAddress() << std::endl;
-#endif
-    
-}
-
-/**
- * FUNCTION NAME: multicastHeartbeat
- *
- * DESCRIPTION: Multicast a heartbeat to all the members
- *              TODO: only leaders can call this function
- */
-void DNode::multicastHeartbeat() {
-    auto list = member_node->memberList;
-    for (auto iter = list.begin(); iter != list.end(); iter++) {
-        Address addr((*iter).getAddress());
-        std::string str_ack;
-        dNet->DNsend(&addr, D_HEARTBEAT, str_ack, 1);
-#ifdef DEBUGLOG
-        std::cout << "Multicast heartbeat to: " << addr.getAddress() << std::endl;
-#endif
-    }
 }
 
 //////////////////////////////// GETTERS ////////////////////////////////

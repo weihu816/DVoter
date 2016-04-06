@@ -27,6 +27,7 @@ private:
     DNet * dNet;
     Address * join_address = nullptr;
     std::string username;
+    int election_status = E_NONE; //not in election
 
     int seq_num = 0;
     int seq_num_seen = 0;
@@ -40,6 +41,7 @@ private:
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
     holdback_queue * multicast_queue;
+    
 
     DNode(std::string name, std::string join_addr);
     int nodeStart(); // introduce and start functions
@@ -55,18 +57,18 @@ public:
     
     static int enqueueWrapper(void *env, char *buff, int size);
     void nodeLoopOps(); // this is the operation for heartbeat
-    void multicastHeartbeat();
-    void sendHeartbeat();
     int checkHeartbeat(std::string address);
     
     void startElection();
-    void handleElection(Address fromAddr);
+    void handleElection(Address fromAddr, string notice);
 
     void checkMessages();
     void recvHandler(std::pair<Address, std::string>);
     
     void sendMsg(std::string msg);
     void multicastMsg(std::string msg, std::string type);
+    void sendNotice(std::string type);
+    void multicastNotice(std::string type);
     
     Member* getMember();
     DNet* getDNet();
