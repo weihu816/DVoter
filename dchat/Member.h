@@ -81,11 +81,7 @@ public:
     Address * leaderAddr = nullptr; // The leader's Address
     bool inited = false;            // boolean indicating if this member is up
     bool inGroup;                   // boolean indicating if this member is in the group
-    bool bFailed;                   // boolean indicating if this member has failed
-    int nnb;                        // number of my neighbors
-//    long heartbeat;                 // the node's own heartbeat
-//    int pingCounter;                // counter for next ping
-//    int timeOutCounter;             // counter for ping timeout
+    int nnb;                        // number of my neighbors (distributed)
     std::unordered_map<std::string, time_t> heartBeatList;
     std::vector<MemberListEntry> memberList;                // Membership table
     // std::vector<MemberListEntry>::iterator myPos;        // My position in the membership table
@@ -151,7 +147,7 @@ public:
         }
     }
 
-    Member(std::string addr): inited(false), inGroup(false), bFailed(false), nnb(0){
+    Member(std::string addr): inited(false), inGroup(false), nnb(0){
         this->address = new Address(addr);
     }
     Member(const Member &anotherMember);                // copy constructor

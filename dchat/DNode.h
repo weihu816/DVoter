@@ -42,8 +42,8 @@ public:
     holdback_queue * multicast_queue;
 
     DNode(std::string name, std::string join_addr);
-    int nodeStart();
-    int initThisNode();
+    int nodeStart(); // introduce and start functions
+    int initThisNode(); // parameter initialization
     int introduceSelfToGroup(Address *joinAddress, bool isSureLeaderAddr);
     int finishUpThisNode(); // Wind up this node and clean up state
     void initMemberList(std::string member_list, std::string leaderAddr);
@@ -57,6 +57,10 @@ public:
     void nodeLoopOps(); // this is the operation for heartbeat
     void multicastHeartbeat();
     void sendHeartbeat();
+    int checkHeartbeat(std::string address);
+    
+    void startElection();
+    void handleElection(Address fromAddr);
 
     void checkMessages();
     void recvHandler(std::pair<Address, std::string>);

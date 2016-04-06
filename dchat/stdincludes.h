@@ -58,12 +58,15 @@
 // Multicast messages, start with a #
 #define D_M_MSG         "MSG"                      // #MSG#SEQ#Message, multicast from the sequencer
 #define D_M_ADDNODE     "ADDNODE"                  // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
-
 #define D_CHAT          "CHAT"                      // CHAT#Name#Message - From node to sequencer
 #define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT
 #define D_JOINLEADER    "JOINLEADER"                // JOINLEADER#LEADERIP#LEADERPORT
 #define D_JOINLIST      "JOINLIST"                  // JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
 #define D_LEAVE         "LEAVE"                     // LEAVE#name#ip:port
 #define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT: () : detect failed node
+#define D_LEAVEANNO     "LEAVEANNO"                 // LEAVEANNO#ADDR sent by leader
+#define D_ELECTION      "ELECTION"                  // ELECTION, start election
+#define D_ANSWER        "ANSWER"                    // ANSWER, answer to election message
+#define D_COOR          "COOR"                      // COOR, announce leadership
 
 #endif /* STDINCLUDES_H */

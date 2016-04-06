@@ -78,7 +78,6 @@ Member::Member(const Member &anotherMember) {
     *this->leaderAddr = *anotherMember.leaderAddr;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
-    this->bFailed = anotherMember.bFailed;
     this->nnb = anotherMember.nnb;
 //    this->heartbeat = anotherMember.heartbeat;
 //    this->pingCounter = anotherMember.pingCounter;
@@ -95,7 +94,6 @@ Member& Member::operator =(const Member& anotherMember) {
     *this->leaderAddr = *anotherMember.leaderAddr;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
-    this->bFailed = anotherMember.bFailed;
     this->nnb = anotherMember.nnb;
 //    this->heartbeat = anotherMember.heartbeat;
 //    this->pingCounter = anotherMember.pingCounter;

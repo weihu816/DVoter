@@ -34,13 +34,9 @@ DNode::DNode(std::string name, std::string join_addr) : username(name) {
  * 				This function is called by a node to receive messages currently waiting for it
  */
 int DNode::recvLoop() {
-    if ( member_node->bFailed ) {
-        return FAILURE;
-    } else {
-        Address addr;
-        std::string data;
-        dNet->DNrecv(addr, data);
-    }
+    Address addr;
+    std::string data;
+    dNet->DNrecv(addr, data);
     return SUCCESS;
 }
 
@@ -80,16 +76,9 @@ int DNode::nodeStart() {
  * DESCRIPTION: Find out who I am and start up
  */
 int DNode::initThisNode() {
-    // std::string ip = member_node->address->ip;
-    // int port = member_node->address->port;
-    member_node->bFailed = false;
     member_node->inited = true;
     member_node->inGroup = false;
-    // node is up!
     member_node->nnb = 0;
-    //    member_node->heartbeat = 0;
-    //    member_node->pingCounter = TFAIL;
-    //    member_node->timeOutCounter = -1;
     member_node->memberList.clear();
     return SUCCESS;
 }
@@ -136,19 +125,18 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
     
 }
 
-///**
-// * FUNCTION NAME: addMember
-// *
-// * DESCRIPTION: add member to the memberList
-// */
-//void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
-//#ifdef DEBUGLOG
-//    std::cout << "DNode::addMember: " << ip_port << std::endl;
-//#endif
-//    MemberListEntry entry(ip_port, name); // memberList with no such boolean?
-//    member_node->memberList.push_back(entry);
-//    if (isLeader) member_node->leaderAddr = new Address(ip_port);
-//}
+/**
+ * FUNCTION NAME: addMember
+ *
+ * DESCRIPTION:
+ */
+void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
+#ifdef DEBUGLOG
+    std::cout << "DNode::addMember: " << ip_port << std::endl;
+#endif
+    member_node->addMember(ip_port, name);
+    if (isLeader) member_node->leaderAddr = new Address(ip_port);
+}
 
 /**
  * FUNCTION NAME: deleteMember //or done by index? TODO
@@ -164,7 +152,6 @@ void DNode::deleteMember(MemberListEntry toRemove){
 
 
 //////////////////////////////// CLIENT: OPERATIONS FUNC ////////////////////////////////
-
 
 /**
  * FUNCTION NAME: introduceSelfToGroup
@@ -220,20 +207,6 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
     return SUCCESS;
 }
 
-/**
- * FUNCTION NAME: addMember
- *
- * DESCRIPTION:
- */
-void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
-#ifdef DEBUGLOG
-    std::cout << "DNode::addMember: " << ip_port << std::endl;
-#endif
-    member_node->addMember(ip_port, name);
-    if (isLeader) member_node->leaderAddr = new Address(ip_port);
-}
-
-
 //////////////////////////////// SEND MSG FUNC ////////////////////////////////
 
 
@@ -261,7 +234,6 @@ void DNode::sendMsg(std::string msg) {
     }
 }
 
-
 /**
  * FUNCTION NAME: multicastMsg
  *
@@ -278,13 +250,38 @@ void DNode::multicastMsg(std::string msg, std::string type) {
         Address addr((*iter).getAddress());
         std::string ack;
         if (dNet->DNsend(&addr, ss.str(), ack, 3) == FAILURE) {
-            // TODO: BROADCAST LEAVE OF MEMBER:  MemberListEntry iter (ip_port,and name)
+            // TODO: BROADCAST LEAVE OF MEMBER:
+            //exceed timeout limit
+            
         }
 #ifdef DEBUGLOG
         std::cout << "Multicast message: " + ss.str() << " to: " << addr.getAddress() << std::endl;
 #endif
     }
 }
+
+
+//////////////////////////////// LEADER ELECTION ////////////////////////////////
+
+void DNode::startElection() {
+    // broadcasts D_ELECTION to all other processes with higher IDs, expecting D_ANSWER
+    // wait for it....
+    // if hears from no process with higher IDs, then it broadcasts D_COOR.
+    
+   
+}
+
+void DNode::handleElection(Address fromAddr)
+{
+    // If hears D_ELECTION from a process with a higher ID,
+    // waits some time for D_COOR
+    // If it does not receive this message in time, it re-broadcasts the D_ELECTION
+    
+    // If hears D_ELECTION from a process with a lower ID
+    // send back D_ANSWER and startElectionit
+
+}
+
 
 
 ///////////////////////////////////// HEARTBEAT FUNC /////////////////////////////////////
@@ -305,37 +302,38 @@ void DNode::nodeLoopOps() {
         
         // check every one's heartbeat in the memberlist (except myself)
         auto list = member_node->memberList;
-        auto heartBook = member_node->heartBeatList;
         for (auto iter = list.begin(); iter != list.end(); iter++) {
             std::string memberAddr = iter->getAddress();
             if(!memberAddr.compare(self_address)) {
                 //check heartbeat
-                time_t current;
-                time(&current);
-                time_t heartbeat = member_node->getHeartBeat(memberAddr);
-                if(difftime(current, heartbeat) > TIMEOUT/1000) {
+                if(!checkHeartbeat(memberAddr)) {
                     //exceed timeout limit
-                    std::string message_leave = std::string(D_LEAVE) + "#" + iter->username + "#" + memberAddr;
-                    multicastMsg(message_leave, D_LEAVE);
+                    std::string message_leave = memberAddr;
+                    multicastMsg(message_leave, D_LEAVEANNO);
                 }
             }
         }
     } else { // I am a member
         // send a heart beat to the leader
         sendHeartbeat();
-        
         // check leader heartbeat
-        time_t current;
-        time(&current);
-        time_t heartbeat_ledaer = member_node->getHeartBeat(leader_address);
-        if(difftime(current, heartbeat_ledaer) > TIMEOUT/1000) {
-            ////////////////////////////
-            // TODO startElection(); ///
-            ////////////////////////////
+        if(!checkHeartbeat(leader_address)) {
+            startElection();
         }
     }
     // finish heartbeat check
     return;
+}
+
+int DNode::checkHeartbeat(std::string address)
+{
+    time_t current;
+    time(&current);
+    time_t heartbeat = member_node->getHeartBeat(address);
+    if(difftime(current, heartbeat) > TIMEOUT/1000) {
+        return FAILURE;
+    }
+    return SUCCESS;
 }
 
 /**
@@ -351,7 +349,7 @@ void DNode::sendHeartbeat() {
     // send heartbeat to leader
     Address leader_addr(leader_address);
     std::string str_ack;
-    dNet->DNsend(&leader_addr, D_HEARTBEAT, str_ack, 3);
+    dNet->DNsend(&leader_addr, D_HEARTBEAT, str_ack, 1);
 #ifdef DEBUGLOG
     std::cout << "Send heartbeat to (Leader): " << leader_addr.getAddress() << std::endl;
 #endif
@@ -359,7 +357,7 @@ void DNode::sendHeartbeat() {
 }
 
 /**
- * FUNCTION NAME: multicastHeartbeat (maybe optimize into multipcastMsg later)
+ * FUNCTION NAME: multicastHeartbeat
  *
  * DESCRIPTION: Multicast a heartbeat to all the members
  *              TODO: only leaders can call this function
@@ -369,15 +367,17 @@ void DNode::multicastHeartbeat() {
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         Address addr((*iter).getAddress());
         std::string str_ack;
-        dNet->DNsend(&addr, D_HEARTBEAT, str_ack, 3);
+        dNet->DNsend(&addr, D_HEARTBEAT, str_ack, 1);
 #ifdef DEBUGLOG
         std::cout << "Multicast heartbeat to: " << addr.getAddress() << std::endl;
 #endif
     }
 }
 
+//////////////////////////////// GETTERS ////////////////////////////////
+
 /***
- * dNode getter
+ * dNet getter
  ***/
 DNet * DNode::getDNet(){
     return dNet;
