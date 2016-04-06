@@ -118,18 +118,28 @@ string Handler::process(Address from_addr, string recv_msg) {
             node->introduceSelfToGroup(&leaderAddr, true);
             
         } else if (recv_msg.compare(D_JOINLIST) == 0) {
-            
             // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
             std::string memberList(strtok (NULL, "#"));
             node->initMemberList(memberList, nodeMember->getLeaderAddress());
             
         } else if (recv_msg.compare(D_LEAVE)) {
+            // TODO: received: LEAVE#name#ip:port
+            std::string leave_name(strtok(NULL, "#"));
+            std::string leave_addr(strtok(NULL, "#"));
+
+            MemberListEntry leave_entry(leave_addr, leave_name);
             
-            // TODO: received:
+            // delete leaving node from member_list
+            node->deleteMember(leave_entry);
             
         } else if (recv_msg.compare(D_HEARTBEAT) == 0) {
             
-            // TODO: received:
+            // received: HEARTBEAT
+            // know node at from_addr is still there, update heartbeat for node at from_addr
+            std::string node_addr = from_addr.getAddress();
+            time_t timev;
+            time(&timev);
+            nodeMember->updateHeartBeat(node_addr, timev);
             
         }
         
