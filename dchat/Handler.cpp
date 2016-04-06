@@ -59,7 +59,13 @@ string Handler::process(Address from_addr, string recv_msg) {
             node->multicast_queue->push(std::make_pair(param_seq, param_value));
             
             return "OK";
-        } 
+        } else if (recv_msg.compare(D_LEAVEANNO) == 0) {
+            
+            // TODO: received: #LEAVEANNO#seq#ip:port sent by leader
+            node->startElection();
+            
+            return "OK";
+        }
         
     } else {
         
@@ -147,25 +153,23 @@ string Handler::process(Address from_addr, string recv_msg) {
             nodeMember->updateHeartBeat(node_addr, timev);
             return "OK";
             
-        } else if (recv_msg.compare(D_LEAVEANNO) == 0) {
-            
-            // TODO: received: LEAVEANNO#ADDR sent by leader
-            node->startElection();
-            
         } else if (recv_msg.compare(D_ELECTION) == 0) {
             
             // TODO: received: ELECTION
             node->handleElection(from_addr, D_ELECTION);
+            return "OK";
             
         } else if (recv_msg.compare(D_ANSWER) == 0) {
             
             // TODO: received: ANSWER
             node->handleElection(from_addr, D_ANSWER);
+            return "OK";
             
         } else if (recv_msg.compare(D_COOR) == 0) {
             
             // TODO: received: COOR
             node->handleElection(from_addr, D_COOR);
+            return "OK";
             
         }
         
