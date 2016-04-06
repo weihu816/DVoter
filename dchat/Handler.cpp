@@ -95,7 +95,8 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // If it's a multi-threaded server, seq number should be sync with other message handling
                 std::string recv_port(strtok (NULL, "#"));
                 std::string recv_name(strtok (NULL, "#"));
-                node->addMember(from_addr.getAddress(), recv_name, false);
+                std::string member_addr = from_addr.getAddressIp() + ":" + recv_port;
+                node->addMember(member_addr, recv_name, false);
                 int initSeq = node->multicast_queue->getSequenceSeen();
                 
                 // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
