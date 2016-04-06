@@ -222,7 +222,7 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
 void DNode::sendMsg(std::string msg) {
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
-    if (leader_address.compare(self_address)) { // I'm the leader (sequencer)
+    if (leader_address.compare(self_address) == 0) { // I'm the leader (sequencer)
         std::string new_msg = std::string(D_M_MSG) + "#" + msg;
         multicastMsg(new_msg, D_M_MSG);
     } else { // Send Multicast request to the sequencer
