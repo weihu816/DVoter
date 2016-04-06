@@ -329,7 +329,7 @@ void DNode::startElection() {
  * DESCRIPTION: handle a election msg
  */
 void DNode::handleElection(Address fromAddr, std::string type) {
-    if(type == D_ELECTION) {
+    if(type.compare(D_ELECTION) == 0) {
         std::string heardFrom = fromAddr.getAddress();
         // delete leader from member list TODO OOoOOOOOOoOOOOOO
         // member_node->deleteMember(MemberListEntry entry)
@@ -355,11 +355,11 @@ void DNode::handleElection(Address fromAddr, std::string type) {
             sendNotice(D_ANSWER, fromAddr.getAddress());
             startElection();
         }
-    } else if(type == D_ANSWER) {
+    } else if(type.compare(D_ANSWER) == 0) {
         if(fromAddr.getAddress().compare(member_node->getAddress()) > 0 && election_status == E_WAITANS) {
             election_status = E_WAITCOOR;
         }
-    } else if(type == D_COOR) {
+    } else if(type.compare(D_COOR) == 0) {
         if(election_status == E_WAITCOOR)
         election_status = E_NONE;
         // member_node->updateLeaderAddr(fromAddr);
