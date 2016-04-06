@@ -22,7 +22,8 @@ DNode::DNode(std::string name, std::string join_addr) : username(name) {
     } else {
         join_address = new Address(my_addr);
     }
-    std::cout << username << " join an existing chat, listening on " << member_node->getAddress() << std::endl;
+    std::cout << "\t" + username << " join an existing chat, listening on "
+    << member_node->getAddress() << std::endl;
 }
 
 //////////////////////////////// THREAD FUNC ////////////////////////////////
@@ -181,7 +182,7 @@ int DNode::introduceSelfToGroup(Address * joinaddr, bool isSureLeaderAddr) {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << member_node->getAddress() << std::endl;
         // Requst to join by contacting the member
-        std::string msg_to = std::string(D_JOINREQ) + "#" + std::to_string(joinaddr->port);
+        std::string msg_to = std::string(D_JOINREQ) + "#" + std::to_string(joinaddr->port) + "#" + username;
         std::string msg_ack;
         if (dNet->DNsend(joinaddr, msg_to, msg_ack, 3) != SUCCESS) return FAILURE;
         // Receive member lists from the leader, then save the leader address

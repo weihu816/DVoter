@@ -57,7 +57,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             node->m_queue->push(std::make_pair(param_seq, param_value));
             
             return "OK";
-        } else if (recv_msg.compare(D_LEAVEANNO) == 0) { //# D_LEAVEANNO is leader broadcast member leaving
+        } else if (strcmp(msg_type, D_LEAVEANNO) == 0) { //# D_LEAVEANNO is leader broadcast member leaving
             // this needs to be in the queue and process in order of seq #
         
             // TODO: received: #LEAVEANNO#seq#ip:port sent by leader
@@ -69,7 +69,7 @@ string Handler::process(Address from_addr, string recv_msg) {
         
     } else {
         
-        if (recv_msg.compare(D_CHAT) == 0) {
+        if (strcmp(msg_type, D_CHAT) == 0) {
 
             // received: CHAT#Message - From node to sequencer
             std::string recv_msg(strtok (NULL, "#"));
@@ -80,7 +80,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             }
             return "OK";
             
-        } else if (recv_msg.compare(D_JOINREQ) == 0) {
+        } else if (strcmp(msg_type, D_JOINREQ) == 0) {
 
             
             if (nodeMember->leaderAddr == nullptr) { // I am the leader
@@ -116,7 +116,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 return "OK";
 
             }
-        } else if (recv_msg.compare(D_LEAVE) == 0) {
+        } else if (strcmp(msg_type, D_LEAVE) == 0) {
             
             // TODO: received: LEAVE#name#ip:port
             std::string leave_name(strtok(NULL, "#"));
@@ -128,7 +128,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             // TODO: D_LEAVE is sent to the leader, and leader should send out LEAVEANNO
             return "OK";
             
-        } else if (recv_msg.compare(D_HEARTBEAT) == 0) {
+        } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
             
             // received: HEARTBEAT
             // know node at from_addr is still there, update heartbeat for node at from_addr
@@ -138,19 +138,19 @@ string Handler::process(Address from_addr, string recv_msg) {
             nodeMember->updateHeartBeat(node_addr, timev);
             return "OK";
             
-        } else if (recv_msg.compare(D_ELECTION) == 0) {
+        } else if (strcmp(msg_type, D_ELECTION) == 0) {
             
             // TODO: received: ELECTION (put it in a queue to be built soon)
             //node->handleElection(from_addr, D_ELECTION);
             return "OK";
             
-        } else if (recv_msg.compare(D_ANSWER) == 0) {
+        } else if (strcmp(msg_type, D_ANSWER) == 0) {
             
             // TODO: received: ANSWER  (put it in a queue)
             //node->handleElection(from_addr, D_ANSWER);
             return "OK";
             
-        } else if (recv_msg.compare(D_COOR) == 0) {
+        } else if (strcmp(msg_type, D_COOR) == 0) {
             
             // TODO: received: COOR (put it in a queue)
             //node->handleElection(from_addr, D_COOR);
