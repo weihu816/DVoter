@@ -93,6 +93,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // #ADDNODE#SEQ#ip#port#name, multicast addnode message from the sequencer
                 // This message must be delivered once (at least onece)
                 std::string message_addmember = from_addr.getAddressIp() + "#" + recv_port + "#" + recv_name;
+                // TODO: multicast is blocking
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
 
                 std::string member_addr = from_addr.getAddressIp() + ":" + recv_port;

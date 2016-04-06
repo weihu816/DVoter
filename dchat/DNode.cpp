@@ -276,9 +276,12 @@ void DNode::multicastMsg(std::string msg, std::string type) {
         Address addr((*iter).getAddress());
         std::string ack;
         if (dNet->DNsend(&addr, send_msg, ack, 3) == FAILURE) {
+#ifdef DEBUGLOG
+            std::cout << "\tmulticastMsg: Fail! " << addr.getAddress() << std::endl;
+#endif
             // Remove first then recursively multicastMsg
-            member_node->deleteMember(*iter);
-            multicastMsg(iter->getAddress(), D_LEAVEANNO);
+//            member_node->deleteMember(*iter);
+//            multicastMsg(iter->getAddress(), D_LEAVEANNO);
         }
         
 #ifdef DEBUGLOG

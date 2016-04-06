@@ -110,7 +110,7 @@ in_port_t get_in_port(struct sockaddr *sa)
  */
 int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times) {
 #ifdef DEBUGLOG
-    std::cout << "DNet::DNsend: " << addr->getAddress() << std::endl;
+    std::cout << "\tDNet::DNsend: " << addr->getAddress() << std::endl;
 #endif
     if (times <= 0) return FAILURE;
 
