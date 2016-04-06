@@ -93,7 +93,7 @@ int main(int argc, const char * argv[]) {
     }
 
     // Node is up, introduced to the group
-    if (!node->nodeStart()) {
+    if (node->nodeStart() == FAILURE) {
         delete node;
         std::cout << "Fail to start the node" << std::endl;
         std::exit(1);
