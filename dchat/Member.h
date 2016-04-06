@@ -127,6 +127,10 @@ public:
         }
         return list;
     }
+    
+    std::vector<MemberListEntry> getMemberEntryList() {
+        return memberList;
+    }
 
     
     std::string getAddress() {

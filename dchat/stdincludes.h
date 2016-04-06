@@ -63,7 +63,7 @@
 #define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT
 #define D_JOINLEADER    "JOINLEADER"                // JOINLEADER#LEADERIP#LEADERPORT
 #define D_JOINLIST      "JOINLIST"                  // JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
-#define D_LEAVE         "LEAVE"                     // LEAVE
+#define D_LEAVE         "LEAVE"                     // LEAVE#name#ip:port
 #define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT: () : detect failed node
 
 #endif /* STDINCLUDES_H */
