@@ -57,6 +57,7 @@ public:
     holdback_queue(int init_seen) : sequence_seen(init_seen) { }
     holdback_queue(const holdback_queue&) = delete;
     holdback_queue& operator=(const holdback_queue&) = delete;
+    int getSequenceSeen() {return sequence_seen;}
     void push(T const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
         mlock.lock();

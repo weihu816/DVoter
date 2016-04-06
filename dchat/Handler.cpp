@@ -27,7 +27,7 @@ string Handler::process(Address from_addr, string recv_msg) {
     
     std::string send_msg;
     if (recv_msg.empty()) return "";
-
+    
     char * cstr = new char[recv_msg.length() + 1];
     strcpy(cstr, recv_msg.c_str());
     char * msg_type = strtok(cstr, "#");
@@ -35,12 +35,11 @@ string Handler::process(Address from_addr, string recv_msg) {
     Member * nodeMember = node->getMember();
     DNet * nodeDNet = node->getDNet();
     string nodeUsername = node->getUsername();
-
+    
     if (recv_msg.find("#") == 0) { // Start with a #
-        //if multi-cast message, msg_type==""
-        // DELETE: msg_type = strtok(NULL, "#");
+        
         if (strcmp(msg_type, D_M_ADDNODE) == 0) {
-            // TODO: received: #ADDNODE#SEQ#ip#port#name
+            // received: #ADDNODE#SEQ#ip#port#name
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_ip(strtok(NULL, "#"));
             std::string param_port(strtok(NULL, "#"));
@@ -49,19 +48,19 @@ string Handler::process(Address from_addr, string recv_msg) {
             std::string param_value(param_ip + ":" + param_port + ":" + param_name);
             node->multicast_queue->push(std::make_pair(param_seq, param_value));
             return "OK";
-        } else if (strcmp(msg_type, D_M_MSG)) {
+        } else if (strcmp(msg_type, D_M_MSG) == 0) {
             // TODO: received: #MSG#SEQ#Message
-            std::string param_ip = strtok(NULL, "#");
-            std::string param_port = strtok(NULL, "#");
-            std::string param_name = strtok(NULL, "#");
+            int param_seq = atoi(strtok(NULL, "#"));
+            std::string param_value(strtok(NULL, "#"));
+            node->multicast_queue->push(std::make_pair(param_seq, param_value));
             return "OK";
         }
-
+        
     } else {
-
+        
         if (recv_msg.compare(D_CHAT) == 0) {
             // received: CHAT#Name#Message - From node to sequencer
-            std::string recv_name(strtok (cstr, "#"));
+            std::string recv_name(strtok (NULL, "#"));
             std::string recv_msg(strtok (NULL, "#"));
             
             if (nodeMember->leaderAddr == nullptr) { // Only leader can multicast messages
@@ -76,9 +75,10 @@ string Handler::process(Address from_addr, string recv_msg) {
             if (nodeMember->leaderAddr == nullptr) { // I am the leader
                 // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
                 // First need to add this member to the list (should not exist)
-                // TODO: need initSeq
+                int initSeq = node->multicast_queue->getSequenceSeen();
                 node->addMember(from_addr.getAddress(), nodeUsername, false);
-                std::string message = std::string(D_JOINLIST) + "#" + nodeMember->getMemberList();
+                std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
+                "#" + nodeMember->getMemberList();
                 std::string str_ack;
                 nodeDNet->DNsend(&from_addr, message, str_ack, 3);
                 // Multicast addnode message
@@ -92,20 +92,18 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // send leader address
                 // received: JOINLEADER#LEADERIP#LEADERPORT
                 std::string message = std::string(D_JOINLEADER) + "#" + nodeMember->getLeaderAddressIp()
-                                    + "#" + nodeMember->getLeaderAddressPort();
+                + "#" + nodeMember->getLeaderAddressPort();
                 std::string str_ack;
                 nodeDNet->DNsend(&from_addr, message, str_ack, 3);
             }
-        } else if (recv_msg.compare(D_JOINLEADER)) {
+        } else if (recv_msg.compare(D_JOINLEADER) == 0) {
             //TODO: received: JOINLEADER#LEADERIP#LEADERPORT
-            
-            
-            
-        } else if (recv_msg.compare(D_JOINLIST)) {
+            std::string
+        } else if (recv_msg.compare(D_JOINLIST) == 0) {
             //TODO: received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
         } else if (recv_msg.compare(D_LEAVE)) {
-            //TODO: received: 
-        } else if (recv_msg.compare(D_HEARTBEAT)) {
+            //TODO: received:
+        } else if (recv_msg.compare(D_HEARTBEAT) == 0) {
             
         }
         
