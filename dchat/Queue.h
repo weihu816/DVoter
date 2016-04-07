@@ -65,6 +65,7 @@ public:
     void pop();
     void handle(std::string msg);
     int getNextSequence();
+    void resetSequence();
 };
 
 class blocking_priority_queue {

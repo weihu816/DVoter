@@ -19,6 +19,25 @@ vector<string> splitstr(string ori, char deli) {
     return tmp;
 }
 
+/**
+ * FUNCTION NAME: electionHandler
+ *
+ * DESCRIPTION: handle election: start if no message recved in time
+ */
+void electionHandler(DNode * node) {
+    // waits some time for D_COOR
+    node->updateElectionStatus(E_WAITCOOR);
+    std::chrono::milliseconds sleepTime(ELECTIONTIME);
+    std::this_thread::sleep_for(sleepTime);
+    
+    if(node->getElectionStatus() != E_NONE) {// recv
+        // If it does not receive this message in time, it re-broadcasts the D_ELECTION
+        node->startElection();
+    }
+    
+}
+
+
 string Handler::process(Address & from_addr, string recv_msg) {
     
 #ifdef DEBUGLOG
@@ -66,7 +85,9 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // TODO: received: #LEAVEANNO#seq#ip:port sent by leader
             // node->startElection();
             // TODO: delete the member from the memberList and display message accrodingly.
-            
+            int param_seq = atoi(strtok(NULL, "#"));
+            std::string param_ip_port(strtok(NULL, "#"));
+            node->m_queue->push(std::make_pair(param_seq, param_ip_port));
             return "OK";
         }
         
@@ -130,7 +151,9 @@ string Handler::process(Address & from_addr, string recv_msg) {
             MemberListEntry leave_entry(leave_addr, leave_name);
             // delete leaving node from member_list
             node->deleteMember(leave_entry);
-            // TODO: D_LEAVE is sent to the leader, and leader should send out LEAVEANNO
+            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO
+            std::string message_leave = from_addr.getAddress();
+            node->multicastMsg(message_leave, D_LEAVEANNO);
             return "OK";
             
         } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
@@ -142,23 +165,44 @@ string Handler::process(Address & from_addr, string recv_msg) {
             time(&timev);
             nodeMember->updateHeartBeat(node_addr, timev);
             return "OK";
+        } else if (recv_msg.compare(D_ELECTION) == 0) {
+            // TODO: received: ELECTION
+            std::string heardFrom = from_addr.getAddress();
+            // delete leader from member (leader not in member list, just leaderEntry?)
+            // display: leader (username) left the chat,  immediately? TODO
+            std::cout << "NOTICE " << nodeMember->getLeaderName() << "left the chat or crashed" << std::endl;
             
-        } else if (strcmp(msg_type, D_ELECTION) == 0) {
-            
-            // TODO: received: ELECTION (put it in a queue to be built soon)
-            //node->handleElection(from_addr, D_ELECTION);
+            // If hears D_ELECTION from a process with a higher ID,
+            if(from_addr.getAddress().compare(nodeMember->getAddress()) > 0) {
+                //pass to handler thread
+                // TODO: needs to be handled by the main process..? deleted funtion etc error.
+                std::thread thread_election(electionHandler, node);
+                thread_election.detach();
+             } else {
+                // If hears D_ELECTION from a process with a lower ID
+                // send back D_ANSWER and startElection myself
+                node->sendNotice(D_ANSWER, from_addr.getAddress());
+                node->startElection();
+            }
+
             return "OK";
             
         } else if (strcmp(msg_type, D_ANSWER) == 0) {
             
-            // TODO: received: ANSWER  (put it in a queue)
-            //node->handleElection(from_addr, D_ANSWER);
+            // TODO: received: ANSWER
+            if(from_addr.getAddress().compare(nodeMember->getAddress()) > 0 && node->getElectionStatus() == E_WAITANS) {
+                node->updateElectionStatus(E_WAITCOOR);
+            }
             return "OK";
             
         } else if (strcmp(msg_type, D_COOR) == 0) {
-            
-            // TODO: received: COOR (put it in a queue)
-            //node->handleElection(from_addr, D_COOR);
+            std::string leader_name(strtok(NULL, "#"));
+            // TODO: received: COOR
+            if(node->getElectionStatus() == E_WAITCOOR) {
+                node->updateElectionStatus(E_NONE);
+                nodeMember->updateLeader(from_addr, leader_name);
+                node->m_queue->resetSequence();
+            }
             return "OK";
             
         } else {

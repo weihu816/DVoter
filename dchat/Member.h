@@ -104,6 +104,12 @@ public:
     bool isLeader() {
         return (getLeaderAddress().compare(address->getAddress()) == 0);
     }
+    
+    void updateLeader(Address leaderAddr, std::string leaderName) {
+        std::string ip = leaderAddr.getAddressIp();
+        std::string port = leaderAddr.getAddressPort();
+        leaderEntry = new MemberListEntry(ip + ":" + port, leaderName);
+    }
 
     
     // this is the member address list, without user name

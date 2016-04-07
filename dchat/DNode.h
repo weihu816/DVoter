@@ -52,7 +52,6 @@ public:
     int checkHeartbeat(std::string address);
     
     void startElection();
-    void handleElection(Address fromAddr, std::string type);
 
     void addMessage(std::string msg);
     void recvHandler(std::pair<Address, std::string>);
@@ -65,6 +64,8 @@ public:
     Member* getMember();
     DNet* getDNet();
     std::string getUsername();
+    int getElectionStatus();
+    void updateElectionStatus(int new_status);
 
     virtual ~DNode() {
         if(dNet) delete dNet;

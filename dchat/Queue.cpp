@@ -53,6 +53,12 @@ int holdback_queue::getNextSequence()  {
     return sequence_next++;
 }
 
+void holdback_queue::resetSequence() {
+    std::unique_lock<std::mutex> mlock(d_mutex);
+    sequence_seen = 0;
+    sequence_next = 1;
+}
+
 holdback_queue::holdback_queue(int init_seen, DNode * node) : node(node) {
     sequence_seen = init_seen;
     sequence_next = init_seen + 1;
