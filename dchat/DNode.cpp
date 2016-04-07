@@ -263,7 +263,7 @@ void DNode::sendMsg(std::string msg) {
         std::string msgToSend = username + "::" + msg;
         multicastMsg(msgToSend, D_M_MSG);
     } else { // Send Multicast request to the sequencer
-        std::string str_to = std::string(D_CHAT) + "#" + msg;
+        std::string str_to = std::string(D_CHAT) + "#" + username + "::" + msg;
         std::string str_ack;
         Address leader_addr(leader_address);
         dNet->DNsend(&leader_addr, str_to, str_ack, 3);
