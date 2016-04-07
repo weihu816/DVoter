@@ -68,7 +68,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string param_name(strtok(NULL, "#"));
             std::string param_value(param_ip + "#" + param_port + "#" + param_name);
             node->m_queue->push(std::make_pair(param_seq, param_value));
-            
+            node->m_queue->pop();
             return "OK";
 
         } else if (strcmp(msg_type, D_M_MSG) == 0) {
@@ -77,8 +77,8 @@ string Handler::process(Address & from_addr, string recv_msg) {
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_value(strtok(NULL, "#"));
             node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_value));
-            node->addMessage(param_value);
-            
+            //node->addMessage(param_value);
+            node->m_queue->pop();
             return "OK";
         } else if (strcmp(msg_type, D_LEAVEANNO) == 0) { //# D_LEAVEANNO is leader broadcast member leaving
             // this needs to be in the queue and process in order of seq #
@@ -89,6 +89,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_ip_port(strtok(NULL, "#"));
             node->m_queue->push(std::make_pair(param_seq, param_ip_port));
+            node->m_queue->pop();
             return "OK";
         }
         
