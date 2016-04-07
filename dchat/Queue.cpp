@@ -10,7 +10,7 @@ void holdback_queue::pop() {
 #ifdef DEBUGLOG
         std::cout << "\t#holdback_queue handling: " << peek_pair.first << " " << peek_pair.second << std::endl;
 #endif
-        //handle(peek_pair.second.substr(1)); // ignore duplicate?
+        handle(peek_pair.second.substr(1)); // ignore duplicate?
     }
     while (!d_queue.empty() && d_queue.top().first == sequence_seen + 1) {
         T peek_pair = d_queue.top();
@@ -41,7 +41,7 @@ void holdback_queue::handle(std::string msg) {
 #ifdef DEBUGLOG
         //std::cout << "message added to display queue" << std::endl;
 #endif
-        node->addMessage(msg);
+        node->addMessage(msg_body);
 
     }
 }

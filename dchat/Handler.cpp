@@ -73,10 +73,11 @@ string Handler::process(Address & from_addr, string recv_msg) {
 
         } else if (strcmp(msg_type, D_M_MSG) == 0) {
             
-            // received: #MSG#SEQ#Message
+            // received: #MSG#SEQ#username::Message
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_value(strtok(NULL, "#"));
-            node->m_queue->push(std::make_pair(param_seq, param_value));
+            node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_value));
+            node->addMessage(param_value);
             
             return "OK";
         } else if (strcmp(msg_type, D_LEAVEANNO) == 0) { //# D_LEAVEANNO is leader broadcast member leaving

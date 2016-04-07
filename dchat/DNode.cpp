@@ -47,6 +47,9 @@ int DNode::recvLoop() {
  * DESCRIPTION: This function receives chat messages and displays to terminal
  */
 std::string DNode::msgLoop() {
+#ifdef DEBUGLOG
+    std::cout << "\tpop from message_chat_queue" << std::endl;
+#endif
     return message_chat_queue.pop();
 }
 
@@ -237,6 +240,9 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 
 void DNode::addMessage(std::string msg) {
     message_chat_queue.push(msg);
+#ifdef DEBUGLOG
+    std::cout << "\tpush to message_chat_queue" << std::endl;
+#endif
 }
 
 

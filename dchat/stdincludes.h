@@ -57,7 +57,7 @@
 #define ELECTIONTIME 1000
 
 // Multicast messages, start with a #
-#define D_M_MSG         "MSG"               // #MSG#SEQ#Message, multicast from the sequencer
+#define D_M_MSG         "MSG"               // #MSG#SEQ#username::Message, multicast from the sequencer
 #define D_M_ADDNODE     "ADDNODE"           // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
 #define D_LEAVEANNO     "LEAVEANNO"         // #LEAVEANNO#seq#ip:port
 
