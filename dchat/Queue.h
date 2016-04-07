@@ -11,6 +11,8 @@
 #include <mutex>
 #include <condition_variable>
 
+class DNode;
+
 template <typename T>
 class blocking_queue {
 private:
@@ -25,7 +27,6 @@ public:
     void push(T const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
         d_queue.push_back(value);
-        mlock.unlock();
         d_condition.notify_one();
     }
     T pop() {
@@ -43,6 +44,7 @@ typedef std::pair<int, std::string> T;
 
 class holdback_queue {
 private:
+    DNode * node;
     class cmp {
     public:
         cmp() {}
@@ -55,36 +57,13 @@ private:
     int sequence_next;
 
 public:
-    holdback_queue(int init_seen) : sequence_seen(init_seen), sequence_next(init_seen + 1) { }
+    holdback_queue(int init_seen, DNode * node);
     holdback_queue(const holdback_queue&) = delete;
     holdback_queue& operator=(const holdback_queue&) = delete;
     int getSequenceSeen() {return sequence_seen;}
-    void push(T const& value) {
-        std::unique_lock<std::mutex> mlock(d_mutex);
-        mlock.lock();
-        d_queue.push(value);
-        mlock.unlock();
-        d_condition.notify_one();
-    }
-    T pop() {
-        std::unique_lock<std::mutex> mlock(d_mutex);
-        mlock.lock();
-        while (!d_queue.empty() && d_queue.top().first <= sequence_seen) {
-            d_queue.pop();
-        }
-        if (d_queue.empty()) return std::make_pair(-1, "");
-        T rc = d_queue.top();
-        if (rc.first == sequence_seen + 1) {
-            d_queue.pop();
-            return rc;
-        } else {
-            return std::make_pair(-1, "");
-        }
-    }
-    int getNextSequence() {
-        std::unique_lock<std::mutex> mlock(d_mutex);
-        return sequence_next++;
-    }
+    void push(T const& value);
+    void pop();
+    int getNextSequence();
 };
 
 class blocking_priority_queue {
@@ -106,7 +85,6 @@ public:
     void push(T const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
         d_queue.push(value);
-        mlock.unlock();
         d_condition.notify_one();
     }
 

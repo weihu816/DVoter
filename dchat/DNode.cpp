@@ -41,6 +41,15 @@ int DNode::recvLoop() {
     return SUCCESS;
 }
 
+/**
+ * FUNCTION NAME: msgLoop
+ *
+ * DESCRIPTION: This function receives chat messages and displays to terminal
+ */
+std::string DNode::msgLoop() {
+    return message_chat_queue.pop();
+}
+
 //////////////////////////////// NODE INIT AND CLEAN FUNC ////////////////////////////////
 
 
@@ -58,15 +67,14 @@ int DNode::nodeStart() {
         return FAILURE;
     }
     if( introduceSelfToGroup(join_address, false) == FAILURE ) {
-        finishUpThisNode();
         // TODO
         std::cout << "Sorry no chat is active on " << member_node->getAddress()
         << ", try again later." << std::endl;
         return FAILURE;
     }
     std::cout << "Succeed, current users:" << std::endl; // TODO
-    //    printMembers();
-    std::cout << username << " " << member_node->getLeaderAddress() << " (Leader)" << std::endl;
+    std::cout << member_node->getLeaderName() << " " << member_node->getLeaderAddress() << " (Leader)" << std::endl;
+    member_node->printMemberList();
     if (member_node->isLeader()) std::cout << "Waiting for others to join" << std::endl;
     return SUCCESS;
 }
@@ -86,11 +94,11 @@ int DNode::initThisNode() {
 
 
 /**
- * FUNCTION NAME: finishUpThisNode
+ * FUNCTION NAME: nodeLeave
  *
  * DESCRIPTION: Wind up this node and clean up state
  */
-int DNode::finishUpThisNode() {
+int DNode::nodeLeave() {
     
     return 0;
 }
@@ -115,17 +123,12 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
     char * cstr = new char[member_list.length() + 1];
     std::string addr;
     strcpy(cstr, member_list.c_str());
-    std::string ip(strtok(cstr, "#"));
-    std::string port(strtok(NULL, "#"));
-    std::string name(strtok(NULL, "#"));
-    addr = ip + "#" + port;
-    addMember(addr, name, addr.compare(leaderAddr) == 0);
-    char * pch;
-    while ((pch = strtok(NULL, "#")) != NULL) {
-        ip = std::string(pch);
-        port = std::string(strtok(NULL, "#"));
-        name = std::string(strtok(NULL, "#"));
-        addMember(ip + "#" + port, name, addr.compare(leaderAddr) == 0);
+    char * pch = strtok(cstr, "#");
+    while (pch != NULL) {
+        std::string entry(pch);
+        MemberListEntry listEntry(entry);
+        addMember(listEntry.getAddress(), listEntry.username);
+        pch = strtok(NULL, "#");
     }
     
 }
@@ -135,16 +138,13 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
  *
  * DESCRIPTION:
  */
-void DNode::addMember(std::string ip_port, std::string name, bool isLeader){
+void DNode::addMember(std::string ip_port, std::string name){
     
 #ifdef DEBUGLOG
     std::cout << "\tDNode::addMember: " << ip_port  << " " << name << std::endl;
 #endif
 
     member_node->addMember(ip_port, name);
-    if (isLeader) {
-        member_node->leaderEntry = new MemberListEntry(ip_port, name);
-    }
 }
 
 /**
@@ -172,7 +172,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
     std::string self_addr = member_node->getAddress();
 
 #ifdef DEBUGLOG
-    std::cout << "DNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
+    std::cout << "\tDNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
 #endif
 
     if (self_addr.compare(join_addr) == 0) {
@@ -180,9 +180,10 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
         // I am the group booter (first process to join the group). Boot up the group
         std::cout << username << " started a new chat, listening on ";
         std::cout << member_node->getAddress() << std::endl;
-        addMember(join_addr, username, true); // I'm the leader
+        // addMember(join_addr, username, true); // I'm the leader
+        member_node->leaderEntry = new MemberListEntry(join_addr, username);
         
-        m_queue = new holdback_queue(0);
+        m_queue = new holdback_queue(0, this);
         
     } else {
 
@@ -214,12 +215,15 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
             
         } else if (msg_type.compare(D_JOINLIST) == 0) {
             
-            // received: JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
+            // received: JOINLIST#initSeq#leadername#ip1:port1:name1:ip2:port2:name2...
             std::string recv_param = msg_ack.substr(index + 1);
             std::string recv_init_seq = recv_param.substr(0, recv_param.find("#"));
-            std::string recv_member_list = recv_param.substr(recv_param.find("#") + 1);
-            m_queue = new holdback_queue(atoi(recv_init_seq.c_str()));
-            initMemberList(recv_member_list, to_addr.getAddress());
+            std::string recv_name_list = recv_param.substr(recv_param.find("#") + 1);
+            std::string recv_name = recv_name_list.substr(0, recv_name_list.find("#"));
+            std::string recv_list = recv_name_list.substr(recv_name_list.find("#") + 1);
+            m_queue = new holdback_queue(atoi(recv_init_seq.c_str()), this);
+            initMemberList(recv_list, to_addr.getAddress());
+            if (!isSureLeaderAddr) member_node->leaderEntry = new MemberListEntry(join_addr, recv_name);
             
         } else {
             return FAILURE;
@@ -229,6 +233,11 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
     member_node->inGroup = true;
     return SUCCESS;
 }
+
+void DNode::addMessage(std::string msg) {
+    message_chat_queue.push(msg);
+}
+
 
 //////////////////////////////// SEND MSG FUNC ////////////////////////////////
 
@@ -244,8 +253,7 @@ void DNode::sendMsg(std::string msg) {
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
     if (leader_address.compare(self_address) == 0) { // I'm the leader (sequencer)
-        std::string new_msg = std::string(D_M_MSG) + "#" + msg;
-        multicastMsg(new_msg, D_M_MSG);
+        multicastMsg(msg, D_M_MSG);
     } else { // Send Multicast request to the sequencer
         std::string str_to = std::string(D_CHAT) + "#" + username + "#" + msg;
         std::string str_ack;
@@ -267,11 +275,15 @@ void DNode::multicastMsg(std::string msg, std::string type) {
     int seq = m_queue->getNextSequence();
 
 #ifdef DEBUGLOG
-    std::cout << "\tmulticastMsg: seq: " << seq << " msg: " << msg << " " << type << std::endl;
+    std::cout << "\tmulticastMsg: seq: " << seq << " msg: " << msg << " type: " << type << std::endl;
 #endif
-    
-    auto list = member_node->memberList;
+
     std::string send_msg =  "#" + type + "#" + std::to_string(seq) + "#" + msg;
+    // Send to self
+    m_queue->push(std::make_pair(seq, type + "#" + msg));
+    m_queue->pop();
+    // Send to group members
+    auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         Address addr((*iter).getAddress());
         std::string ack;

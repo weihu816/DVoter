@@ -33,7 +33,7 @@ int DNet::DNinit() {
     // NULL means
     if ((rv = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return NULL;
+        return FAILURE;
     }
     
     // loop through all the results and bind to the first we can
@@ -58,7 +58,7 @@ int DNet::DNinit() {
     
     if (p == NULL) {
         fprintf(stderr, "listener: failed to bind socket\n");
-        return NULL;
+        return FAILURE;
     }
 
     freeaddrinfo(servinfo);
@@ -180,7 +180,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     }
 
 #ifdef DEBUGLOG
-    std::cout << "DNet::DNsend: " << numbytes << " bytes to " << addr->getAddress() << std::endl;
+    std::cout << "\tDNet::DNsend: receive: " << data << std::endl;
 #endif
 
     ack = std::string(buf, numbytes);
@@ -213,10 +213,20 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
                             get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
     fromaddr.port = ntohs(get_in_port((struct sockaddr *) &their_addr));
     data = std::string(buf, numbytes);
-    
+
+#ifdef DEBUGLOG
+    std::cout << "\treceive: " << data << "from "
+    << inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s)
+    <<std::endl;
+#endif
+
     // Handle received message
     std::string recv_msg(buf);
     std::string send_msg = handler->process(fromaddr, recv_msg);
+
+#ifdef DEBUGLOG
+    printf("\tsend back: %s\n", send_msg.c_str());
+#endif
 
     // Fail to handle message, simply no sending back, let the send timeout
     if (send_msg.empty()) return FAILURE;
@@ -229,13 +239,6 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
         return FAILURE;
     }
 
-#ifdef DEBUGLOG
-    std::cout << "\treceive: " << data << std::endl;
-    printf("\tlistener: got packet from %s\n",
-           inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s));
-    printf("\tsend back: \"%s\"\n", buf);
-#endif
-    
     return SUCCESS;
 }
 

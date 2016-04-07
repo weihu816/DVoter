@@ -31,6 +31,10 @@ string Handler::process(Address from_addr, string recv_msg) {
     char * cstr = new char[recv_msg.length() + 1];
     strcpy(cstr, recv_msg.c_str());
     char * msg_type = strtok(cstr, "#");
+
+#ifdef DEBUGLOG
+    std::cout << "\tMessage Type: " << msg_type << std::endl;
+#endif
     
     Member * nodeMember = node->getMember();
     
@@ -43,8 +47,7 @@ string Handler::process(Address from_addr, string recv_msg) {
             std::string param_ip(strtok(NULL, "#"));
             std::string param_port(strtok(NULL, "#"));
             std::string param_name(strtok(NULL, "#"));
-            std::string param_key(msg_type);
-            std::string param_value(param_ip + ":" + param_port + ":" + param_name);
+            std::string param_value(param_ip + "#" + param_port + "#" + param_name);
             node->m_queue->push(std::make_pair(param_seq, param_value));
             
             return "OK";
@@ -93,18 +96,20 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // #ADDNODE#SEQ#ip#port#name, multicast addnode message from the sequencer
                 // This message must be delivered once (at least onece)
                 std::string message_addmember = from_addr.getAddressIp() + "#" + recv_port + "#" + recv_name;
-                // TODO: multicast is blocking
+                
+                // Start a thread to do the multicast to avoid blocking self
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
-
+                
                 std::string member_addr = from_addr.getAddressIp() + ":" + recv_port;
                 std::string member_name = recv_name;
-                node->addMember(member_addr, member_name, false);
+                node->addMember(member_addr, member_name);
                 int initSeq = node->m_queue->getSequenceSeen();
-                
                 // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
                 std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +
-                "#" + nodeMember->getMemberList();
-                
+                "#" + node->getUsername() + "#" + nodeMember->getMemberList();
+#ifdef DEBUGLOG
+                std::cout << "\tHandling Returns: " << message << std::endl;
+#endif
                 return message;
                 
             } else {

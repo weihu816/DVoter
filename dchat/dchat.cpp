@@ -27,8 +27,8 @@ void usage(std::string msg) {
  */
 void sendMsg(DNode * node) {
     while (1) {
-        if (std::cin.eof()) {
-            // TODO
+        if (std::cin.eof()) { // Control-D / EOF: shutdown
+            node->nodeLeave();
         }
         char msg[MAXBUFLEN];
         std::cin.getline(msg, MAXBUFLEN);
@@ -37,6 +37,19 @@ void sendMsg(DNode * node) {
         }
     }
 }
+
+/**
+ * FUNCTION NAME: recvMsg
+ *
+ * DESCRIPTION: thread keep listening to incoming messages
+ */
+void displayMsg(DNode * node) {
+    while (1) {
+        std::string msg = node->msgLoop();
+        std::cout << msg << std::endl;
+    }
+}
+
 
 /**
  * FUNCTION NAME: recvMsg
@@ -103,14 +116,17 @@ int main(int argc, const char * argv[]) {
     std::thread thread_sendMsg(sendMsg, node);
     // Thread: Receive chat messages
     std::thread thread_recvMsg(recvMsg, node);
+    // Thread: Receive chat messages
+    std::thread thread_displayMsg(displayMsg, node);
     // Thread: Track heartbeat
     // std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
+    thread_displayMsg.join();
     // thread_heartbeat.join();
     
     // Clean up and quit
-    node->finishUpThisNode();
+    node->nodeLeave();
     delete node;
 }

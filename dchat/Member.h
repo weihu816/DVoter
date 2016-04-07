@@ -55,9 +55,11 @@ public:
     int port;
     std::string username;
     
-    MemberListEntry(std::string address, std::string username);
+    MemberListEntry(std::string address, std::string name);
+    MemberListEntry(std::string entry);
     MemberListEntry(const MemberListEntry &anotherMLE);
     MemberListEntry& operator =(const MemberListEntry &anotherMLE);
+    bool operator ==(const MemberListEntry &anotherMLE);
 
     std::string getAddress() {
         return ip + ":" + std::to_string(port);
@@ -83,7 +85,6 @@ public:
     int nnb;                                // number of my neighbors (distributed)
     std::unordered_map<std::string, time_t> heartBeatList;
     std::vector<MemberListEntry> memberList;                // Membership table
-    std::vector<MemberListEntry>::iterator leaderPos;       // My position in the membership table
 
     MemberListEntry * leaderEntry;                          // The leader
 
@@ -95,6 +96,9 @@ public:
     }
     std::string getLeaderAddressPort() {
         return std::to_string(leaderEntry->port);
+    }
+    std::string getLeaderName() {
+        return  leaderEntry->username;
     }
     
     bool isLeader() {
@@ -108,6 +112,9 @@ public:
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
             if ((*iter).getEntry() ==  entry.getEntry()) return;
         }
+#ifdef DEBUGLOG
+        std::cout << "\tMember::addMember: " << entry.getEntry() << std::endl;
+#endif
         memberList.push_back(entry);
     }
 
@@ -119,14 +126,19 @@ public:
         }
     }
 
-    // with user name
     std::string getMemberList() {
-        std::string list;
+        std::string list = "";
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
             list += (*iter).getEntry();
-            if (iter != memberList.end()-1) list += ":";
+            if (iter != memberList.end()-1) list += "#";
         }
         return list;
+    }
+    
+    void printMemberList() {
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            std::cout << (*iter).username << " " << (*iter).getAddress() << std::endl;
+        }
     }
     
     std::vector<MemberListEntry> getMemberEntryList() {

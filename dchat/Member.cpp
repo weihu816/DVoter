@@ -42,9 +42,18 @@ bool Address::operator ==(const Address& anotherAddress) {
  * Main use: memberList addr track
  */
 MemberListEntry::MemberListEntry(std::string address, std::string name) : username(name) {
-    size_t pos = address.find(":");
+    size_t pos = address.find_last_of(":");
     ip = address.substr(0, pos);
-    port = stoi(address.substr(pos + 1, address.size()-pos-1));
+    port = stoi(address.substr(pos + 1));
+}
+
+MemberListEntry::MemberListEntry(std::string entry) {
+    size_t pos_1 = entry.find_last_of(":");
+    username = entry.substr(pos_1 + 1);
+    std::string ip_port = entry.substr(0, pos_1);
+    size_t pos_2 = ip_port.find_last_of(":");
+    ip = ip_port.substr(0, pos_2);
+    port = stoi(ip_port.substr(pos_2 + 1));
 }
 
 
@@ -52,22 +61,26 @@ MemberListEntry::MemberListEntry(std::string address, std::string name) : userna
  * Copy constructor
  */
 MemberListEntry::MemberListEntry(const MemberListEntry &anotherMLE) {
-//    this->heartbeat = anotherMLE.heartbeat;
     this->ip = anotherMLE.ip;
     this->port = anotherMLE.port;
-//    this->timestamp = anotherMLE.timestamp;
+    this->username = anotherMLE.username;
 }
 
 /**
  * Assignment operator overloading
  */
 MemberListEntry& MemberListEntry::operator =(const MemberListEntry &anotherMLE) {
-    MemberListEntry temp(anotherMLE);
-//    std::swap(heartbeat, temp.heartbeat);
-    std::swap(ip, temp.ip);
-    std::swap(port, temp.port);
-//    std::swap(timestamp, temp.timestamp);
+    this->ip = anotherMLE.ip;
+    this->port = anotherMLE.port;
+    this->username = anotherMLE.username;
     return *this;
+}
+
+/**
+ * Compare two MemberListEntry objects
+ */
+bool MemberListEntry::operator ==(const MemberListEntry& anotherEntry) {
+    return (ip.compare(anotherEntry.ip) == 0) && (port == anotherEntry.port) && (username == anotherEntry.username);
 }
 
 /**

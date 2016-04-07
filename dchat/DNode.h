@@ -11,7 +11,7 @@
 #include "stdincludes.h"
 #include "Member.h"
 #include "DNet.h"
-#include "BlockingQueue.h"
+#include "Queue.h"
 
 class Handler;
 
@@ -28,7 +28,7 @@ private:
     std::string join_address;
     std::string username;
     int election_status = E_NONE; //not in election
-    blocking_queue<std::string> message_chat_queue_ready;
+    blocking_queue<std::string> message_chat_queue;
 
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
@@ -38,12 +38,13 @@ public:
     int nodeStart(); // introduce and start functions
     int initThisNode(); // parameter initialization
     int introduceSelfToGroup(std::string joinAddress, bool isSureLeaderAddr);
-    int finishUpThisNode(); // Wind up this node and clean up state
+    int nodeLeave(); // Wind up this node and clean up state
     void initMemberList(std::string member_list, std::string leaderAddr);
-    void addMember(std::string ip_port, std::string name, bool isLeader);
+    void addMember(std::string ip_port, std::string name);
     void deleteMember(MemberListEntry member); // delete a member
     
     int recvLoop();
+    std::string msgLoop();
     void nodeLoop();
     
     static int enqueueWrapper(void *env, char *buff, int size);
@@ -53,7 +54,7 @@ public:
     void startElection();
     void handleElection(Address fromAddr, std::string type);
 
-    void checkMessages();
+    void addMessage(std::string msg);
     void recvHandler(std::pair<Address, std::string>);
     
     void sendMsg(std::string msg);
@@ -66,9 +67,9 @@ public:
     std::string getUsername();
 
     virtual ~DNode() {
-        delete dNet;
-        delete member_node;
-        delete m_queue;
+        if(dNet) delete dNet;
+        if(member_node) delete member_node;
+        if (m_queue) delete m_queue;
     }
 };
 

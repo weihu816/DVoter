@@ -57,19 +57,19 @@
 #define ELECTIONTIME 1000
 
 // Multicast messages, start with a #
-#define D_M_MSG         "MSG"                      // #MSG#SEQ#Message, multicast from the sequencer
-#define D_M_ADDNODE     "ADDNODE"                  // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
-#define D_LEAVEANNO     "LEAVEANNO"                // #LEAVEANNO#seq#ip:port
+#define D_M_MSG         "MSG"               // #MSG#SEQ#Message, multicast from the sequencer
+#define D_M_ADDNODE     "ADDNODE"           // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
+#define D_LEAVEANNO     "LEAVEANNO"         // #LEAVEANNO#seq#ip:port
 
-#define D_CHAT          "CHAT"                      // CHAT#Message - From node to sequencer
-#define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT#Name
-#define D_JOINLEADER    "JOINLEADER"                // JOINLEADER#LEADERIP#LEADERPORT
-#define D_JOINLIST      "JOINLIST"                  // JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
-#define D_LEAVE         "LEAVE"                     // LEAVE#name#ip:port
-#define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT detect failed node
-#define D_ELECTION      "ELECTION"                  // ELECTION, start election
-#define D_ANSWER        "ANSWER"                    // ANSWER, answer to election message
-#define D_COOR          "COOR"                      // COOR, announce leadership
+#define D_CHAT          "CHAT"              // CHAT#Message - From node to sequencer
+#define D_JOINREQ       "JOINREQ"           // JOINREQ#PORT#Name
+#define D_JOINLEADER    "JOINLEADER"        // JOINLEADER#LEADERIP#LEADERPORT
+#define D_JOINLIST      "JOINLIST"          // JOINLIST#initSeq#LEADERNAME#ip1:port1:name1:...
+#define D_LEAVE         "LEAVE"             // LEAVE#name#ip:port
+#define D_HEARTBEAT     "HEARTBEAT"         // HEARTBEAT detect failed node
+#define D_ELECTION      "ELECTION"          // ELECTION, start election
+#define D_ANSWER        "ANSWER"            // ANSWER, answer to election message
+#define D_COOR          "COOR"              // COOR, announce leadership
 
 // Election status
 #define E_NONE  0       // not in election

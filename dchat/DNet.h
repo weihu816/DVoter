@@ -18,7 +18,6 @@ private:
     Handler * handler;
     
 public:
-    //DNet() {  };
     DNet(Handler * handler);
     DNet(DNet &anotherDNet) = delete;
     DNet& operator = (DNet &anotherDNet) = delete;

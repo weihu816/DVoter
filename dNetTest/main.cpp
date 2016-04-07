@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include "DNet.h"
-#include "BlockingQueue.h"
+#include "Queue.h"
 
 using namespace std;
 
@@ -37,13 +37,7 @@ void testQueue() {
 }
 
 void testHoldBackQueue() {
-    holdback_queue pq(1);
-    pq.push(std::make_pair(3, "aa"));
-    pq.push(std::make_pair(4, "bb"));
-    pq.push(std::make_pair(2, "cc"));
-    cout << pq.pop().first << endl;
-    cout << pq.pop().first << endl;
-    cout << pq.pop().first << endl;
+
 }
 
 int main(int argc, const char * argv[]) {
