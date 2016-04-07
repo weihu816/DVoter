@@ -98,7 +98,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // received: CHAT#Message - From node to sequencer
             std::string recv_msg(strtok (NULL, "#"));
             if (nodeMember->isLeader()) { // Only leader can multicast messages
-                // msg to be sent: #MSG#SEQ#Message
+                // msg to be sent: #MSG#SEQ#username#Message
                 std::string message = recv_msg;
                 node->multicastMsg(message, D_M_MSG);
             }

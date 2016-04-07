@@ -254,7 +254,8 @@ void DNode::sendMsg(std::string msg) {
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
     if (leader_address.compare(self_address) == 0) { // I'm the leader (sequencer)
-        multicastMsg(msg, D_M_MSG);
+        std::string msgToSend = username + "#" + msg;
+        multicastMsg(msgToSend, D_M_MSG);
     } else { // Send Multicast request to the sequencer
         std::string str_to = std::string(D_CHAT) + "#" + username + "#" + msg;
         std::string str_ack;
@@ -293,14 +294,13 @@ void DNode::multicastMsg(std::string msg, std::string type) {
 //            member_node->deleteMember(*iter);
 //            multicastMsg(iter->getAddress(), D_LEAVEANNO);
         }
-    // Send to self
-    m_queue->push(std::make_pair(seq, type + "#" + msg));
-    m_queue->pop();
 #ifdef DEBUGLOG
         std::cout << "\tMulticast: " << send_msg << " to: " << addr.getAddress() << std::endl;
 #endif
-
     }
+    // Send to self
+    m_queue->push(std::make_pair(seq, "#"+ type + "#" + msg));
+    m_queue->pop();
 }
 
 
