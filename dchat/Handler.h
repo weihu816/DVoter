@@ -17,7 +17,7 @@ private:
     
 public:
     Handler(DNode * node) : node(node) { }
-    std::string process(Address from_addr, std::string msg);
+    std::string process(Address & from_addr, std::string msg);
 };
 
 #endif /* HANDLER_H */

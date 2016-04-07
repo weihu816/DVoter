@@ -19,7 +19,7 @@ vector<string> splitstr(string ori, char deli) {
     return tmp;
 }
 
-string Handler::process(Address from_addr, string recv_msg) {
+string Handler::process(Address & from_addr, string recv_msg) {
     
 #ifdef DEBUGLOG
     std::cout << "\tHandling message: " + recv_msg << " from: " << from_addr.getAddress() << std::endl;
@@ -96,7 +96,7 @@ string Handler::process(Address from_addr, string recv_msg) {
                 // #ADDNODE#SEQ#ip#port#name, multicast addnode message from the sequencer
                 // This message must be delivered once (at least onece)
                 std::string message_addmember = from_addr.getAddressIp() + "#" + recv_port + "#" + recv_name;
-                
+
                 // Start a thread to do the multicast to avoid blocking self
                 node->multicastMsg(message_addmember, D_M_ADDNODE);
                 

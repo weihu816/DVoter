@@ -63,6 +63,7 @@ public:
     int getSequenceSeen() {return sequence_seen;}
     void push(T const& value);
     void pop();
+    void handle(std::string msg);
     int getNextSequence();
 };
 

@@ -158,7 +158,7 @@ public:
         //if found, return the heartbeat, otherwise return 0
         std::unordered_map<std::string,int long>::const_iterator got = heartBeatList.find (addrKey);
         if(got == heartBeatList.end()) {
-            return NULL;
+            return 0;
         } else {
             return got->second;
         }

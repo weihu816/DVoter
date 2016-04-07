@@ -12,8 +12,8 @@ OBJS		= ${C_OBJS}
 
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-CC_FLAGS	= -std=c++11 -g -Wall
-LD_FLAGS	= -std=c++11 -g -Wall
+CC_FLAGS	= -std=c++11 -g -pthread -Wall
+LD_FLAGS	= -std=c++11 -g -pthread -Wall
 
 .cpp.o:
 	@echo "Compiling each source file separately ..."
@@ -24,7 +24,7 @@ LD_FLAGS	= -std=c++11 -g -Wall
 # Default executable
 #
 all:
-	g++ -std=c++11 -g -Wall *.cpp
+	g++ -std=c++11 -pthread -g -Wall *.cpp
 
 dchat: $(EXE)
 

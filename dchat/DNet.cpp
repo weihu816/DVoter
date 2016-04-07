@@ -38,7 +38,7 @@ int DNet::DNinit() {
     
     // loop through all the results and bind to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
             perror("socket");
             continue;
         }
@@ -110,14 +110,14 @@ in_port_t get_in_port(struct sockaddr *sa)
  */
 int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times) {
 #ifdef DEBUGLOG
-    std::cout << "\tDNet::DNsend: " << addr->getAddress() << std::endl;
+    std::cout << "\tDNet::DNsend: " << addr->getAddress() << " " << data << std::endl;
 #endif
     if (times <= 0) return FAILURE;
 
     int sockfd_w = 0;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    size_t numbytes;
+    long numbytes;
     
     // set timeout val
     struct timeval tv;
@@ -143,11 +143,11 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
     // loop through all the results and make a socket
     for (p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd_w = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+        if ((sockfd_w = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
             perror("stub: socket error");
             continue;
         }
-        if (setsockopt(sockfd_w, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) == -1) {
+        if (setsockopt(sockfd_w, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) < 0) {
             perror("setsockopt");
             return FAILURE;
         }
@@ -196,7 +196,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
  */
 int DNet::DNrecv(Address &fromaddr, std::string &data) {
 
-    size_t numbytes;
+    long numbytes;
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof their_addr;
     char buf[MAXBUFLEN];
@@ -215,9 +215,10 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     data = std::string(buf, numbytes);
 
 #ifdef DEBUGLOG
-    std::cout << "\treceive: " << data << "from "
+    std::cout << "\treceive: " << data << " from "
     << inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s)
-    <<std::endl;
+    << ":" << ntohs(get_in_port((struct sockaddr *) &their_addr))
+    << std::endl;
 #endif
 
     // Handle received message
@@ -261,7 +262,7 @@ int DNet::DNinfo(std::string & addr) {
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == NULL) continue;
         // mac:en0, linuxs:eth0, unix:em1
-        if ((strcmp(ifa->ifa_name, "en0") == 0) && (ifa->ifa_addr->sa_family == AF_INET)) {
+        if ((strcmp(ifa->ifa_name, "em1") == 0) && (ifa->ifa_addr->sa_family == AF_INET)) {
             int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host,
                                 NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             if (s != 0) {

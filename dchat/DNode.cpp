@@ -145,6 +145,7 @@ void DNode::addMember(std::string ip_port, std::string name){
 #endif
 
     member_node->addMember(ip_port, name);
+    std::cout << "NOTICE " << name << " joined on " << ip_port << std::endl;
 }
 
 /**
@@ -191,7 +192,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
         std::cout << username << " joining a new chat on " << join_addr << ", listening on ";
         std::cout << member_node->getAddress() << std::endl;
         // Requst to join by contacting the member
-        std::string msg_to = std::string(D_JOINREQ) + "#" + std::to_string(to_addr.port) + "#" + username;
+        std::string msg_to = std::string(D_JOINREQ) + "#" + std::to_string(member_node->address->port) + "#" + username;
         std::string msg_ack;
         if (dNet->DNsend(&to_addr, msg_to, msg_ack, 3) != SUCCESS) return FAILURE;
         // Receive member lists from the leader, then save the leader address
@@ -279,9 +280,6 @@ void DNode::multicastMsg(std::string msg, std::string type) {
 #endif
 
     std::string send_msg =  "#" + type + "#" + std::to_string(seq) + "#" + msg;
-    // Send to self
-    m_queue->push(std::make_pair(seq, type + "#" + msg));
-    m_queue->pop();
     // Send to group members
     auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
@@ -295,7 +293,9 @@ void DNode::multicastMsg(std::string msg, std::string type) {
 //            member_node->deleteMember(*iter);
 //            multicastMsg(iter->getAddress(), D_LEAVEANNO);
         }
-        
+    // Send to self
+    m_queue->push(std::make_pair(seq, type + "#" + msg));
+    m_queue->pop();
 #ifdef DEBUGLOG
         std::cout << "\tMulticast: " << send_msg << " to: " << addr.getAddress() << std::endl;
 #endif
