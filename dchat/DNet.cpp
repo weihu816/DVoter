@@ -110,7 +110,7 @@ in_port_t get_in_port(struct sockaddr *sa)
  */
 int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times) {
 #ifdef DEBUGLOG
-    std::cout << "DNet::DNsend: " << addr->getAddress() << std::endl;
+    std::cout << "\tDNet::DNsend: " << addr->getAddress() << std::endl;
 #endif
     if (times <= 0) return FAILURE;
 
@@ -121,7 +121,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
     // set timeout val
     struct timeval tv;
-    tv.tv_sec = 3;
+    tv.tv_sec = 6;
     tv.tv_usec = 0;
     
     // receive msg from server, for ack
@@ -216,7 +216,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     
     // Handle received message
     std::string recv_msg(buf);
-    std::string send_msg = handler->process(fromaddr, buf);
+    std::string send_msg = handler->process(fromaddr, recv_msg);
 
     // Fail to handle message, simply no sending back, let the send timeout
     if (send_msg.empty()) return FAILURE;
@@ -230,11 +230,10 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     }
 
 #ifdef DEBUGLOG
-    printf("listener: got packet from %s\n",
+    std::cout << "\treceive: " << data << std::endl;
+    printf("\tlistener: got packet from %s\n",
            inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s));
-    printf("listener: packet is %d bytes long\n", (int) numbytes);
-    printf("listener: packet contains \"%s\"\n", buf);
-    std::cout << "data: " << data << std::endl;
+    printf("\tsend back: \"%s\"\n", buf);
 #endif
     
     return SUCCESS;

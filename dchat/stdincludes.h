@@ -61,8 +61,8 @@
 #define D_M_ADDNODE     "ADDNODE"                  // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
 #define D_LEAVEANNO     "LEAVEANNO"                // #LEAVEANNO#seq#ip:port
 
-#define D_CHAT          "CHAT"                      // CHAT#Name#Message - From node to sequencer
-#define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT
+#define D_CHAT          "CHAT"                      // CHAT#Message - From node to sequencer
+#define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT#Name
 #define D_JOINLEADER    "JOINLEADER"                // JOINLEADER#LEADERIP#LEADERPORT
 #define D_JOINLIST      "JOINLIST"                  // JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
 #define D_LEAVE         "LEAVE"                     // LEAVE#name#ip:port

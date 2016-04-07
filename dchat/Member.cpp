@@ -75,7 +75,7 @@ MemberListEntry& MemberListEntry::operator =(const MemberListEntry &anotherMLE) 
  */
 Member::Member(const Member &anotherMember) {
     *this->address = *anotherMember.address;
-    *this->leaderAddr = *anotherMember.leaderAddr;
+    *this->leaderEntry = *anotherMember.leaderEntry;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
     this->nnb = anotherMember.nnb;
@@ -91,7 +91,7 @@ Member::Member(const Member &anotherMember) {
  */
 Member& Member::operator =(const Member& anotherMember) {
     *this->address = *anotherMember.address;
-    *this->leaderAddr = *anotherMember.leaderAddr;
+    *this->leaderEntry = *anotherMember.leaderEntry;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
     this->nnb = anotherMember.nnb;
