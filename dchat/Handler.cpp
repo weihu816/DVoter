@@ -166,15 +166,15 @@ string Handler::process(Address & from_addr, string recv_msg) {
 #endif
             return "OK";
         } else if (recv_msg.compare(D_ELECTION) == 0) {
-            // TODO: received: ELECTION
-            std::string heardFrom = from_addr.getAddress();
+            // TODO: received: ELECTION#ip:port
+            std::string heardFrom(strtok(NULL, "#"));
             // delete leader from member (leader not in member list, just leaderEntry?)
             // display: leader (username) left the chat,  immediately? TODO
             std::cout << "NOTICE " << nodeMember->getLeaderName() << "left the chat or crashed" << std::endl;
             // TODO : display (in election) ? something about leader missing?
             
             // If hears D_ELECTION from a process with a higher ID,
-            if(from_addr.getAddress().compare(nodeMember->getAddress()) > 0) {
+            if(heardFrom.compare(nodeMember->getAddress()) > 0) {
                 //pass to handler thread
                 // TODO: needs to be handled by the main process..? deleted funtion etc error.
                 std::thread thread_election(electionHandler, node);
@@ -182,7 +182,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
              } else {
                 // If hears D_ELECTION from a process with a lower ID
                 // send back D_ANSWER and startElection myself
-                node->sendNotice(D_ANSWER, from_addr.getAddress());
+                node->sendNotice(D_ANSWER, heardFrom);
                 node->startElection();
             }
 
@@ -190,18 +190,21 @@ string Handler::process(Address & from_addr, string recv_msg) {
             
         } else if (strcmp(msg_type, D_ANSWER) == 0) {
             
-            // TODO: received: ANSWER
-            if(from_addr.getAddress().compare(nodeMember->getAddress()) > 0 && node->getElectionStatus() == E_WAITANS) {
+            // TODO: received: ANSWER#ip:port
+            std::string heardFrom(strtok(NULL, "#"));
+            if(heardFrom.compare(nodeMember->getAddress()) > 0 && node->getElectionStatus() == E_WAITANS) {
                 node->updateElectionStatus(E_WAITCOOR);
             }
             return "OK";
             
         } else if (strcmp(msg_type, D_COOR) == 0) {
+            // received: COOR#name#ip:port
             std::string leader_name(strtok(NULL, "#"));
+            std::string heardFrom(strtok(NULL, "#"));
             // TODO: received: COOR
             if(node->getElectionStatus() == E_WAITCOOR) {
                 node->updateElectionStatus(E_NONE);
-                nodeMember->updateLeader(from_addr, leader_name);
+                nodeMember->updateLeader(heardFrom, leader_name);
                 node->m_queue->resetSequence();
             }
             return "OK";

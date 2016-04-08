@@ -369,12 +369,12 @@ void DNode::startElection() {
     auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         if(iter->getAddress().compare(member_node->getAddress()) > 0) {
-            sendNotice(D_ELECTION,iter->getAddress());
+            sendNotice(std::string(D_ELECTION)+"#"+member_node->getAddress(),iter->getAddress());
         }
     }
     //also send to old leader in case of false alarm?
     if(member_node->getLeaderAddress().compare(member_node->getAddress()) > 0) {
-        sendNotice(D_ELECTION,member_node->getLeaderAddress());
+        sendNotice(std::string(D_ELECTION)+"#"+member_node->getAddress(),member_node->getLeaderAddress());
     }
     
     // wait for some ANSWER, sleep? RECV in another thread so we are okay?
@@ -383,7 +383,7 @@ void DNode::startElection() {
     std::this_thread::sleep_for(sleepTime);
     // if hears from no process with higher IDs, then it broadcasts D_COOR.
     if(election_status == E_WAITANS) {
-        multicastNotice(D_COOR);
+        multicastNotice(std::string(D_COOR)+"#"+getUsername()+"#"+member_node->getAddress());
         updateElectionStatus(E_NONE);
         member_node->updateLeader(*member_node->address, username);
         m_queue->resetSequence();

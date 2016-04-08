@@ -67,9 +67,9 @@
 #define D_JOINLIST      "JOINLIST"          // JOINLIST#initSeq#LEADERNAME#ip1:port1:name1:...
 #define D_LEAVE         "LEAVE"             // LEAVE#name#ip:port
 #define D_HEARTBEAT     "HEARTBEAT"         // HEARTBEAT#ip:port detect failed node
-#define D_ELECTION      "ELECTION"          // ELECTION, start election
-#define D_ANSWER        "ANSWER"            // ANSWER, answer to election message
-#define D_COOR          "COOR"              // COOR, announce leadership
+#define D_ELECTION      "ELECTION"          // ELECTION#ip:port, start election
+#define D_ANSWER        "ANSWER"            // ANSWER#ip:port, answer to election message
+#define D_COOR          "COOR"              // COOR#name#ip:port, announce leadership
 
 // Election status
 #define E_NONE  0       // not in election
