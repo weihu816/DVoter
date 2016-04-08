@@ -102,7 +102,9 @@ int DNode::initThisNode() {
  * DESCRIPTION: Wind up this node and clean up state
  */
 int DNode::nodeLeave() {
-    sendNotice(D_LEAVE, member_node->getLeaderAddress());
+    sendNotice(std::string(D_LEAVE)+"#"+getUsername()+"#"+member_node->getAddress(),
+               member_node->getLeaderAddress());
+    
     return SUCCESS;
 }
 
@@ -162,6 +164,18 @@ void DNode::deleteMember(std::string memberAddr){
 #endif
     std::string memberName = member_node->deleteMember(memberAddr);
     std::cout << "NOTICE " << memberName << " left the chat or crashed." << std::endl;
+}
+
+/**
+ * FUNCTION NAME: clear member list
+ *
+ * DESCRIPTION: empty memberlist
+ */
+void DNode::clearMembers() {
+#ifdef DEBUGLOG
+    std::cout << "DNode::clear Memberlist... " << std::endl;
+#endif
+    member_node->clearMemberList();
 }
 
 

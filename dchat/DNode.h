@@ -42,6 +42,7 @@ public:
     void initMemberList(std::string member_list, std::string leaderAddr);
     void addMember(std::string ip_port, std::string name);
     void deleteMember(std::string ip_port); // delete a member
+    void clearMembers(); //delete all members
     
     int recvLoop();
     std::string msgLoop();

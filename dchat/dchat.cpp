@@ -29,6 +29,7 @@ void sendMsg(DNode * node) {
     while (1) {
         if (std::cin.eof()) { // Control-D / EOF: shutdown
             node->nodeLeave();
+            exit(0);
         }
         char msg[MAXBUFLEN];
         std::cin.getline(msg, MAXBUFLEN);

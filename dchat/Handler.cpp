@@ -149,7 +149,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
 
             // delete leaving node from member_list
             node->deleteMember(leave_addr);
-            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO#name#ip:port
+            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO#seq#name#ip:port
             node->multicastMsg(leave_name+"#"+leave_addr, D_LEAVEANNO);
             return "OK";
             

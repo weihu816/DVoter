@@ -45,11 +45,18 @@ void holdback_queue::handle(std::string msg) {
 
     } else if (msg_type.compare(D_LEAVEANNO) == 0) {
         // name#ip:port
-        // TODO: delete the member from the memberList and display message accrodingly.
-        node->deleteMember(msg_body);
-        std::string name = msg_body.substr(0, msg_body.find("#"));
-        // display notice on stdout
-        std::cout << "NOTICE: " << name << " left the char or crashed" << std::endl;
+        std::string leader_addr = node->getMember()->getLeaderAddress();
+        std::string my_addr = node->getMember()->getAddress();
+        if (leader_addr.compare(my_addr) == 0) {     // if i am leader, i have already deleted
+            return;
+        }
+        else {      // i am a member, i need to delete the leaving member
+            // TODO: delete the member from the memberList and display message accrodingly.
+            node->deleteMember(msg_body);
+            std::string name = msg_body.substr(0, msg_body.find("#"));
+            // display notice on stdout
+            std::cout << "NOTICE: " << name << " left the char or crashed" << std::endl;
+        }
     }
 }
 
