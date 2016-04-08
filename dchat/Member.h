@@ -68,6 +68,10 @@ public:
     std::string getEntry() {
         return getAddress() + ":" + username;
     }
+    
+    std::string getUsername() {
+        return username;
+    }
 };
 
 
@@ -122,6 +126,8 @@ public:
         std::cout << "\tMember::addMember: " << entry.getEntry() << std::endl;
 #endif
         memberList.push_back(entry);
+        time_t curtime;
+        updateHeartBeat(ip_port, time(&curtime));
     }
 
     std::string deleteMember(std::string memberAddr) {

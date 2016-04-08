@@ -81,11 +81,12 @@ string Handler::process(Address & from_addr, string recv_msg) {
             node->m_queue->pop();
             return "OK";
         } else if (strcmp(msg_type, D_LEAVEANNO) == 0) {
-            // TODO: received: #LEAVEANNO#seq#ip:port sent by leader
+            // TODO: received: #LEAVEANNO#seq#name#ip:port sent by leader
             int param_seq = atoi(strtok(NULL, "#"));
-            std::string param_ip_port(strtok(NULL, "#"));
-            node->m_queue->push(std::make_pair(param_seq, param_ip_port));
+            std::string param_name_addr(strtok(NULL, "#"));
+            node->m_queue->push(std::make_pair(param_seq, param_name_addr));
             node->m_queue->pop();
+            
             return "OK";
         }
         
@@ -140,23 +141,23 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 return message;
 
             }
-        } else if (strcmp(msg_type, D_LEAVE) == 0) { // maybe D_LEAVE without name, just send leave?
+        } else if (strcmp(msg_type, D_LEAVE) == 0) {    //can only be received by leader
             
             // TODO: received: LEAVE#name#ip:port
-            // std::string leave_name(strtok(NULL, "#"));
+            std::string leave_name(strtok(NULL, "#"));
             std::string leave_addr(strtok(NULL, "#"));
 
             // delete leaving node from member_list
             node->deleteMember(leave_addr);
-            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO #name#ip:port
-            node->multicastMsg(leave_addr, D_LEAVEANNO); //maybe don't need name?
+            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO#name#ip:port
+            node->multicastMsg(leave_name+"#"+leave_addr, D_LEAVEANNO);
             return "OK";
             
         } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
             
-            // received: HEARTBEAT
+            // received: HEARTBEAT#ip:port
             // know node at from_addr is still there, update heartbeat for node at from_addr
-            std::string node_addr = from_addr.getAddress();
+            std::string node_addr(strtok(NULL, "#"));
             time_t timev;
             time(&timev);
             nodeMember->updateHeartBeat(node_addr, timev);

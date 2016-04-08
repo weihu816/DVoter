@@ -44,8 +44,12 @@ void holdback_queue::handle(std::string msg) {
         node->addMessage(msg_body);
 
     } else if (msg_type.compare(D_LEAVEANNO) == 0) {
+        // name#ip:port
         // TODO: delete the member from the memberList and display message accrodingly.
         node->deleteMember(msg_body);
+        std::string name = msg_body.substr(0, msg_body.find("#"));
+        // display notice on stdout
+        std::cout << "NOTICE: " << name << " left the char or crashed" << std::endl;
     }
 }
 
