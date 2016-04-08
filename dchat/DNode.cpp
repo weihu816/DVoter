@@ -156,11 +156,12 @@ void DNode::addMember(std::string ip_port, std::string name){
  *
  * DESCRIPTION: delete member from the memberList
  */
-void DNode::deleteMember(MemberListEntry toRemove){
+void DNode::deleteMember(std::string memberAddr){
 #ifdef DEBUGLOG
-    std::cout << "DNode::deleteMember: " << toRemove.username << std::endl;
+    std::cout << "DNode::deleteMember... " << std::endl;
 #endif
-    member_node->deleteMember(toRemove);
+    std::string memberName = member_node->deleteMember(memberAddr);
+    std::cout << "NOTICE " << memberName << " left the chat or crashed." << std::endl;
 }
 
 
@@ -363,14 +364,21 @@ void DNode::startElection() {
             sendNotice(D_ELECTION,iter->getAddress());
         }
     }
+    //also send to old leader in case of false alarm?
+    if(member_node->getLeaderAddress().compare(member_node->getAddress()) > 0) {
+        sendNotice(D_ELECTION,member_node->getLeaderAddress());
+    }
     
     // wait for some ANSWER, sleep? RECV in another thread so we are okay?
-    election_status = E_WAITANS;
+    updateElectionStatus(E_WAITANS);
     std::chrono::milliseconds sleepTime(ELECTIONTIME);
     std::this_thread::sleep_for(sleepTime);
     // if hears from no process with higher IDs, then it broadcasts D_COOR.
     if(election_status == E_WAITANS) {
         multicastNotice(D_COOR);
+        updateElectionStatus(E_NONE);
+        member_node->updateLeader(*member_node->address, username);
+        m_queue->resetSequence();
     }
 }
 
@@ -389,6 +397,9 @@ void DNode::nodeLoopOps() {
     if(leader_address.compare(self_address) == 0) { // I am the leader
         // have the leader broadcast a heartbeat
         multicastNotice(D_HEARTBEAT);
+#ifdef DEBUGLOG
+        std::cout << "Sent out heartbeat. " << std::endl;
+#endif
         
         // check every one's heartbeat in the memberlist (except myself)
         auto list = member_node->memberList;
@@ -398,8 +409,12 @@ void DNode::nodeLoopOps() {
                 //check heartbeat
                 if(checkHeartbeat(memberAddr) == FAILURE) {
                     //exceed timeout limit
+                    deleteMember(memberAddr);
                     std::string message_leave = memberAddr;
                     multicastMsg(message_leave, D_LEAVEANNO);
+#ifdef DEBUGLOG
+                    std::cout << "Sent out leave announcement. " << std::endl;
+#endif
                 }
             }
         }
@@ -407,9 +422,15 @@ void DNode::nodeLoopOps() {
         // send heartbeat to leader
         std::string leader_address = member_node->getLeaderAddress();
         sendNotice(D_HEARTBEAT, leader_address);
+#ifdef DEBUGLOG
+        std::cout << "Sent out heartbeat. " << std::endl;
+#endif
         // check leader heartbeat
         if(checkHeartbeat(leader_address) == FAILURE) {
-            startElection();
+#ifdef DEBUGLOG
+            std::cout << "Leader failed. Do nothing for now. " << std::endl;
+#endif
+            //startElection();
         }
     }
     // finish heartbeat check

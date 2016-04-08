@@ -39,9 +39,9 @@ void sendMsg(DNode * node) {
 }
 
 /**
- * FUNCTION NAME: recvMsg
+ * FUNCTION NAME: displayMsg
  *
- * DESCRIPTION: thread keep listening to incoming messages
+ * DESCRIPTION: thread in charge of displaying messages
  */
 void displayMsg(DNode * node) {
     while (1) {
@@ -119,12 +119,12 @@ int main(int argc, const char * argv[]) {
     // Thread: Receive chat messages
     std::thread thread_displayMsg(displayMsg, node);
     // Thread: Track heartbeat
-    //std::thread thread_heartbeat(heartBeatRoutine,node);
+    std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
     thread_displayMsg.join();
-    //thread_heartbeat.join();
+    thread_heartbeat.join();
     
     // Clean up and quit
     node->nodeLeave();

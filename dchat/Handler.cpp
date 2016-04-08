@@ -80,12 +80,8 @@ string Handler::process(Address & from_addr, string recv_msg) {
             //node->addMessage(param_value);
             node->m_queue->pop();
             return "OK";
-        } else if (strcmp(msg_type, D_LEAVEANNO) == 0) { //# D_LEAVEANNO is leader broadcast member leaving
-            // this needs to be in the queue and process in order of seq #
-        
+        } else if (strcmp(msg_type, D_LEAVEANNO) == 0) {
             // TODO: received: #LEAVEANNO#seq#ip:port sent by leader
-            // node->startElection();
-            // TODO: delete the member from the memberList and display message accrodingly.
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_ip_port(strtok(NULL, "#"));
             node->m_queue->push(std::make_pair(param_seq, param_ip_port));
@@ -150,12 +146,11 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string leave_name(strtok(NULL, "#"));
             std::string leave_addr(strtok(NULL, "#"));
 
-            MemberListEntry leave_entry(leave_addr, leave_name);
             // delete leaving node from member_list
-            node->deleteMember(leave_entry);
-            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO
-            std::string message_leave = from_addr.getAddress();
-            node->multicastMsg(message_leave, D_LEAVEANNO);
+            node->deleteMember(leave_addr);
+            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO #name#ip:port
+            std::string message_leave = leave_name + "#" + leave_addr;
+            node->multicastMsg(message_leave, D_LEAVEANNO); //maybe don't need name?
             return "OK";
             
         } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
@@ -166,6 +161,9 @@ string Handler::process(Address & from_addr, string recv_msg) {
             time_t timev;
             time(&timev);
             nodeMember->updateHeartBeat(node_addr, timev);
+#ifdef DEBUGLOG
+            std::cout << "HeartBeat updated " << nodeMember->getHeartBeat(node_addr) << std::endl;
+#endif
             return "OK";
         } else if (recv_msg.compare(D_ELECTION) == 0) {
             // TODO: received: ELECTION
@@ -173,6 +171,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // delete leader from member (leader not in member list, just leaderEntry?)
             // display: leader (username) left the chat,  immediately? TODO
             std::cout << "NOTICE " << nodeMember->getLeaderName() << "left the chat or crashed" << std::endl;
+            // TODO : display (in election) ? something about leader missing?
             
             // If hears D_ELECTION from a process with a higher ID,
             if(from_addr.getAddress().compare(nodeMember->getAddress()) > 0) {

@@ -124,12 +124,15 @@ public:
         memberList.push_back(entry);
     }
 
-    void deleteMember(MemberListEntry entry) {
+    std::string deleteMember(std::string memberAddr) {
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            if ((*iter).getEntry() ==  entry.getEntry()) {
+            if (memberAddr.compare((*iter).getAddress()) == 0 ) {
+                std::string memberName = (*iter).username;
                 memberList.erase(iter);
+                return memberName;
             }
         }
+        return NULL;
     }
 
     std::string getMemberList() {

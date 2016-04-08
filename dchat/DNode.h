@@ -41,7 +41,7 @@ public:
     int nodeLeave(); // Wind up this node and clean up state
     void initMemberList(std::string member_list, std::string leaderAddr);
     void addMember(std::string ip_port, std::string name);
-    void deleteMember(MemberListEntry member); // delete a member
+    void deleteMember(std::string ip_port); // delete a member
     
     int recvLoop();
     std::string msgLoop();

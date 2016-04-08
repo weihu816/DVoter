@@ -43,6 +43,9 @@ void holdback_queue::handle(std::string msg) {
 #endif
         node->addMessage(msg_body);
 
+    } else if (msg_type.compare(D_LEAVEANNO) == 0) {
+        // TODO: delete the member from the memberList and display message accrodingly.
+        node->deleteMember(msg_body);
     }
 }
 
