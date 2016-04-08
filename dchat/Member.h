@@ -140,10 +140,6 @@ public:
         }
         return NULL;
     }
-    
-    void clearMemberList() {
-        memberList.clear();
-    }
 
     std::string getMemberList() {
         std::string list = "";

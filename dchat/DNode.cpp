@@ -166,17 +166,6 @@ void DNode::deleteMember(std::string memberAddr){
     std::cout << "NOTICE " << memberName << " left the chat or crashed." << std::endl;
 }
 
-/**
- * FUNCTION NAME: clear member list
- *
- * DESCRIPTION: empty memberlist
- */
-void DNode::clearMembers() {
-#ifdef DEBUGLOG
-    std::cout << "DNode::clear Memberlist... " << std::endl;
-#endif
-    member_node->clearMemberList();
-}
 
 
 //////////////////////////////// CLIENT: OPERATIONS FUNC ////////////////////////////////
