@@ -140,17 +140,16 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 return message;
 
             }
-        } else if (strcmp(msg_type, D_LEAVE) == 0) {
+        } else if (strcmp(msg_type, D_LEAVE) == 0) { // maybe D_LEAVE without name, just send leave?
             
             // TODO: received: LEAVE#name#ip:port
-            std::string leave_name(strtok(NULL, "#"));
+            // std::string leave_name(strtok(NULL, "#"));
             std::string leave_addr(strtok(NULL, "#"));
 
             // delete leaving node from member_list
             node->deleteMember(leave_addr);
             //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO #name#ip:port
-            std::string message_leave = leave_name + "#" + leave_addr;
-            node->multicastMsg(message_leave, D_LEAVEANNO); //maybe don't need name?
+            node->multicastMsg(leave_addr, D_LEAVEANNO); //maybe don't need name?
             return "OK";
             
         } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {

@@ -97,13 +97,13 @@ int DNode::initThisNode() {
 
 
 /**
- * FUNCTION NAME: nodeLeave
+ * FUNCTION NAME: nodeLeave TODO
  *
  * DESCRIPTION: Wind up this node and clean up state
  */
 int DNode::nodeLeave() {
-    
-    return 0;
+    sendNotice(D_LEAVE, member_node->getLeaderAddress());
+    return SUCCESS;
 }
 
 
