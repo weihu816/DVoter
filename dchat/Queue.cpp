@@ -36,6 +36,9 @@ void holdback_queue::handle(std::string msg) {
         std::string port_name = msg_body.substr(msg_body.find("#") + 1);
         std::string port = port_name.substr(0, port_name.find("#"));
         std::string name = port_name.substr(port_name.find("#") + 1);
+#ifdef DEBUGLOG
+        std::cout << "Queue handling: ADDNODE " << ip << " " << port << " " << name << std::endl;
+#endif
         node->addMember(ip + ":" + port, name);
     } else if (msg_type.compare(D_M_MSG) == 0) {
 #ifdef DEBUGLOG

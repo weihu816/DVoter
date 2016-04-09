@@ -154,7 +154,7 @@ void DNode::addMember(std::string ip_port, std::string name){
 }
 
 /**
- * FUNCTION NAME: deleteMember //or done by index? TODO
+ * FUNCTION NAME: deleteMember
  *
  * DESCRIPTION: delete member from the memberList
  */
@@ -163,7 +163,9 @@ void DNode::deleteMember(std::string memberAddr){
     std::cout << "DNode::deleteMember... " << std::endl;
 #endif
     std::string memberName = member_node->deleteMember(memberAddr);
-    std::cout << "NOTICE " << memberName << " left the chat or crashed." << std::endl;
+    if(!memberName.empty()) {
+        std::cout << "NOTICE " << memberName << " left the chat or crashed." << std::endl;
+    }
 }
 
 
@@ -425,8 +427,8 @@ void DNode::nodeLoopOps() {
 #endif
                     //exceed timeout limit
                     deleteMember(memberAddr);
-                    std::string message_leave = memberAddr;
-                    multicastMsg(memberName+"#"+message_leave, D_LEAVEANNO);
+                   // std::string message_leave = memberAddr;
+                    multicastMsg(memberAddr, D_LEAVEANNO);
 #ifdef DEBUGLOG
                     std::cout << "\tSent out leave announcement. " << std::endl;
 #endif
@@ -444,9 +446,9 @@ void DNode::nodeLoopOps() {
         // check leader heartbeat
         if(checkHeartbeat(leader_address) == FAILURE) {
 #ifdef DEBUGLOG
-            std::cout << "\tLeader failed. Do nothing for now. " << std::endl;
+            std::cout << "\tLeader failed. " << std::endl;
 #endif
-            //startElection();
+            startElection();
         }
     }
     // finish heartbeat check

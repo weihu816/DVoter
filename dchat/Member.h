@@ -138,7 +138,7 @@ public:
                 return memberName;
             }
         }
-        return NULL;
+        return "";
     }
 
     std::string getMemberList() {
