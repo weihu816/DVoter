@@ -28,7 +28,7 @@ void holdback_queue::handle(std::string msg) {
     std::string msg_type = msg.substr(0, msg.find("#"));
     std::string msg_body = msg.substr(msg.find("#") + 1);
 #ifdef DEBUGLOG
-    //std::cout << "message being handled... " << msg_type << std::endl;
+    std::cout << "message being handled... " << msg_type << " : " << msg_body << std::endl;
 #endif
     if (msg_type.compare(D_M_ADDNODE) == 0) {
         // ip#port#name
@@ -54,11 +54,8 @@ void holdback_queue::handle(std::string msg) {
             return;
         }
         else {      // i am a member, i need to delete the leaving member
-            // TODO: delete the member from the memberList and display message accrodingly.
+            // delete the member from the memberList and display message in node function
             node->deleteMember(msg_body);
-            std::string name = msg_body.substr(0, msg_body.find("#"));
-            // display notice on stdout
-            std::cout << "NOTICE: " << name << " left the char or crashed" << std::endl;
         }
     }
 }
