@@ -67,7 +67,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string param_port(strtok(NULL, "#"));
             std::string param_name(strtok(NULL, "#"));
             std::string param_value(param_ip + "#" + param_port + "#" + param_name);
-            node->m_queue->push(std::make_pair(param_seq, param_value));
+            node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_value));
             node->m_queue->pop();
             return "OK";
 
@@ -84,7 +84,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // TODO: received: #LEAVEANNO#seq#name#ip:port sent by leader
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_name_addr(strtok(NULL, "#"));
-            node->m_queue->push(std::make_pair(param_seq, param_name_addr));
+            node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_name_addr));
             node->m_queue->pop();
             
             return "OK";
