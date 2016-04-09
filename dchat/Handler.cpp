@@ -171,7 +171,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string heardFrom(strtok(NULL, "#"));
             // delete leader from member (leader not in member list, just leaderEntry?)
             // display: leader (username) left the chat,  immediately? TODO
-            std::cout << "NOTICE " << nodeMember->getLeaderName() << "left the chat or crashed" << std::endl;
+            // std::cout << "NOTICE " << nodeMember->getLeaderName() << "left the chat or crashed" << std::endl;
             // TODO : display (in election) ? something about leader missing?
             
             // If hears D_ELECTION from a process with a higher ID,

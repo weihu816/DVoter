@@ -110,11 +110,10 @@ public:
     }
     
     void updateLeader(Address leaderAddr, std::string leaderName) {
+        std::cout << "NOTICE " << leaderEntry->getUsername() << "left the chat or crashed" << std::endl;
         std::string ip = leaderAddr.getAddressIp();
         std::string port = leaderAddr.getAddressPort();
         leaderEntry = new MemberListEntry(ip + ":" + port, leaderName);
-        // TODO delete leader from memberList;
-        deleteMember(ip + ":" + port);
     }
 
     
