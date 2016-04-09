@@ -113,6 +113,8 @@ public:
         std::string ip = leaderAddr.getAddressIp();
         std::string port = leaderAddr.getAddressPort();
         leaderEntry = new MemberListEntry(ip + ":" + port, leaderName);
+        // TODO delete leader from memberList;
+        deleteMember(ip + ":" + port);
     }
 
     
