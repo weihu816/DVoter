@@ -83,15 +83,15 @@ public:
 class Member {
     
 public:
-    Address * address;                      // This member's Address
-    bool inited = false;                    // boolean indicating if this member is up
-    bool inGroup;                           // boolean indicating if this member is in the group
-    int nnb;                                // number of my neighbors (distributed)
-    std::unordered_map<std::string, time_t> heartBeatList;
-    std::vector<MemberListEntry> memberList;                // Membership table
-
+    Address * address;                                      // This member's Address
+    bool inited = false;                                    // boolean indicating if this member is up
+    bool inGroup;                                           // boolean indicating if this member is in the group
+    int nnb;                                                // number of my neighbors (distributed)
+    std::unordered_map<std::string, time_t> heartBeatList;  // Hearbeat List
+    
     MemberListEntry * leaderEntry;                          // The leader
-
+    std::vector<MemberListEntry> memberList;                // Membership table
+    
     std::string getLeaderAddress() {
         return  leaderEntry->getAddress();
     }
@@ -104,7 +104,7 @@ public:
     std::string getLeaderName() {
         return  leaderEntry->username;
     }
-    
+
     bool isLeader() {
         return (getLeaderAddress().compare(address->getAddress()) == 0);
     }
@@ -115,7 +115,6 @@ public:
         std::string port = leaderAddr.getAddressPort();
         leaderEntry = new MemberListEntry(ip + ":" + port, leaderName);
     }
-
     
     // this is the member address list, without user name
     void addMember(std::string ip_port, std::string name) {
@@ -160,7 +159,6 @@ public:
     std::vector<MemberListEntry> getMemberEntryList() {
         return memberList;
     }
-
     
     std::string getAddress() {
         return address->getAddress();
@@ -169,20 +167,21 @@ public:
     void updateHeartBeat(std::string addrKey, time_t heartbeat) {
         heartBeatList[addrKey] = heartbeat;
     }
-    
+
     time_t getHeartBeat(std::string addrKey) {
-        //if found, return the heartbeat, otherwise return 0
-        std::unordered_map<std::string,int long>::const_iterator got = heartBeatList.find (addrKey);
-        if(got == heartBeatList.end()) {
+        // if found, return the heartbeat, otherwise return 0
+        auto iter = heartBeatList.find(addrKey);
+        if (iter == heartBeatList.end()) {
             return 0;
         } else {
-            return got->second;
+            return iter->second;
         }
     }
 
     Member(std::string addr): inited(false), inGroup(false), nnb(0){
         this->address = new Address(addr);
     }
+
     Member(const Member &anotherMember);                // copy constructor
     Member& operator =(const Member &anotherMember);    // Assignment operator overloading
     

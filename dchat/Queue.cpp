@@ -3,47 +3,47 @@
 
 void holdback_queue::pop() {
     std::unique_lock<std::mutex> mlock(d_mutex);
-    while (!d_queue.empty() && d_queue.top().first <= sequence_seen) {
-        T peek_pair = d_queue.top();
-        d_queue.pop();
-        // Handle peek_pair
-#ifdef DEBUGLOG
-        std::cout << "\t#holdback_queue handling: " << peek_pair.first << " " << peek_pair.second << std::endl;
-#endif
-        handle(peek_pair.second.substr(1)); // ignore duplicate?
-    }
+//    while (!d_queue.empty() && d_queue.top().first <= sequence_seen) {
+//        T peek_pair = d_queue.top();
+//        d_queue.pop();
+//        // Handle peek_pair
+//#ifdef DEBUGLOG
+//        std::cout << "\t#holdback_queue handling: " << peek_pair.first << " " << peek_pair.second << std::endl;
+//#endif
+//        handle(peek_pair.second.substr(1)); // ignore duplicate?
+//    }
     while (!d_queue.empty() && d_queue.top().first == sequence_seen + 1) {
         T peek_pair = d_queue.top();
         d_queue.pop();
         sequence_seen++;
         // Handle peek_pair
 #ifdef DEBUGLOG
-        std::cout << "\t#tholdback_queue handling: " << peek_pair.first << " " << peek_pair.second << std::endl;
+        std::cout << "\t#holdback_queue handling: " << peek_pair.first << " " << peek_pair.second << std::endl;
 #endif
         handle(peek_pair.second.substr(1));
     }
 }
 
 void holdback_queue::handle(std::string msg) {
+
     std::string msg_type = msg.substr(0, msg.find("#"));
     std::string msg_body = msg.substr(msg.find("#") + 1);
+    
 #ifdef DEBUGLOG
-    std::cout << "message being handled... " << msg_type << " : " << msg_body << std::endl;
+    std::cout << "\tQueue handling... " << msg_type << " : " << msg_body << std::endl;
 #endif
+
     if (msg_type.compare(D_M_ADDNODE) == 0) {
+        
         // ip#port#name
         std::string ip = msg_body.substr(0, msg_body.find("#"));
         std::string port_name = msg_body.substr(msg_body.find("#") + 1);
         std::string port = port_name.substr(0, port_name.find("#"));
         std::string name = port_name.substr(port_name.find("#") + 1);
-#ifdef DEBUGLOG
-        std::cout << "Queue handling: ADDNODE " << ip << " " << port << " " << name << std::endl;
-#endif
         node->addMember(ip + ":" + port, name);
+        
     } else if (msg_type.compare(D_M_MSG) == 0) {
-#ifdef DEBUGLOG
-        //std::cout << "message added to display queue" << std::endl;
-#endif
+
         node->addMessage(msg_body);
 
     } else if (msg_type.compare(D_LEAVEANNO) == 0) {
@@ -53,7 +53,8 @@ void holdback_queue::handle(std::string msg) {
         if (leader_addr.compare(my_addr) == 0) {     // if i am leader, i have already deleted
             return;
         }
-        else {      // i am a member, i need to delete the leaving member
+        else {
+            // i am a member, i need to delete the leaving member
             // delete the member from the memberList and display message in node function
             node->deleteMember(msg_body);
         }

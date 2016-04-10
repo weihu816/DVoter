@@ -7,6 +7,8 @@
 #include "stdincludes.h"
 #include "DNode.h"
 
+volatile bool isAlive = true;
+
 /**
  * FUNCTION NAME: usage
  *
@@ -26,10 +28,11 @@ void usage(std::string msg) {
  * DESCRIPTION: thread keep listening to user input
  */
 void sendMsg(DNode * node) {
-    while (1) {
+    while (isAlive) {
         if (std::cin.eof()) { // Control-D / EOF: shutdown
             node->nodeLeave();
-            exit(0);
+            delete node;
+            std::exit(0);
         }
         char msg[MAXBUFLEN];
         std::cin.getline(msg, MAXBUFLEN);
@@ -45,7 +48,7 @@ void sendMsg(DNode * node) {
  * DESCRIPTION: thread in charge of displaying messages
  */
 void displayMsg(DNode * node) {
-    while (1) {
+    while (isAlive) {
         std::string msg = node->msgLoop();
         std::cout << msg << std::endl;
     }
@@ -58,7 +61,7 @@ void displayMsg(DNode * node) {
  * DESCRIPTION: thread keep listening to incoming messages
  */
 void recvMsg(DNode * node) {
-    while (1) {
+    while (isAlive) {
         node->recvLoop();
     }
 }
@@ -70,7 +73,7 @@ void recvMsg(DNode * node) {
  * DESCRIPTION: send and check heartbeat
  */
 void heartBeatRoutine(DNode * node) {
-    while (1) {
+    while (isAlive) {
         std::chrono::milliseconds sleepTime(HEARTFREQ); // check every 3 seconds
         std::this_thread::sleep_for(sleepTime);
         node->nodeLoopOps();

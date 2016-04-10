@@ -47,9 +47,9 @@ int DNode::recvLoop() {
  * DESCRIPTION: This function receives chat messages and displays to terminal
  */
 std::string DNode::msgLoop() {
-#ifdef DEBUGLOG
-    std::cout << "\tpop from message_chat_queue" << std::endl;
-#endif
+//#ifdef DEBUGLOG
+//    std::cout << "\tpop from message_chat_queue" << std::endl;
+//#endif
     return message_chat_queue.pop();
 }
 
@@ -102,7 +102,7 @@ int DNode::initThisNode() {
  * DESCRIPTION: Wind up this node and clean up state
  */
 int DNode::nodeLeave() {
-    sendNotice(std::string(D_LEAVE)+"#"+getUsername()+"#"+member_node->getAddress(),
+    sendNotice(std::string(D_LEAVE) + "#" + getUsername() + "#" + member_node->getAddress(),
                member_node->getLeaderAddress());
     
     return SUCCESS;
@@ -234,7 +234,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
             m_queue = new holdback_queue(atoi(recv_init_seq.c_str()), this);
             initMemberList(recv_list, to_addr.getAddress());
             if (!isSureLeaderAddr) member_node->leaderEntry = new MemberListEntry(join_addr, recv_name);
-            
+
         } else {
             return FAILURE;
         }
@@ -303,8 +303,8 @@ void DNode::multicastMsg(std::string msg, std::string type) {
             std::cout << "\tmulticastMsg: Fail! " << addr.getAddress() << std::endl;
 #endif
             // Remove first then recursively multicastMsg
-//            member_node->deleteMember(*iter);
-//            multicastMsg(iter->getAddress(), D_LEAVEANNO);
+            member_node->deleteMember((*iter).getAddress());
+            multicastMsg(iter->getAddress(), D_LEAVEANNO);
         }
 #ifdef DEBUGLOG
         std::cout << "\tMulticast: " << send_msg << " to: " << addr.getAddress() << std::endl;
@@ -374,12 +374,12 @@ void DNode::startElection() {
     auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         if(iter->getAddress().compare(member_node->getAddress()) > 0) {
-            sendNotice(std::string(D_ELECTION)+"#"+member_node->getAddress(),iter->getAddress());
+            sendNotice(std::string(D_ELECTION) + "#" + member_node->getAddress(), iter->getAddress());
         }
     }
     //also send to old leader in case of false alarm?
     if(member_node->getLeaderAddress().compare(member_node->getAddress()) > 0) {
-        sendNotice(std::string(D_ELECTION)+"#"+member_node->getAddress(),member_node->getLeaderAddress());
+        sendNotice(std::string(D_ELECTION) + "#" + member_node->getAddress(), member_node->getLeaderAddress());
     }
     
     // wait for some ANSWER, sleep? RECV in another thread so we are okay?
@@ -388,7 +388,7 @@ void DNode::startElection() {
     std::this_thread::sleep_for(sleepTime);
     // if hears from no process with higher IDs, then it broadcasts D_COOR.
     if(election_status == E_WAITANS) {
-        multicastNotice(std::string(D_COOR)+"#"+getUsername()+"#"+member_node->getAddress());
+        multicastNotice(std::string(D_COOR) + "#" + getUsername() + "#"+member_node->getAddress());
         updateElectionStatus(E_NONE);
         member_node->updateLeader(*member_node->address, username);
         m_queue->resetSequence();
@@ -405,33 +405,41 @@ void DNode::startElection() {
  * 				member: start election; leader: multicast LEAVEANNO
  */
 void DNode::nodeLoopOps() {
+
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
+
     if(leader_address.compare(self_address) == 0) { // I am the leader
+        
         // have the leader broadcast a heartbeat
-        multicastNotice(std::string(D_HEARTBEAT)+"#"+self_address);
+        multicastNotice(std::string(D_HEARTBEAT) + "#" + self_address);
+        
 #ifdef DEBUGLOG
-        std::cout << "\tLeader sent out heartbeat. " << std::endl;
+    std::cout << "\tLeader sent out heartbeat. " << std::endl;
 #endif
         
         // check every one's heartbeat in the memberlist (except myself)
         auto list = member_node->memberList;
         for (auto iter = list.begin(); iter != list.end(); iter++) {
+
             std::string memberAddr = iter->getAddress();
             std::string memberName = iter->getUsername();
             if(memberAddr.compare(self_address) != 0) {
-                //check heartbeat
+                // check heartbeat
                 if(checkHeartbeat(memberAddr) == FAILURE) {
 #ifdef DEBUGLOG
                     std::cout << "\tLeader check heartbeat failure. " << std::endl;
 #endif
-                    //exceed timeout limit
+                    
+                    // exceed timeout limit
                     deleteMember(memberAddr);
-                   // std::string message_leave = memberAddr;
+                    // std::string message_leave = memberAddr;
                     multicastMsg(memberAddr, D_LEAVEANNO);
+
 #ifdef DEBUGLOG
-                    std::cout << "\tSent out leave announcement. " << std::endl;
+    std::cout << "\tSent out leave announcement. " << std::endl;
 #endif
+                    
                 }
             }
         }
@@ -440,9 +448,11 @@ void DNode::nodeLoopOps() {
         std::string leader_address = member_node->getLeaderAddress();
         std::string self_address = member_node->getAddress();
         sendNotice(std::string(D_HEARTBEAT)+"#"+self_address, leader_address);
+        
 #ifdef DEBUGLOG
-        std::cout << "\tMember sent out heartbeat. " << std::endl;
+        //        std::cout << "\tMember sent out heartbeat. " << std::endl;
 #endif
+        
         // check leader heartbeat
         if(checkHeartbeat(leader_address) == FAILURE) {
 #ifdef DEBUGLOG
@@ -455,12 +465,11 @@ void DNode::nodeLoopOps() {
     return;
 }
 
-int DNode::checkHeartbeat(std::string address)
-{
+int DNode::checkHeartbeat(std::string address) {
     time_t current;
     time(&current);
     time_t heartbeat = member_node->getHeartBeat(address);
-    if(difftime(current, heartbeat) > TIMEOUT/1000) {
+    if(difftime(current, heartbeat) > TIMEOUT / 1000) {
         return FAILURE;
     }
     return SUCCESS;
@@ -471,7 +480,7 @@ int DNode::checkHeartbeat(std::string address)
 /***
  * dNet getter
  ***/
-DNet * DNode::getDNet(){
+DNet * DNode::getDNet() {
     return dNet;
 }
 
