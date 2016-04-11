@@ -183,7 +183,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
 #endif
                 // If hears D_ELECTION from a process with a lower ID
                 // send back D_ANSWER and startElection myself
-                node->sendNotice(D_ANSWER, heardFrom);
+                node->sendNotice(std::string(D_ANSWER) + "#" + nodeMember->getAddress(), heardFrom);
                 node->startElection();
             }
 

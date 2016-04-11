@@ -55,7 +55,7 @@
 #define MAXBUFLEN       512
 #define TIMEOUT         6000
 #define HEARTFREQ       3000
-#define ELECTIONTIME    1000
+#define ELECTIONTIME    10000
 
 // Multicast messages, start with a #
 #define D_M_MSG         "MSG"               // #MSG#SEQ#username::Message, multicast from the sequencer
