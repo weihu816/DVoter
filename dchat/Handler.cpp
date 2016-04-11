@@ -210,6 +210,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 node->updateElectionStatus(E_NONE);
                 nodeMember->updateLeader(heardFrom, leader_name); // this one displays last leader left
                 node->m_queue->resetSequence();
+                node->sendNotice(std::string(D_HEARTBEAT)+"#"+nodeMember->getAddress(), nodeMember->getLeaderAddress());
             }
             return "OK";
             
