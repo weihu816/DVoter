@@ -22,7 +22,7 @@ DNode::DNode(std::string name, std::string join_addr) : username(name) {
     } else {
         join_address = my_addr;
     }
-    std::cout << "\t" + username << " join an existing chat, listening on "
+    std::cout << username << " join an existing chat, listening on "
     << member_node->getAddress() << std::endl;
 }
 
@@ -66,19 +66,23 @@ std::string DNode::msgLoop() {
 int DNode::nodeStart() {
     // Self booting routines
     if( initThisNode() == FAILURE ) {
+
         std::cout << "init_thisnode failed. Exit." << std::endl;
         return FAILURE;
+
     }
     if( introduceSelfToGroup(join_address, false) == FAILURE ) {
-        // TODO
+
         std::cout << "Sorry no chat is active on " << member_node->getAddress()
         << ", try again later.\nBye." << std::endl;
         return FAILURE;
+
     }
     std::cout << "Succeed, current users:" << std::endl; // TODO
     std::cout << member_node->getLeaderName() << " " << member_node->getLeaderAddress() << " (Leader)" << std::endl;
     member_node->printMemberList();
     if (member_node->isLeader()) std::cout << "Waiting for others to join" << std::endl;
+
     return SUCCESS;
 }
 

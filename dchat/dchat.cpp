@@ -30,12 +30,13 @@ void usage(std::string msg) {
 void sendMsg(DNode * node) {
     while (isAlive) {
         if (std::cin.eof()) { // Control-D / EOF: shutdown
+            isAlive = false;
             node->nodeLeave();
             delete node;
             std::exit(0);
         }
         char msg[MAXBUFLEN];
-        std::cin.getline(msg, MAXBUFLEN);
+        std::cin.getline(msg, MAXBUFLEN - 1);
         if (strlen(msg) != 0) {
             node->sendMsg(std::string(msg));
         }
@@ -122,13 +123,13 @@ int main(int argc, const char * argv[]) {
     std::thread thread_recvMsg(recvMsg, node);
     // Thread: Receive chat messages
     std::thread thread_displayMsg(displayMsg, node);
-    // Thread: Track heartbeat
-    std::thread thread_heartbeat(heartBeatRoutine,node);
+//    // Thread: Track heartbeat
+//    std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
     thread_displayMsg.join();
-    thread_heartbeat.join();
+//    thread_heartbeat.join();
     
     // Clean up and quit
     node->nodeLeave();

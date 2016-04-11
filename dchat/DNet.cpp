@@ -42,12 +42,6 @@ int DNet::DNinit() {
             perror("socket");
             continue;
         }
-        // reuse address
-//        const int enable = 1;
-//        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-//            fprintf(stderr, "Fail to set socket options!\n");
-//            exit(1);
-//        }
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
             perror("bind");
@@ -121,14 +115,13 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
     // set timeout val
     struct timeval tv;
-    tv.tv_sec = 6;
+    tv.tv_sec = 2;
     tv.tv_usec = 0;
     
     // receive msg from server, for ack
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof their_addr;
     char buf[MAXBUFLEN];
-//    char s[INET6_ADDRSTRLEN];
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // AF_UNSPEC/AF_INET
@@ -153,8 +146,6 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
         }
         break;
     }
-
-    freeaddrinfo(servinfo);
     
     if (p == NULL) {
         fprintf(stderr, "stub: failed to create socket.\n");
@@ -163,8 +154,9 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     }
     
     // Send message
-    if ((numbytes = sendto(sockfd_w, data.c_str(), strlen(data.c_str()) + 1,
-                           0, p->ai_addr, p->ai_addrlen)) == -1) {
+    strcpy(buf, data.c_str());
+    std::cout << "xxx1: sendto Tip:Tport->" << addr_ip << ":" << addr_port << std::endl;
+    if ((numbytes = sendto(sockfd_w, buf, strlen(buf) + 1, 0, p->ai_addr, p->ai_addrlen)) == -1) {
         perror("sendto");
         close(sockfd_w);
         return FAILURE;
@@ -178,6 +170,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
         close(sockfd_w);
         return DNsend(addr, data, ack, times - 1);
     }
+    std::cout << "xxx1: recvfrom " << buf << std::endl;
 
 #ifdef DEBUGLOG
     std::cout << "\tDNet::DNsend: receive: " << data << std::endl;
@@ -185,6 +178,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
 
     ack = std::string(buf, numbytes);
     close(sockfd_w);
+    freeaddrinfo(servinfo);
     return SUCCESS;
 }
 
@@ -207,7 +201,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
         perror("recvfrom");
         return FAILURE;
     }
-
+std::cout << "xxx2: recvfrom data: " << data << std::endl;
     // copy their_addr to fromaddr
     fromaddr.ip = std::string(inet_ntop(their_addr.ss_family,
                             get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
@@ -234,6 +228,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
 
     // Send ack back
     strcpy(buf, send_msg.c_str());
+    std::cout << "xxx2: sendto " << std::endl;
     if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
                            (struct sockaddr *) &their_addr, addr_len)) == -1) {
         perror("sendto");
@@ -262,7 +257,7 @@ int DNet::DNinfo(std::string & addr) {
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == NULL) continue;
         // mac:en0, linuxs:eth0, unix:em1
-        if ((strcmp(ifa->ifa_name, "em1") == 0) && (ifa->ifa_addr->sa_family == AF_INET)) {
+        if ((strcmp(ifa->ifa_name, "en0") == 0) && (ifa->ifa_addr->sa_family == AF_INET)) {
             int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host,
                                 NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             if (s != 0) {
@@ -270,6 +265,7 @@ int DNet::DNinfo(std::string & addr) {
                 return FAILURE;
             }
             str_ip = std::string(host);
+            break;
         }
     }
 
