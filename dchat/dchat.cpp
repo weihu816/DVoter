@@ -123,8 +123,8 @@ int main(int argc, const char * argv[]) {
     std::thread thread_recvMsg(recvMsg, node);
     // Thread: Receive chat messages
     std::thread thread_displayMsg(displayMsg, node);
-//    // Thread: Track heartbeat
-//    std::thread thread_heartbeat(heartBeatRoutine,node);
+    // Thread: Track heartbeat
+    std::thread thread_heartbeat(heartBeatRoutine,node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();

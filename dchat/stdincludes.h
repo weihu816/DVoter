@@ -50,7 +50,7 @@
 //using namespace std;
 
 // You can comment out the following line
-//#define DEBUGLOG    1
+#define DEBUGLOG    1
 
 #define MAXBUFLEN       512
 #define TIMEOUT         6000
