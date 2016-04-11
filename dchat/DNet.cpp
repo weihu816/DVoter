@@ -155,7 +155,6 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
     // Send message
     strcpy(buf, data.c_str());
-    std::cout << "xxx1: sendto Tip:Tport->" << addr_ip << ":" << addr_port << std::endl;
     if ((numbytes = sendto(sockfd_w, buf, strlen(buf) + 1, 0, p->ai_addr, p->ai_addrlen)) == -1) {
         perror("sendto");
         close(sockfd_w);
@@ -170,7 +169,6 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
         close(sockfd_w);
         return DNsend(addr, data, ack, times - 1);
     }
-    std::cout << "xxx1: recvfrom " << buf << std::endl;
 
 #ifdef DEBUGLOG
     std::cout << "\tDNet::DNsend: receive: " << data << std::endl;
@@ -201,7 +199,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
         perror("recvfrom");
         return FAILURE;
     }
-std::cout << "xxx2: recvfrom data: " << data << std::endl;
+
     // copy their_addr to fromaddr
     fromaddr.ip = std::string(inet_ntop(their_addr.ss_family,
                             get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
@@ -228,7 +226,7 @@ std::cout << "xxx2: recvfrom data: " << data << std::endl;
 
     // Send ack back
     strcpy(buf, send_msg.c_str());
-    std::cout << "xxx2: sendto " << std::endl;
+
     if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
                            (struct sockaddr *) &their_addr, addr_len)) == -1) {
         perror("sendto");
