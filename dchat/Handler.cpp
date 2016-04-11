@@ -166,7 +166,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::cout << "HeartBeat updated " << nodeMember->getHeartBeat(node_addr) << std::endl;
 #endif
             return "OK";
-        } else if (recv_msg.compare(D_ELECTION) == 0) {
+        } else if (strcmp(msg_type, D_ELECTION) == 0) {
             // TODO: received: ELECTION#ip:port
             std::string heardFrom(strtok(NULL, "#"));
             // If hears D_ELECTION from a process with a higher ID,
@@ -215,7 +215,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             
         } else {
 #ifdef DEBUGLOG
-            std::cout << "\tReceive Unexpecte: " << recv_msg << std::endl;
+            std::cout << "\tReceive Unexpected: " << recv_msg << std::endl;
 #endif
         }
 
