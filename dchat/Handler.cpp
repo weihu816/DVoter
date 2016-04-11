@@ -169,18 +169,18 @@ string Handler::process(Address & from_addr, string recv_msg) {
         } else if (recv_msg.compare(D_ELECTION) == 0) {
             // TODO: received: ELECTION#ip:port
             std::string heardFrom(strtok(NULL, "#"));
-            // delete leader from member (leader not in member list, just leaderEntry?)
-            // display: leader (username) left the chat,  immediately? TODO
-            // std::cout << "NOTICE " << nodeMember->getLeaderName() << "left the chat or crashed" << std::endl;
-            // TODO : display (in election) ? something about leader missing?
-            
             // If hears D_ELECTION from a process with a higher ID,
             if(heardFrom.compare(nodeMember->getAddress()) > 0) {
+#ifdef DEBUGLOG
+                std::cout << "\tElection: heard from someone larger... " << heardFrom << std::endl;
+#endif
                 //pass to handler thread
-                // TODO: needs to be handled by the main process..? deleted funtion etc error.
                 std::thread thread_election(electionHandler, node);
                 thread_election.detach();
              } else {
+#ifdef DEBUGLOG
+                 std::cout << "\tElection: heard from someone smaller... " << heardFrom << std::endl;
+#endif
                 // If hears D_ELECTION from a process with a lower ID
                 // send back D_ANSWER and startElection myself
                 node->sendNotice(D_ANSWER, heardFrom);
@@ -196,6 +196,9 @@ string Handler::process(Address & from_addr, string recv_msg) {
             if(heardFrom.compare(nodeMember->getAddress()) > 0 && node->getElectionStatus() == E_WAITANS) {
                 node->updateElectionStatus(E_WAITCOOR);
             }
+#ifdef DEBUGLOG
+            std::cout << "\tElection: heard an answer, wait for COOR ... " << std::endl;
+#endif
             return "OK";
             
         } else if (strcmp(msg_type, D_COOR) == 0) {
@@ -205,7 +208,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // TODO: received: COOR
             if(node->getElectionStatus() == E_WAITCOOR) {
                 node->updateElectionStatus(E_NONE);
-                nodeMember->updateLeader(heardFrom, leader_name);
+                nodeMember->updateLeader(heardFrom, leader_name); // this one displays last leader left
                 node->m_queue->resetSequence();
             }
             return "OK";

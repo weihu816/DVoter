@@ -72,7 +72,7 @@ int DNode::nodeStart() {
     if( introduceSelfToGroup(join_address, false) == FAILURE ) {
         // TODO
         std::cout << "Sorry no chat is active on " << member_node->getAddress()
-        << ", try again later." << std::endl;
+        << ", try again later.\nBye." << std::endl;
         return FAILURE;
     }
     std::cout << "Succeed, current users:" << std::endl; // TODO
@@ -510,4 +510,7 @@ int DNode::getElectionStatus() {
  */
 void DNode::updateElectionStatus(int new_status) {
     election_status = new_status;
+#ifdef DEBUGLOG
+    std::cout << "\tElection status update: " << new_status << std::endl;
+#endif
 }
