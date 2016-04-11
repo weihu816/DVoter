@@ -330,7 +330,7 @@ void DNode::sendNotice(std::string notice, std::string destAddress) {
 #endif
     }
 #ifdef DEBUGLOG
-    std::cout << "Send notice to (leader): " << addr.getAddress() << std::endl;
+    std::cout << "Send notice to: " << addr.getAddress() << std::endl;
 #endif
     
 }
@@ -370,6 +370,8 @@ void DNode::startElection() {
     if(getElectionStatus() != E_NONE) {
         return; //in election already
     }
+    // wait for some ANSWER, sleep? RECV in another thread so we are okay?
+    updateElectionStatus(E_WAITANS);
     // send D_ELECTION to all other processes with higher IDs, expecting D_ANSWER
     auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
@@ -382,14 +384,13 @@ void DNode::startElection() {
         sendNotice(std::string(D_ELECTION) + "#" + member_node->getAddress(), member_node->getLeaderAddress());
     }
     
-    // wait for some ANSWER, sleep? RECV in another thread so we are okay?
-    updateElectionStatus(E_WAITANS);
+    
     std::chrono::milliseconds sleepTime(ELECTIONTIME);
     std::this_thread::sleep_for(sleepTime);
     // if hears from no process with higher IDs, then it broadcasts D_COOR.
     if(election_status == E_WAITANS) {
-        multicastNotice(std::string(D_COOR) + "#" + getUsername() + "#"+member_node->getAddress());
         updateElectionStatus(E_NONE);
+        multicastNotice(std::string(D_COOR) + "#" + getUsername() + "#"+member_node->getAddress());
         member_node->updateLeader(*member_node->address, username);
         m_queue->resetSequence();
     }
