@@ -47,7 +47,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
     std::string send_msg;
     if (recv_msg.empty()) return "";
     
-    char * cstr = new char[recv_msg.length() + 1];
+    char cstr[MAXBUFLEN];
     strcpy(cstr, recv_msg.c_str());
     char * msg_type = strtok(cstr, "#");
 
@@ -138,7 +138,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 // received: JOINLEADER#LEADERIP#LEADERPORT
                 // send back leader address - don't care failure, they can retry
                 std::string message = std::string(D_JOINLEADER) + "#" + nodeMember->getLeaderAddressIp()
-                + "#" + nodeMember->getLeaderAddressPort();
+                + "#" + nodeMember->getLeaderAddressPort() + "#" + nodeMember->getLeaderName();
                 return message;
 
             }

@@ -394,8 +394,8 @@ void DNode::startElection() {
     // if hears from no process with higher IDs, then it broadcasts D_COOR.
     if(election_status == E_WAITANS) {
         updateElectionStatus(E_NONE);
-        multicastNotice(std::string(D_COOR) + "#" + getUsername() + "#"+member_node->getAddress());
         member_node->updateLeader(*member_node->address, username);
+        multicastNotice(std::string(D_COOR) + "#" + username + "#"+member_node->getAddress());
         m_queue->resetSequence();
     }
 }
@@ -420,7 +420,7 @@ void DNode::nodeLoopOps() {
         multicastNotice(std::string(D_HEARTBEAT) + "#" + self_address);
         
 #ifdef DEBUGLOG
-    std::cout << "\tLeader sent out heartbeat. " << std::endl;
+    //std::cout << "\tLeader sent out heartbeat. " << std::endl;
 #endif
         
         // check every one's heartbeat in the memberlist (except myself)
@@ -433,7 +433,7 @@ void DNode::nodeLoopOps() {
                 // check heartbeat
                 if(checkHeartbeat(memberAddr) == FAILURE) {
 #ifdef DEBUGLOG
-                    std::cout << "\tLeader check heartbeat failure. " << std::endl;
+                    //std::cout << "\tLeader check heartbeat failure. " << std::endl;
 #endif
                     
                     // exceed timeout limit
@@ -463,7 +463,9 @@ void DNode::nodeLoopOps() {
 #ifdef DEBUGLOG
             std::cout << "\tLeader failed. " << std::endl;
 #endif
-            startElection();
+            if(getElectionStatus() == E_NONE) {
+                startElection();
+            }
         }
     }
     // finish heartbeat check
@@ -507,14 +509,19 @@ std::string DNode::getUsername() {
  * election status getter
  */
 int DNode::getElectionStatus() {
-    return election_status;
+    mtx.lock();
+    int toReturn = election_status;
+    mtx.unlock();
+    return toReturn;
 }
 
 /*
  * update election status
  */
 void DNode::updateElectionStatus(int new_status) {
+    mtx.lock();
     election_status = new_status;
+    mtx.unlock();
 #ifdef DEBUGLOG
     std::cout << "\tElection status update: " << new_status << std::endl;
 #endif

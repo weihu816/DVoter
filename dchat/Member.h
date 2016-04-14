@@ -114,6 +114,7 @@ public:
         heartBeatList.erase(leaderEntry->getAddress());
         std::string leader_ip_port = leaderAddr.getAddress();
         leaderEntry = new MemberListEntry(leader_ip_port, leaderName);
+        std::cout << "NOTICE " << getLeaderName() << " is the new leader." << std::endl;
         deleteMember(leader_ip_port); //new leader should not be in the list
 #ifdef DEBUGLOG
         std::cout << "\tNew Leader: " << getLeaderName() << std::endl;
