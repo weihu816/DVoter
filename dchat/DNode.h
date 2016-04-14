@@ -33,6 +33,7 @@ private:
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
     holdback_queue * m_queue;
+    std::mutex mtx;  
 
     DNode(std::string name, std::string join_addr="");
     int nodeStart();                                                // introduce and start functions
