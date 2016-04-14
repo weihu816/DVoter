@@ -255,7 +255,7 @@ int DNet::DNinfo(std::string & addr) {
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == NULL) continue;
         // mac:en0, linuxs:eth0, unix:em1
-        if ((strcmp(ifa->ifa_name, "em1") == 0) && (ifa->ifa_addr->sa_family == AF_INET)) {
+        if ((strcmp(ifa->ifa_name, "en0") == 0) && (ifa->ifa_addr->sa_family == AF_INET)) {
             int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host,
                                 NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             if (s != 0) {

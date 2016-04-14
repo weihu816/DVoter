@@ -138,7 +138,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 // received: JOINLEADER#LEADERIP#LEADERPORT
                 // send back leader address - don't care failure, they can retry
                 std::string message = std::string(D_JOINLEADER) + "#" + nodeMember->getLeaderAddressIp()
-                + "#" + nodeMember->getLeaderAddressPort() + "#" + nodeMember->getLeaderName();
+                + "#" + nodeMember->getLeaderAddressPort();
                 return message;
 
             }

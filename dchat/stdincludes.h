@@ -50,7 +50,7 @@
 //using namespace std;
 
 // You can comment out the following line
-// #define DEBUGLOG    1
+#define DEBUGLOG    1
 
 #define MAXBUFLEN       512
 #define TIMEOUT         6000
@@ -64,7 +64,7 @@
 
 #define D_CHAT          "CHAT"              // CHAT#username::Message - From node to sequencer
 #define D_JOINREQ       "JOINREQ"           // JOINREQ#PORT#Name
-#define D_JOINLEADER    "JOINLEADER"        // JOINLEADER#LEADERIP#LEADERPORT#NAME
+#define D_JOINLEADER    "JOINLEADER"        // JOINLEADER#LEADERIP#LEADERPORT
 #define D_JOINLIST      "JOINLIST"          // JOINLIST#initSeq#LEADERNAME#ip1:port1:name1:...
 #define D_LEAVE         "LEAVE"             // LEAVE#name#ip:port
 #define D_HEARTBEAT     "HEARTBEAT"         // HEARTBEAT#ip:port detect failed node
