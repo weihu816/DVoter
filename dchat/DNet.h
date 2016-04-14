@@ -34,8 +34,8 @@ public:
     void * get_in_addr(struct sockaddr *sa);
     
     // TODO: For EC, we need to handle encrypt & decrypt
-    void encrypt(std::string & data);
-    void decrypt(std::string & data);
+    std::string encrypt(std::string data, std::string key);
+    std::string decrypt(std::string data, std::string key);
 };
 
 #endif /* DNET_H */

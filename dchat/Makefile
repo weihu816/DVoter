@@ -24,7 +24,7 @@ LD_FLAGS	= -std=c++11 -g -pthread -Wall
 # Default executable
 #
 all:
-	g++ -std=c++11 -pthread -g -Wall *.cpp
+	g++ -std=c++11 -pthread -g -Wall *.cpp -o dchat
 
 dchat: $(EXE)
 

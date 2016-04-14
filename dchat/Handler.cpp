@@ -47,7 +47,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
     std::string send_msg;
     if (recv_msg.empty()) return "";
     
-    char * cstr = new char[recv_msg.length() + 1];
+    char cstr[MAXBUFLEN];
     strcpy(cstr, recv_msg.c_str());
     char * msg_type = strtok(cstr, "#");
 

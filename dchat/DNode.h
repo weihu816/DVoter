@@ -35,14 +35,14 @@ public:
     holdback_queue * m_queue;
 
     DNode(std::string name, std::string join_addr="");
-    int nodeStart(); // introduce and start functions
-    int initThisNode(); // parameter initialization
+    int nodeStart();                                                // introduce and start functions
+    int initThisNode();                                             // parameter initialization
     int introduceSelfToGroup(std::string joinAddress, bool isSureLeaderAddr);
-    int nodeLeave(); // Wind up this node and clean up state
+    int nodeLeave();                                                // Wind up this node and clean up state
     void initMemberList(std::string member_list, std::string leaderAddr);
     void addMember(std::string ip_port, std::string name);
-    void deleteMember(std::string ip_port); // delete a member
-    void clearMembers(); //delete all members
+    void deleteMember(std::string ip_port);                         // delete a member
+    void clearMembers();                                            // delete all members
     
     int recvLoop();
     std::string msgLoop();
