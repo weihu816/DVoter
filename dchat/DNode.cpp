@@ -467,11 +467,6 @@ void DNode::startElection() {
         multicastNotice(std::string(D_COOR) + "#" + username + "#" + member_node->getAddress());
         
         m_queue->resetSequence();
-        
-        // Also send to old leader in case of false alarm ?
-        if(member_node->getLeaderAddress().compare(member_node->getAddress()) > 0) {
-            sendNotice(std::string(D_ELECTION) + "#" + member_node->getAddress(), member_node->getLeaderAddress());
-        }
         return;
     }
     
