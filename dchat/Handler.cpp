@@ -19,24 +19,6 @@ vector<string> splitstr(string ori, char deli) {
     return tmp;
 }
 
-/**
- * FUNCTION NAME: electionHandler
- *
- * DESCRIPTION: handle election: start if no message recved in time
- */
-void electionHandler(DNode * node) {
-    // waits some time for D_COOR
-    node->updateElectionStatus(E_WAITCOOR);
-    std::chrono::milliseconds sleepTime(ELECTIONTIME);
-    std::this_thread::sleep_for(sleepTime);
-    
-    if(node->getElectionStatus() != E_NONE) {// recv
-        // If it does not receive this message in time, it re-broadcasts the D_ELECTION
-        node->startElection();
-    }
-    
-}
-
 
 string Handler::process(Address & from_addr, string recv_msg) {
     
@@ -142,18 +124,6 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 return message;
 
             }
-        } else if (strcmp(msg_type, D_LEAVE) == 0) {    //can only be received by leader
-            
-            // TODO: received: LEAVE#name#ip:port
-            std::string leave_name(strtok(NULL, "#"));
-            std::string leave_addr(strtok(NULL, "#"));
-
-            // delete leaving node from member_list
-            node->deleteMember(leave_addr);
-            //D_LEAVE is sent to the leader, and leader should send out LEAVEANNO#seq#name#ip:port
-            node->multicastMsg(leave_addr, D_LEAVEANNO);
-            return "OK";
-            
         } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
             
             // received: HEARTBEAT#ip:port
@@ -166,58 +136,51 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::cout << "HeartBeat updated " << nodeMember->getHeartBeat(node_addr) << std::endl;
 #endif
             return "OK";
+
         } else if (strcmp(msg_type, D_ELECTION) == 0) {
+            
             // TODO: received: ELECTION#ip:port
             std::string heardFrom(strtok(NULL, "#"));
+            
             // If hears D_ELECTION from a process with a higher ID,
             if(heardFrom.compare(nodeMember->getAddress()) > 0) {
-#ifdef DEBUGLOG
-                std::cout << "\tElection: heard from someone larger... " << heardFrom << std::endl;
-#endif
-                //pass to handler thread
-                std::thread thread_election(electionHandler, node);
-                thread_election.detach();
+
+                std::cout << "\tElection: This should never happen " << heardFrom << std::endl;
+
              } else {
-#ifdef DEBUGLOG
+                 
                  std::cout << "\tElection: heard from someone smaller... " << heardFrom << std::endl;
-#endif
-                // If hears D_ELECTION from a process with a lower ID
-                // send back D_ANSWER and startElection myself
-                node->sendNotice(std::string(D_ANSWER) + "#" + nodeMember->getAddress(), heardFrom);
-                node->startElection();
+                 // If hears D_ELECTION from a process with a lower ID, send back OK and startElection myself
+                 // node->sendNotice(std::string(D_ANSWER) + "#" + nodeMember->getAddress(), heardFrom);
+                 std::thread electionThread(&DNode::startElection, node);
+                 electionThread.detach();
+                 
             }
 
             return "OK";
             
-        } else if (strcmp(msg_type, D_ANSWER) == 0) {
-            
-            // TODO: received: ANSWER#ip:port
-            std::string heardFrom(strtok(NULL, "#"));
-            if(heardFrom.compare(nodeMember->getAddress()) > 0 && node->getElectionStatus() == E_WAITANS) {
-                node->updateElectionStatus(E_WAITCOOR);
-            }
-#ifdef DEBUGLOG
-            std::cout << "\tElection: heard an answer, wait for COOR ... " << std::endl;
-#endif
-            return "OK";
-            
         } else if (strcmp(msg_type, D_COOR) == 0) {
+            
+            node->mutex_election.lock();
+
+            std::cout << "\tReceive D_COOR " << std::endl;
             // received: COOR#name#ip:port
+            node->updateElectionStatus(E_NONE);
             std::string leader_name(strtok(NULL, "#"));
             std::string heardFrom(strtok(NULL, "#"));
-            // TODO: received: COOR
-            if(node->getElectionStatus() == E_WAITCOOR) {
-                node->updateElectionStatus(E_NONE);
-                nodeMember->updateLeader(heardFrom, leader_name); // this one displays last leader left
-                node->m_queue->resetSequence();
-                node->sendNotice(std::string(D_HEARTBEAT)+"#"+nodeMember->getAddress(), nodeMember->getLeaderAddress());
-            }
+            nodeMember->updateLeader(heardFrom, leader_name); // this one displays last leader left
+            node->m_queue->resetSequence();
+            
+            node->mutex_election.unlock();
+            
             return "OK";
             
         } else {
+
 #ifdef DEBUGLOG
             std::cout << "\tReceive Unexpected: " << recv_msg << std::endl;
 #endif
+
         }
 
     }

@@ -17,7 +17,7 @@ DNet::DNet(Handler * handler) {
  *              Randomly choose port number
  */
 int DNet::DNinit() {
-
+    
     // randomly choose port number
     srand((unsigned int) time(NULL));
     port = rand() % 500 + 20000;
@@ -39,12 +39,16 @@ int DNet::DNinit() {
     // loop through all the results and bind to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
+#ifdef DEBUGLOG
             perror("socket");
+#endif
             continue;
         }
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
+#ifdef DEBUGLOG
             perror("bind");
+#endif
             continue;
         }
         break;
@@ -54,13 +58,13 @@ int DNet::DNinit() {
         fprintf(stderr, "listener: failed to bind socket\n");
         return FAILURE;
     }
-
+    
     freeaddrinfo(servinfo);
     
 #ifdef DEBUGLOG
     std::cout << "DEBUG:(DNet::DNinit) return " << SUCCESS << std::endl;
 #endif
-
+    
     return SUCCESS;
 }
 
@@ -107,7 +111,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     std::cout << "\tDNet::DNsend: " << addr->getAddress() << " " << data << std::endl;
 #endif
     if (times <= 0) return FAILURE;
-
+    
     int sockfd_w = 0;
     struct addrinfo hints, *servinfo, *p;
     int rv;
@@ -115,7 +119,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
     // set timeout val
     struct timeval tv;
-    tv.tv_sec = 2;
+    tv.tv_sec = 1;
     tv.tv_usec = 0;
     
     // receive msg from server, for ack
@@ -137,18 +141,24 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     // loop through all the results and make a socket
     for (p = servinfo; p != NULL; p = p->ai_next) {
         if ((sockfd_w = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
+#ifdef DEBUGLOG
             perror("stub: socket error");
+#endif
             continue;
         }
         if (setsockopt(sockfd_w, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval)) < 0) {
+#ifdef DEBUGLOG
             perror("setsockopt");
+#endif
             return FAILURE;
         }
         break;
     }
     
     if (p == NULL) {
+#ifdef DEBUGLOG
         fprintf(stderr, "stub: failed to create socket.\n");
+#endif
         close(sockfd_w);
         return FAILURE;
     }
@@ -156,7 +166,9 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     // Send message
     strcpy(buf, data.c_str());
     if ((numbytes = sendto(sockfd_w, buf, strlen(buf) + 1, 0, p->ai_addr, p->ai_addrlen)) == -1) {
+#ifdef DEBUGLOG
         perror("sendto");
+#endif
         close(sockfd_w);
         return FAILURE;
     }
@@ -164,16 +176,18 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     // To receive ACK from the server
     if ((numbytes = recvfrom(sockfd_w, buf, MAXBUFLEN - 1, 0,
                              (struct sockaddr *) &their_addr, &addr_len)) == -1) {
+#ifdef DEBUGLOG
         perror("recvfrom");
+#endif
         // not getting ack within timeout
         close(sockfd_w);
         return DNsend(addr, data, ack, times - 1);
     }
-
+    
 #ifdef DEBUGLOG
     std::cout << "\tDNet::DNsend: receive: " << data << std::endl;
 #endif
-
+    
     ack = std::string(buf, numbytes);
     close(sockfd_w);
     freeaddrinfo(servinfo);
@@ -187,7 +201,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
  *              If timeout < 0, no timeout
  */
 int DNet::DNrecv(Address &fromaddr, std::string &data) {
-
+    
     long numbytes;
     struct sockaddr_storage their_addr;
     socklen_t addr_len = sizeof their_addr;
@@ -196,43 +210,45 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     
     if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN - 1 , 0,
                              (struct sockaddr *) &their_addr, &addr_len)) == -1) {
+#ifdef DEBUGLOG
         perror("recvfrom");
+#endif
         return FAILURE;
     }
-
+    
     // copy their_addr to fromaddr
     fromaddr.ip = std::string(inet_ntop(their_addr.ss_family,
-                            get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
+                                        get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
     fromaddr.port = ntohs(get_in_port((struct sockaddr *) &their_addr));
     data = std::string(buf, numbytes);
-
+    
 #ifdef DEBUGLOG
     std::cout << "\treceive: " << data << " from "
     << inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s)
     << ":" << ntohs(get_in_port((struct sockaddr *) &their_addr))
     << std::endl;
 #endif
-
+    
     // Handle received message
     std::string recv_msg(buf);
     std::string send_msg = handler->process(fromaddr, recv_msg);
-
+    
 #ifdef DEBUGLOG
     printf("\tsend back: %s\n", send_msg.c_str());
 #endif
-
+    
     // Fail to handle message, simply no sending back, let the send timeout
     if (send_msg.empty()) return FAILURE;
-
+    
     // Send ack back
     strcpy(buf, send_msg.c_str());
-
+    
     if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
                            (struct sockaddr *) &their_addr, addr_len)) == -1) {
         perror("sendto");
         return FAILURE;
     }
-
+    
     return SUCCESS;
 }
 
@@ -248,7 +264,9 @@ int DNet::DNinfo(std::string & addr) {
     char host[NI_MAXHOST];
     
     if (getifaddrs(&ifaddr) == -1) {
+#ifdef DEBUGLOG
         perror("getifaddrs");
+#endif
         return FAILURE;
     }
     
@@ -266,20 +284,20 @@ int DNet::DNinfo(std::string & addr) {
             break;
         }
     }
-
+    
     freeifaddrs(ifaddr);
     
     struct sockaddr_in local_address;
     socklen_t address_length = sizeof local_address;
     getsockname(sockfd, (struct sockaddr*) &local_address, &address_length);
-
+    
     str_port = std::to_string((int) ntohs(local_address.sin_port));
     addr = str_ip + ":" + str_port;
-
+    
 #ifdef DEBUGLOG
     std::cout << "DEBUG:(DNet::DNinfo) return " << SUCCESS << std::endl;
 #endif
-
+    
     return SUCCESS;
 }
 

@@ -53,7 +53,7 @@
 //#define DEBUGLOG    1
 
 #define MAXBUFLEN       512
-#define TIMEOUT         6000
+#define TIMEOUT         3000
 #define HEARTFREQ       2000
 #define ELECTIONTIME    2000
 
@@ -64,13 +64,14 @@
 
 #define D_CHAT          "CHAT"              // CHAT#username::Message - From node to sequencer
 #define D_JOINREQ       "JOINREQ"           // JOINREQ#PORT#Name
-#define D_JOINLEADER    "JOINLEADER"        // JOINLEADER#LEADERIP#LEADERPORT
+#define D_JOINLEADER    "JOINLEADER"        // JOINLEADER#LEADERIP#LEADERPORT#LEADERNAME
 #define D_JOINLIST      "JOINLIST"          // JOINLIST#initSeq#LEADERNAME#ip1:port1:name1:...
-#define D_LEAVE         "LEAVE"             // LEAVE#name#ip:port
 #define D_HEARTBEAT     "HEARTBEAT"         // HEARTBEAT#ip:port detect failed node
 #define D_ELECTION      "ELECTION"          // ELECTION#ip:port, start election
-#define D_ANSWER        "ANSWER"            // ANSWER#ip:port, answer to election message
+//#define D_ANSWER        "ANSWER"            // ANSWER#ip:port, answer to election message
 #define D_COOR          "COOR"              // COOR#name#ip:port, announce leadership
+//#define D_LEAVE         "LEAVE"             // LEAVE#name#ip:port
+
 
 // Election status
 #define E_NONE  0       // not in election

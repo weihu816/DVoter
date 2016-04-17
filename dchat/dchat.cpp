@@ -29,6 +29,7 @@ void usage(std::string msg) {
  */
 void sendMsg(DNode * node) {
     while (isAlive) {
+        /* Simply exit */
         if (std::cin.eof()) { // Control-D / EOF: shutdown
             isAlive = false;
             node->nodeLeave();
@@ -40,6 +41,12 @@ void sendMsg(DNode * node) {
         if (strlen(msg) != 0) {
             node->sendMsg(std::string(msg));
         }
+    }
+}
+
+void sendMsgToLeader(DNode * node) {
+    while (isAlive) {
+        node->sendMsgToLeader();
     }
 }
 
@@ -75,7 +82,7 @@ void recvMsg(DNode * node) {
  */
 void heartBeatRoutine(DNode * node) {
     while (isAlive) {
-        std::chrono::milliseconds sleepTime(HEARTFREQ); // check every 3 seconds
+        std::chrono::milliseconds sleepTime(HEARTFREQ); // check every HEARTFREQ seconds
         std::this_thread::sleep_for(sleepTime);
         node->nodeLoopOps();
     }
@@ -113,8 +120,7 @@ int main(int argc, const char * argv[]) {
     // Node is up, introduced to the group
     if (node->nodeStart() == FAILURE) {
         delete node;
-        std::cout << "Fail to start the node" << std::endl;
-        std::exit(1);
+        return 0;
     }
     
     // Thread: Listening for input
@@ -124,7 +130,9 @@ int main(int argc, const char * argv[]) {
     // Thread: Receive chat messages
     std::thread thread_displayMsg(displayMsg, node);
     // Thread: Track heartbeat
-    std::thread thread_heartbeat(heartBeatRoutine,node);
+    std::thread thread_heartbeat(heartBeatRoutine, node);
+    
+    std::thread thread_sendMsgToLeader(sendMsgToLeader, node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
@@ -134,4 +142,5 @@ int main(int argc, const char * argv[]) {
     // Clean up and quit
     node->nodeLeave();
     delete node;
+    return 0;
 }

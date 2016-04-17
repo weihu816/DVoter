@@ -1,17 +1,22 @@
 #include "Queue.h"
 #include "DNode.h"
 
+
+/**
+ * FUNCTION NAME: pop
+ *
+ * DESCRIPTION:
+ */
 void holdback_queue::pop() {
     std::unique_lock<std::mutex> mlock(d_mutex);
-//    while (!d_queue.empty() && d_queue.top().first <= sequence_seen) {
-//        T peek_pair = d_queue.top();
-//        d_queue.pop();
-//        // Handle peek_pair
-//#ifdef DEBUGLOG
-//        std::cout << "\t#holdback_queue handling: " << peek_pair.first << " " << peek_pair.second << std::endl;
-//#endif
-//        handle(peek_pair.second.substr(1)); // ignore duplicate?
-//    }
+    
+    // Dangerous Zone
+    while (!d_queue.empty() && d_queue.top().first <= sequence_seen) {
+        std::cout << "? This should never happen in holdback_queue" << std::endl;
+        d_queue.pop();
+    }
+    
+    // Handling Loop
     while (!d_queue.empty() && d_queue.top().first == sequence_seen + 1) {
         T peek_pair = d_queue.top();
         d_queue.pop();
@@ -24,6 +29,12 @@ void holdback_queue::pop() {
     }
 }
 
+
+/**
+ * FUNCTION NAME: handle
+ *
+ * DESCRIPTION:
+ */
 void holdback_queue::handle(std::string msg) {
 
     std::string msg_type = msg.substr(0, msg.find("#"));
@@ -40,7 +51,7 @@ void holdback_queue::handle(std::string msg) {
         std::string port_name = msg_body.substr(msg_body.find("#") + 1);
         std::string port = port_name.substr(0, port_name.find("#"));
         std::string name = port_name.substr(port_name.find("#") + 1);
-        node->addMember(ip + ":" + port, name);
+        node->addMember(ip + ":" + port, name, true);
         
     } else if (msg_type.compare(D_M_MSG) == 0) {
 
@@ -54,13 +65,20 @@ void holdback_queue::handle(std::string msg) {
             return;
         }
         else {
-            // i am a member, i need to delete the leaving member
+            // I am a member, i need to delete the leaving member
             // delete the member from the memberList and display message in node function
+            std::cout << " === " << msg << std::endl;
             node->deleteMember(msg_body);
         }
     }
 }
 
+
+/**
+ * FUNCTION NAME: push
+ *
+ * DESCRIPTION:
+ */
 void holdback_queue::push(const T &value)  {
 #ifdef DEBUGLOG
     std::cout << "\t#holdback_queue push: " << value.first << " " << value.second << std::endl;
@@ -70,17 +88,35 @@ void holdback_queue::push(const T &value)  {
     d_condition.notify_one();
 }
 
+
+/**
+ * FUNCTION NAME: getNextSequence
+ *
+ * DESCRIPTION:
+ */
 int holdback_queue::getNextSequence()  {
     std::unique_lock<std::mutex> mlock(d_mutex);
     return sequence_next++;
 }
 
+
+/**
+ * FUNCTION NAME: resetSequence
+ *
+ * DESCRIPTION:
+ */
 void holdback_queue::resetSequence() {
     std::unique_lock<std::mutex> mlock(d_mutex);
     sequence_seen = 0;
     sequence_next = 1;
 }
 
+
+/**
+ * FUNCTION NAME: holdback_queue
+ *
+ * DESCRIPTION:
+ */
 holdback_queue::holdback_queue(int init_seen, DNode * node) : node(node) {
     sequence_seen = init_seen;
     sequence_next = init_seen + 1;
