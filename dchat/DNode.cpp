@@ -63,18 +63,18 @@ std::string DNode::msgLoop() {
  */
 int DNode::nodeStart() {
     // Self booting routines
+    if (member_node->getAddress().compare(join_address) != 0) {
+        std::cout << username << " joining a new chat on " << join_address;
+        std::cout << ", listening on " << member_node->getAddress() << std::endl;
+    }
     if( initThisNode() == FAILURE ) {
-
         std::cout << "init_thisnode failed. Exit." << std::endl;
         return FAILURE;
-
     }
     if( introduceSelfToGroup(join_address, false) == FAILURE ) {
-
         std::cout << "Sorry no chat is active on " << member_node->getAddress()
         << ", try again later.\nBye." << std::endl;
         return FAILURE;
-
     }
     std::cout << "Succeed, current users:" << std::endl; // TODO
     std::cout << member_node->getLeaderName() << " " << member_node->getLeaderAddress() << " (Leader)" << std::endl;
@@ -224,7 +224,6 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
             
         } else if (msg_type.compare(D_JOINLIST) == 0) {
             
-            std::cout << username << " joining a new chat on " << join_addr << ", listening on " << member_node->getAddress() << std::endl;
             // received: JOINLIST#initSeq#leadername#ip1:port1:name1:ip2:port2:name2...
             std::string recv_param = msg_ack.substr(index + 1);
             std::string recv_init_seq = recv_param.substr(0, recv_param.find("#"));
@@ -284,10 +283,10 @@ void DNode::sendMsg(std::string msg) {
  */
 void DNode::sendMsgToLeader() {
 
-    std::unique_lock<std::mutex> lk(mutex_election);
-    while (getElectionStatus() != E_NONE) {
-        cv.wait(lk);
-    }
+//    std::unique_lock<std::mutex> lk(mutex_election);
+//    while (getElectionStatus() != E_NONE) {
+//        cv.wait(lk);
+//    }
 
     std::string msg = message_send_queue.pop();
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
@@ -314,9 +313,7 @@ void DNode::sendMsgToLeader() {
  *              TODO: only leaders can call this function
  */
 void DNode::multicastMsg(std::string msg, std::string type) {
-    
-    std::unique_lock<std::mutex> lk(mutex_list);
-    
+        
     int seq = m_queue->getNextSequence();
 
 #ifdef DEBUGLOG
@@ -382,19 +379,17 @@ int DNode::sendNotice(std::string notice, std::string destAddress) {
  */
 void DNode::multicastNotice(std::string notice) {
     
-    std::unique_lock<std::mutex> lk(mutex_list);
-    
     auto list = member_node->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         Address addr((*iter).getAddress());
         std::string str_ack;
         if (dNet->DNsend(&addr, notice, str_ack, 2) == FAILURE) {
 #ifdef DEBUGLOG
-            std::cout << "\tMulticastNotice: Fail! " << addr.getAddress() << std::endl;
+            std::cout << "\tSendNotice: Fail! " << addr.getAddress() << std::endl;
 #endif
         }
 //#ifdef DEBUGLOG
-        std::cout << "\tMulticast notice to: " << notice << " " << addr.getAddress() << std::endl;
+        std::cout << "\tSend notice to: " << notice << " " << addr.getAddress() << std::endl;
 //#endif
     }
 }
@@ -402,24 +397,24 @@ void DNode::multicastNotice(std::string notice) {
 
 //////////////////////////////// LEADER ELECTION ////////////////////////////////
 
-/**
- * FUNCTION NAME: electionHandler
- *
- * DESCRIPTION: Handle the case if the potential fails during the election process
- */
-void electionHandler(DNode * node) {
-    // waits some time for D_COOR
-    std::cout << "electionHandler~~" << std::endl;
-    if (node->getElectionStatus() == E_WAITCOOR) {
-        std::chrono::milliseconds sleepTime(ELECTIONTIME);
-        std::this_thread::sleep_for(sleepTime);
-        
-        if(node->getElectionStatus() == E_WAITCOOR) {
-            node->updateElectionStatus(E_NONE);
-            node->startElection();
-        }
-    }
-}
+///**
+// * FUNCTION NAME: electionHandler
+// *
+// * DESCRIPTION: Handle the case if the potential fails during the election process
+// */
+//void electionHandler(DNode * node) {
+//    // waits some time for D_COOR
+//    std::cout << "electionHandler~~" << std::endl;
+//    if (node->getElectionStatus() == E_WAITCOOR) {
+//        std::chrono::milliseconds sleepTime(ELECTIONTIME);
+//        std::this_thread::sleep_for(sleepTime);
+//        
+//        if(node->getElectionStatus() == E_WAITCOOR) {
+//            node->updateElectionStatus(E_NONE);
+//            node->startElection();
+//        }
+//    }
+//}
 
 /**
  * FUNCTION NAME: startElection, called by a member
@@ -427,13 +422,13 @@ void electionHandler(DNode * node) {
  * DESCRIPTION: member start a election
  */
 void DNode::startElection() {
-
+    
     if(getElectionStatus() != E_NONE) {
         return; // In election already
     }
     
     std::unique_lock<std::mutex> lk(mutex_election);
-    
+
     std::cout << ">>>>> Start Leader Election <<<<<" << std::endl;
     
     // wait for some ANSWER, sleep? RECV in another thread so we are okay?
@@ -454,7 +449,7 @@ void DNode::startElection() {
     // Send Election to leader as well
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) > 0) {
         int status = sendNotice(std::string(D_ELECTION) + "#" + member_node->getAddress(), member_node->getLeaderAddress());
-        std::cout << "Send Election to " << member_node->getLeaderAddress() << " : " << status << std::endl;
+        std::cout << "Send Election to " << member_node->getLeaderAddress() << " [status] " << status << std::endl;
         if (status == SUCCESS) {
             send_count++;
         }
@@ -482,13 +477,17 @@ void DNode::startElection() {
     
     // Wait for COOR message ..........
     updateElectionStatus(E_WAITCOOR);
-
     lk.unlock();
-    cv.notify_one();
+
+    std::cout << "Wait for COOR message .........." << std::endl;
+    std::chrono::milliseconds sleepTime(ELECTIONTIME);
+    std::this_thread::sleep_for(sleepTime);
     
-    //pass to handler thread
-    std::thread thread_election(electionHandler, this);
-    thread_election.detach();
+    if(getElectionStatus() == E_WAITCOOR) {
+        std::cout << "No COOR message .........." << std::endl;
+        updateElectionStatus(E_NONE);
+        startElection();
+    }
     
 }
 
@@ -504,8 +503,8 @@ void DNode::startElection() {
  * 				member: start election; leader: multicast LEAVEANNO
  */
 void DNode::nodeLoopOps() {
-
-    std::unique_lock<std::mutex> lk(mutex_list);
+    
+    std::unique_lock<std::mutex> lk(mutex_election);
     
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
@@ -556,6 +555,7 @@ void DNode::nodeLoopOps() {
             std::cout << "\tLeader failed. " << std::endl;
 #endif
 
+            lk.unlock();
             startElection();
             
         }

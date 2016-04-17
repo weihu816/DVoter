@@ -39,6 +39,8 @@
 #include <list>
 #include <fstream>
 #include <thread>
+#include <mutex>
+#include <chrono>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -55,7 +57,7 @@
 #define MAXBUFLEN       512
 #define TIMEOUT         3000
 #define HEARTFREQ       2000
-#define ELECTIONTIME    2000
+#define ELECTIONTIME    4000
 
 // Multicast messages, start with a #
 #define D_M_MSG         "MSG"               // #MSG#SEQ#username::Message, multicast from the sequencer

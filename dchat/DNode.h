@@ -36,8 +36,7 @@ public:
     holdback_queue * m_queue;
     std::mutex mtx;
     std::mutex mutex_election;
-    std::mutex mutex_list;
-    std::condition_variable cv;
+//    std::condition_variable cv;
 
     DNode(std::string name, std::string join_addr="");
     int nodeStart();                                                // introduce and start functions

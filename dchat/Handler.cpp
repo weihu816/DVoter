@@ -161,18 +161,20 @@ string Handler::process(Address & from_addr, string recv_msg) {
             
         } else if (strcmp(msg_type, D_COOR) == 0) {
             
-            node->mutex_election.lock();
-
             std::cout << "\tReceive D_COOR " << std::endl;
+
+            std::unique_lock<std::mutex> lk(node->mutex_election);
+
             // received: COOR#name#ip:port
-            node->updateElectionStatus(E_NONE);
             std::string leader_name(strtok(NULL, "#"));
             std::string heardFrom(strtok(NULL, "#"));
+            
+            node->updateElectionStatus(E_NONE);
             nodeMember->updateLeader(heardFrom, leader_name); // this one displays last leader left
             node->m_queue->resetSequence();
             
-            node->mutex_election.unlock();
-            
+            std::cout << "\tD_COOR Done" << std::endl;
+                        
             return "OK";
             
         } else {

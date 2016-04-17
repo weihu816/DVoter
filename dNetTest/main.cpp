@@ -7,6 +7,9 @@
 //
 
 #include <iostream>
+#include <thread>
+#include <mutex>
+
 #include "DNet.h"
 #include "Queue.h"
 
@@ -36,11 +39,7 @@ void testQueue() {
     thread_push.join();
 }
 
-void testHoldBackQueue() {
-
-}
-
-int main(int argc, const char * argv[]) {
+void testStr() {
     string recv_msg = "HELLO#WORLD#KKK";
     char * cstr = new char[recv_msg.length() + 1];
     strcpy(cstr, recv_msg.c_str());
@@ -51,6 +50,21 @@ int main(int argc, const char * argv[]) {
     cout << strtok(NULL, "#") << endl;
     cout << cstr << endl;
     cout << strtok(NULL, "#") << endl;
+}
+
+mutex mtx;
+int i;
+
+void A() {
+    unique_lock<std::mutex> lk(mtx);
+    if (i >=2) return;
+    cout << i++ << endl;
+    A();
+}
+
+int main(int argc, const char * argv[]) {
+    i = 0;
+    A();
 }
 
 
