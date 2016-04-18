@@ -104,8 +104,9 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 
                 std::string member_addr = from_addr.getAddressIp() + ":" + recv_port;
                 std::string member_name = recv_name;
-                //TODO logic: wait for broadcast ADD_NODE?
-                //node->addMember(member_addr, member_name);
+                
+                node->addMember(member_addr, member_name, false);
+
                 int initSeq = node->m_queue->getSequenceSeen();
                 // send JOINLIST#initSeq#ip1:port1:name1:ip2:port2:name2...
                 std::string message = std::string(D_JOINLIST) + "#" + std::to_string(initSeq) +

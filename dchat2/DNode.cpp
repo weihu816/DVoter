@@ -16,7 +16,7 @@ DNode::DNode(std::string name, std::string join_addr) : username(name) {
     dNet->DNinit();
     std::string my_addr;
     dNet->DNinfo(my_addr);
-    member_node = new Member(my_addr);        // Create Member node
+    member_node = new Member(my_addr);
     if (!join_addr.empty()) {
         join_address = join_addr;
     } else {
@@ -189,6 +189,34 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
         m_queue = new holdback_queue(0, this);
         
     } else {
+        
+        Address to_addr(join_addr);
+        // Requst to join by contacting the member
+        std::string msg_to = std::string(D_JOINREQ) + "#" + std::to_string(member_node->address->port) + "#" + username;
+        std::string msg_ack;
+        if (dNet->DNsend(&to_addr, msg_to, msg_ack, 3) != SUCCESS) return FAILURE;
+        
+        // send JOINREQ message to introducer member
+        size_t index = msg_ack.find("#");
+        if (index == std::string::npos) return FAILURE;
+        std::string msg_type = msg_ack.substr(0, index);
+        
+        if (msg_type.compare(D_JOINLIST) == 0) {
+            
+            // received: JOINLIST#initSeq#leadername#ip1:port1:name1:ip2:port2:name2...
+            std::string recv_param = msg_ack.substr(index + 1);
+            std::string recv_init_seq = recv_param.substr(0, recv_param.find("#"));
+            std::string recv_name_list = recv_param.substr(recv_param.find("#") + 1);
+            std::string recv_name = recv_name_list.substr(0, recv_name_list.find("#"));
+            std::string recv_list = recv_name_list.substr(recv_name_list.find("#") + 1);
+            m_queue = new holdback_queue(atoi(recv_init_seq.c_str()), this);
+            initMemberList(recv_list, to_addr.getAddress());
+            if (!isSureLeaderAddr) member_node->leaderEntry = new MemberListEntry(join_addr, recv_name);
+            
+        } else {
+            std::cout << "(Never here) Bad behaviour in introduceSelfToGroup" << std::endl;
+            return FAILURE;
+        }
         
     }
   

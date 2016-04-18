@@ -67,11 +67,11 @@ int DNode::nodeStart() {
         std::cout << username << " joining a new chat on " << join_address;
         std::cout << ", listening on " << member_node->getAddress() << std::endl;
     }
-    if (initThisNode() == FAILURE) {
-        std::cout << "init node failed. Exit." << std::endl;
+    if( initThisNode() == FAILURE ) {
+        std::cout << "init_thisnode failed. Exit." << std::endl;
         return FAILURE;
     }
-    if (introduceSelfToGroup(join_address, false) == FAILURE) {
+    if( introduceSelfToGroup(join_address, false) == FAILURE ) {
         std::cout << "Sorry no chat is active on " << member_node->getAddress()
         << ", try again later.\nBye." << std::endl;
         return FAILURE;
@@ -184,13 +184,14 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
     std::string self_addr = member_node->getAddress();
     
 #ifdef DEBUGLOG
-    std::cout << "\tDNode::introduceSelfToGroup: " << self_addr << " (self) vs (join) " << join_addr << std::endl;
+    std::cout << "\tDNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
 #endif
     
     if (self_addr.compare(join_addr) == 0) {
         
         // I am the group booter (first process to join the group). Boot up the group
         std::cout << username << " started a new chat, listening on " << member_node->getAddress() << std::endl;
+        // addMember(join_addr, username, true); // I'm the leader
         member_node->leaderEntry = new MemberListEntry(join_addr, username);
         
         m_queue = new holdback_queue(0, this);
@@ -320,7 +321,26 @@ void DNode::multicastMsg(std::string msg, std::string type) {
 #endif
     
     std::string send_msg =  "#" + type + "#" + std::to_string(seq) + "#" + msg;
-    
+    // Send to group members
+    auto list = member_node->memberList;
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        Address addr((*iter).getAddress());
+        std::string ack;
+        if (dNet->DNsend(&addr, send_msg, ack, 2) == FAILURE) {
+#ifdef DEBUGLOG
+            std::cout << "\tmulticastMsg: Fail! " << addr.getAddress() << std::endl;
+#endif
+            // Remove first then recursively multicastMsg
+            member_node->deleteMember((*iter).getAddress());
+            multicastMsg(iter->getAddress(), D_LEAVEANNO);
+        }
+#ifdef DEBUGLOG
+        std::cout << "\tMulticast: " << send_msg << " to: " << addr.getAddress() << std::endl;
+#endif
+    }
+    // Send to self
+    m_queue->push(std::make_pair(seq, "#"+ type + "#" + msg));
+    m_queue->pop();
 }
 
 
