@@ -68,7 +68,7 @@ int DNode::nodeStart() {
         std::cout << ", listening on " << member_node->getAddress() << std::endl;
     }
     if( initThisNode() == FAILURE ) {
-        std::cout << "init_thisnode failed. Exit." << std::endl;
+        std::cout << "init node failed. Exit." << std::endl;
         return FAILURE;
     }
     if( introduceSelfToGroup(join_address, false) == FAILURE ) {
@@ -76,11 +76,8 @@ int DNode::nodeStart() {
         << ", try again later.\nBye." << std::endl;
         return FAILURE;
     }
-//    std::cout << "Succeed, current users:" << std::endl; // TODO
-//    std::cout << member_node->getLeaderName() << " " << member_node->getLeaderAddress() << " (Leader)" << std::endl;
-//    member_node->printMemberList();
-//    if (member_node->isLeader()) std::cout << "Waiting for others to join" << std::endl;
-
+    std::cout << "Succeed, current users:" << std::endl; // TODO
+    member_node->printMemberList();
     return SUCCESS;
 }
 
@@ -134,7 +131,6 @@ void DNode::initMemberList(std::string member_list) {
         addMember(listEntry.getAddress(), listEntry.username, false);
         pch = strtok(NULL, "#");
     }
-    
 }
 
 /**
@@ -186,7 +182,15 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 #ifdef DEBUGLOG
     std::cout << "\tDNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
 #endif
-
+    if (self_addr.compare(join_addr) == 0) {
+        
+        std::cout << username << " started a new chat, listening on " << member_node->getAddress() << std::endl;
+        addMember(join_addr, username, true);
+        m_queue = new holdback_queue(0, this);
+        
+    } else {
+        
+    }
   
     return SUCCESS;
 }

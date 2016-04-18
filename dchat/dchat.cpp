@@ -138,6 +138,7 @@ int main(int argc, const char * argv[]) {
     thread_recvMsg.join();
     thread_displayMsg.join();
     thread_heartbeat.join();
+    thread_sendMsgToLeader.join();
     
     // Clean up and quit
     node->nodeLeave();

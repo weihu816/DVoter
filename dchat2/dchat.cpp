@@ -44,11 +44,6 @@ void sendMsg(DNode * node) {
     }
 }
 
-void sendMsgToLeader(DNode * node) {
-    while (isAlive) {
-        break;
-    }
-}
 
 /**
  * FUNCTION NAME: displayMsg
@@ -132,8 +127,6 @@ int main(int argc, const char * argv[]) {
     // Thread: Track heartbeat
     std::thread thread_heartbeat(heartBeatRoutine, node);
     
-    std::thread thread_sendMsgToLeader(sendMsgToLeader, node);
-
     thread_sendMsg.join();
     thread_recvMsg.join();
     thread_displayMsg.join();

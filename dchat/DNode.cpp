@@ -67,11 +67,11 @@ int DNode::nodeStart() {
         std::cout << username << " joining a new chat on " << join_address;
         std::cout << ", listening on " << member_node->getAddress() << std::endl;
     }
-    if( initThisNode() == FAILURE ) {
-        std::cout << "init_thisnode failed. Exit." << std::endl;
+    if (initThisNode() == FAILURE) {
+        std::cout << "init node failed. Exit." << std::endl;
         return FAILURE;
     }
-    if( introduceSelfToGroup(join_address, false) == FAILURE ) {
+    if (introduceSelfToGroup(join_address, false) == FAILURE) {
         std::cout << "Sorry no chat is active on " << member_node->getAddress()
         << ", try again later.\nBye." << std::endl;
         return FAILURE;
@@ -80,7 +80,7 @@ int DNode::nodeStart() {
     std::cout << member_node->getLeaderName() << " " << member_node->getLeaderAddress() << " (Leader)" << std::endl;
     member_node->printMemberList();
     if (member_node->isLeader()) std::cout << "Waiting for others to join" << std::endl;
-
+    
     return SUCCESS;
 }
 
@@ -103,7 +103,7 @@ int DNode::initThisNode() {
  *
  * DESCRIPTION: Wind up this node and clean up state
  */
-int DNode::nodeLeave() {    
+int DNode::nodeLeave() {
     return SUCCESS;
 }
 
@@ -122,7 +122,7 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
 #ifdef DEBUGLOG
     std::cout << "\tDNode::initMemberList: " << member_list  << " leaderAddr:" << leaderAddr << std::endl;
 #endif
-
+    
     if (member_list.empty()) return;
     char * cstr = new char[member_list.length() + 1];
     std::string addr;
@@ -147,7 +147,7 @@ void DNode::addMember(std::string ip_port, std::string name, bool toPrint){
 #ifdef DEBUGLOG
     std::cout << "\tDNode::addMember: " << ip_port  << " " << name << std::endl;
 #endif
-
+    
     member_node->addMember(ip_port, name);
     if (toPrint) {
         std::cout << "NOTICE " << name << " joined on " << ip_port << std::endl;
@@ -180,31 +180,30 @@ void DNode::deleteMember(std::string memberAddr){
  * DESCRIPTION: Join the distributed system
  */
 int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
-
+    
     std::string self_addr = member_node->getAddress();
-
+    
 #ifdef DEBUGLOG
-    std::cout << "\tDNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
+    std::cout << "\tDNode::introduceSelfToGroup: " << self_addr << " (self) vs (join) " << join_addr << std::endl;
 #endif
-
+    
     if (self_addr.compare(join_addr) == 0) {
         
         // I am the group booter (first process to join the group). Boot up the group
         std::cout << username << " started a new chat, listening on " << member_node->getAddress() << std::endl;
-        // addMember(join_addr, username, true); // I'm the leader
         member_node->leaderEntry = new MemberListEntry(join_addr, username);
         
         m_queue = new holdback_queue(0, this);
         
     } else {
-
+        
         Address to_addr(join_addr);
         // Requst to join by contacting the member
         std::string msg_to = std::string(D_JOINREQ) + "#" + std::to_string(member_node->address->port) + "#" + username;
         std::string msg_ack;
         if (dNet->DNsend(&to_addr, msg_to, msg_ack, 3) != SUCCESS) return FAILURE;
         // Receive member lists from the leader, then save the leader address
-
+        
         // send JOINREQ message to introducer member
         size_t index = msg_ack.find("#");
         if (index == std::string::npos) return FAILURE;
@@ -233,7 +232,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
             m_queue = new holdback_queue(atoi(recv_init_seq.c_str()), this);
             initMemberList(recv_list, to_addr.getAddress());
             if (!isSureLeaderAddr) member_node->leaderEntry = new MemberListEntry(join_addr, recv_name);
-
+            
         } else {
             return FAILURE;
         }
@@ -282,12 +281,12 @@ void DNode::sendMsg(std::string msg) {
  *              No request will be send to leader if election in process
  */
 void DNode::sendMsgToLeader() {
-
-//    std::unique_lock<std::mutex> lk(mutex_election);
-//    while (getElectionStatus() != E_NONE) {
-//        cv.wait(lk);
-//    }
-
+    
+    //    std::unique_lock<std::mutex> lk(mutex_election);
+    //    while (getElectionStatus() != E_NONE) {
+    //        cv.wait(lk);
+    //    }
+    
     std::string msg = message_send_queue.pop();
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
         // I'm the leader now
@@ -302,7 +301,7 @@ void DNode::sendMsgToLeader() {
             std::cout << "Fail to send: " << str_to << std::endl;
         }
     }
-
+    
 }
 
 
@@ -313,13 +312,13 @@ void DNode::sendMsgToLeader() {
  *              TODO: only leaders can call this function
  */
 void DNode::multicastMsg(std::string msg, std::string type) {
-        
+    
     int seq = m_queue->getNextSequence();
-
+    
 #ifdef DEBUGLOG
     std::cout << "\tmulticastMsg: seq: " << seq << " msg: " << msg << " type: " << type << std::endl;
 #endif
-
+    
     std::string send_msg =  "#" + type + "#" + std::to_string(seq) + "#" + msg;
     
 }
@@ -344,7 +343,7 @@ int DNode::sendNotice(std::string notice, std::string destAddress) {
     } else {
         
 #ifdef DEBUGLOG
-    std::cout << "Send notice to: " << addr.getAddress() << std::endl;
+        std::cout << "Send notice to: " << addr.getAddress() << std::endl;
 #endif
         return SUCCESS;
         
@@ -369,9 +368,9 @@ void DNode::multicastNotice(std::string notice) {
             std::cout << "\tSendNotice: Fail! " << addr.getAddress() << std::endl;
 #endif
         }
-//#ifdef DEBUGLOG
+        //#ifdef DEBUGLOG
         std::cout << "\tSend notice to: " << notice << " " << addr.getAddress() << std::endl;
-//#endif
+        //#endif
     }
 }
 
@@ -389,7 +388,7 @@ void DNode::multicastNotice(std::string notice) {
 //    if (node->getElectionStatus() == E_WAITCOOR) {
 //        std::chrono::milliseconds sleepTime(ELECTIONTIME);
 //        std::this_thread::sleep_for(sleepTime);
-//        
+//
 //        if(node->getElectionStatus() == E_WAITCOOR) {
 //            node->updateElectionStatus(E_NONE);
 //            node->startElection();
@@ -409,7 +408,7 @@ void DNode::startElection() {
     }
     
     std::unique_lock<std::mutex> lk(mutex_election);
-
+    
     std::cout << ">>>>> Start Leader Election <<<<<" << std::endl;
     
     // wait for some ANSWER, sleep? RECV in another thread so we are okay?
@@ -435,7 +434,7 @@ void DNode::startElection() {
             send_count++;
         }
     }
-
+    
     // If it knows its id is the highest, it elect itself as coordinator
     // Then sends a Coordinator message to all processes with lower identifier. Election is complete
     if (send_count == 0) {
@@ -454,7 +453,7 @@ void DNode::startElection() {
     // Wait for COOR message ..........
     updateElectionStatus(E_WAITCOOR);
     lk.unlock();
-
+    
     std::cout << "Wait for COOR message .........." << std::endl;
     std::chrono::milliseconds sleepTime(ELECTIONTIME);
     std::this_thread::sleep_for(sleepTime);
@@ -484,14 +483,14 @@ void DNode::nodeLoopOps() {
     
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
-
+    
     if(leader_address.compare(self_address) == 0) { // I am the leader
         
         // have the leader broadcast a heartbeat
         // multicastNotice(std::string(D_HEARTBEAT) + "#" + self_address);
         
 #ifdef DEBUGLOG
-    //std::cout << "\tLeader sent out heartbeat. " << std::endl;
+        //std::cout << "\tLeader sent out heartbeat. " << std::endl;
 #endif
         
         // check every one's heartbeat in the memberlist (except myself)
@@ -514,29 +513,29 @@ void DNode::nodeLoopOps() {
 #endif
                 }
             } else {
-                 std::cout << "!!! Never here in nodeLoopOps " << memberAddr << std::endl;
+                std::cout << "!!! Never here in nodeLoopOps " << memberAddr << std::endl;
             }
         }
     } else {
-
+        
         // I am a member and I send heartbeat to leader
         std::string leader_address = member_node->getLeaderAddress();
         std::string self_address = member_node->getAddress();
         
         // check leader heartbeat
-//        if(checkHeartbeat(leader_address) == FAILURE) {
+        //        if(checkHeartbeat(leader_address) == FAILURE) {
         
         if (sendNotice(std::string(D_HEARTBEAT) + "#" + self_address, leader_address) == FAILURE) {
 #ifdef DEBUGLOG
             std::cout << "\tLeader failed. " << std::endl;
 #endif
-
+            
             lk.unlock();
             startElection();
             
         }
     }
-
+    
     // finish heartbeat check
     return;
 }
@@ -595,12 +594,12 @@ int DNode::getElectionStatus() {
  * update election status
  */
 void DNode::updateElectionStatus(int new_status) {
-
+    
     mtx.lock();
     election_status = new_status;
     mtx.unlock();
 #ifdef DEBUGLOG
     std::cout << "\tElection status update: " << new_status << std::endl;
 #endif
-
+    
 }
