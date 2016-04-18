@@ -301,4 +301,27 @@ int DNet::DNinfo(std::string & addr) {
     return SUCCESS;
 }
 
+/**
+ * FUNCTION NAME: encrypt
+ *
+ * DESCRIPTION: encrypt
+ */
+std::string DNet::encrypt(std::string data, std::string key) {
+    std::string tmp(key);
+    while (key.size() < data.size())
+        key += tmp;
+    for (std::string::size_type i = 0; i < data.size(); ++i)
+        data[i] ^= key[i];
+    return data;
+}
+
+/**
+ * FUNCTION NAME: decrypt
+ *
+ * DESCRIPTION: decrypt
+ */
+std::string DNet::decrypt(std::string data, std::string key) {
+    return encrypt(data, key);
+}
+
 
