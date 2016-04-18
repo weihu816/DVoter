@@ -64,7 +64,6 @@ public:
     void sendMsg(std::string msg);
     void sendMsgToLeader();
     void multicastMsg(std::string msg, std::string type);
-    void propose();
     int sendNotice(std::string type, std::string addr);
     void multicastNotice(std::string type);
     

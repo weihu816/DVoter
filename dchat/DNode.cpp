@@ -324,28 +324,6 @@ void DNode::multicastMsg(std::string msg, std::string type) {
     
 }
 
-void DNode::propose() {
-    
-    auto list = member_node->memberList;
-    for (auto iter = list.begin(); iter != list.end(); iter++) {
-        Address addr((*iter).getAddress());
-        std::string ack;
-        if (dNet->DNsend(&addr, send_msg, ack, 2) == FAILURE) {
-#ifdef DEBUGLOG
-            std::cout << "\tmulticastMsg: Fail! " << addr.getAddress() << std::endl;
-#endif
-            // Remove first then recursively multicastMsg
-            member_node->deleteMember((*iter).getAddress());
-            // TODO start election
-        }
-#ifdef DEBUGLOG
-        std::cout << "\tMulticast: " << send_msg << " to: " << addr.getAddress() << std::endl;
-#endif
-    }
-    // Send to self
-    m_queue->push(std::make_pair(seq, "#"+ type + "#" + msg));
-    m_queue->pop();
-}
 
 /**
  * FUNCTION NAME: sendNotice (send non-chat, notice message without sequence num)
