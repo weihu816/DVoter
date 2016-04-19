@@ -36,14 +36,13 @@ public:
     holdback_queue * m_queue;
     std::mutex mtx;
     std::mutex mutex_election;
-//    std::condition_variable cv;
 
     DNode(std::string name, std::string join_addr="");
     int nodeStart();                                                // introduce and start functions
     int initThisNode();                                             // parameter initialization
     int introduceSelfToGroup(std::string joinAddress, bool isSureLeaderAddr);
     int nodeLeave();                                                // Wind up this node and clean up state
-    void initMemberList(std::string member_list, std::string leaderAddr);
+    void initMemberList(std::string member_list);
     void addMember(std::string ip_port, std::string name, bool toPrint);
     void deleteMember(std::string ip_port);                         // delete a member
     void clearMembers();                                            // delete all members

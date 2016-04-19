@@ -128,88 +128,12 @@ public:
         return (getLeaderAddress().compare(address->getAddress()) == 0);
     }
     
-    /**
-     * FUNCTION NAME: updateLeader
-     *
-     * DESCRIPTION: Update Leader information
-     */
-    void updateLeader(Address leaderAddr, std::string leaderName) {
-
-        if (getLeaderAddress().compare(leaderAddr.getAddress()) == 0) return;
-        std::cout << "NOTICE " << leaderEntry->getUsername() << " left the chat or crashed." << std::endl;
-        heartBeatList.erase(leaderEntry->getAddress());
-        std::string leader_ip_port = leaderAddr.getAddress();
-        leaderEntry = new MemberListEntry(leader_ip_port, leaderName);
-
-        std::cout << "NOTICE " << getLeaderName() << " is the new leader" << std::endl;
-        // New leader should not be in the list
-        deleteMember(leader_ip_port);
-
-#ifdef DEBUGLOG
-        std::cout << "\tNew Leader: " << getLeaderName() << std::endl;
-#endif
-
-    }
+    void updateLeader(Address leaderAddr, std::string leaderName);
+    void addMember(std::string ip_port, std::string name);
+    std::string deleteMember(std::string memberAddr);
+    std::string getMemberList();
+    std::string getMemberListGUI();
     
-    /**
-     * FUNCTION NAME: addMember
-     *
-     * DESCRIPTION: this is the member address list, without user name
-     */
-    void addMember(std::string ip_port, std::string name) {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        MemberListEntry entry(ip_port, name);
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            if ((*iter).getEntry() ==  entry.getEntry()) return;
-        }
-#ifdef DEBUGLOG
-        std::cout << "\tMember::addMember: " << entry.getEntry() << std::endl;
-#endif
-        memberList.push_back(entry);
-        time_t curtime;
-        updateHeartBeat(ip_port, time(&curtime));
-        
-    }
-
-    
-    /**
-     * FUNCTION NAME: deleteMember
-     *
-     * DESCRIPTION: Delete the member from the memberlist given member address
-     */
-    std::string deleteMember(std::string memberAddr) {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            if (memberAddr.compare((*iter).getAddress()) == 0 ) {
-                std::string memberName = (*iter).username;
-                memberList.erase(iter);
-                return memberName;
-            }
-        }
-        return "";
-    }
-
-    /**
-     * FUNCTION NAME: getMemberList
-     *
-     * DESCRIPTION: get MemberList
-     */
-    std::string getMemberList() {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        std::string list = "";
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            list += (*iter).getEntry();
-            if (iter != memberList.end()-1) list += "#";
-        }
-        return list;
-        
-    }
     
     /**
      * FUNCTION NAME: printMemberList

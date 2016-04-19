@@ -117,7 +117,7 @@ int DNode::nodeLeave() {
  * DESCRIPTION: initialize member list given member_list like the following
  *              ip1:port1:name1:ip2:port2:name2: ...
  */
-void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
+void DNode::initMemberList(std::string member_list) {
     
 #ifdef DEBUGLOG
     std::cout << "\tDNode::initMemberList: " << member_list  << " leaderAddr:" << leaderAddr << std::endl;
@@ -231,7 +231,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
             std::string recv_name = recv_name_list.substr(0, recv_name_list.find("#"));
             std::string recv_list = recv_name_list.substr(recv_name_list.find("#") + 1);
             m_queue = new holdback_queue(atoi(recv_init_seq.c_str()), this);
-            initMemberList(recv_list, to_addr.getAddress());
+            initMemberList(recv_list);
             if (!isSureLeaderAddr) member_node->leaderEntry = new MemberListEntry(join_addr, recv_name);
             
         } else {
@@ -265,7 +265,7 @@ void DNode::sendMsg(std::string msg) {
     
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
-    std::cout << "sendMsg" << " leader: " << leader_address << " self:" << self_address << std::endl;
+
     if (leader_address.compare(self_address) == 0) { // I'm the leader (sequencer)
         std::string msgToSend = username + "::" + msg;
         multicastMsg(msgToSend, D_M_MSG);

@@ -2,69 +2,117 @@
 
 #include <QThread>
 #include <qtconcurrentrun.h>
+#include <QTimer>
+
 /**
- * FUNCTION NAME: displayMsg
+ * FUNCTION NAME: sendMsg
  *
- * DESCRIPTION: thread in charge of displaying messages
+ * DESCRIPTION: thread keep listening to user input
  */
-void displayMsg(DNode * node) {
-    while (1) {
-        std::string msg = node->msgLoop();
-        std::cout << msg << std::endl;
+void MainWindow::sendMsg() {
+    while (isAlive) {
+        /* Simply exit */
+        if (std::cin.eof()) { // Control-D / EOF: shutdown
+            isAlive = false;
+            node->nodeLeave();
+            delete node;
+            std::exit(0);
+        }
+        char msg[MAXBUFLEN];
+        std::cin.getline(msg, MAXBUFLEN - 1);
+        if (strlen(msg) != 0) {
+            node->sendMsg(std::string(msg));
+        }
     }
 }
 
+void MainWindow::sendMsgToLeader() {
+    std::cout << "???" << isAlive << std::endl;
+    while (isAlive) {
+        std::cout << "???" << std::endl;
+        node->sendMsgToLeader();
+    }
+}
 
 /**
  * FUNCTION NAME: recvMsg
  *
  * DESCRIPTION: thread keep listening to incoming messages
  */
-void recvMsg(DNode * node) {
-    while (1) {
+void MainWindow::recvMsg() {
+    while (isAlive) {
         node->recvLoop();
     }
 }
 
+/**
+ * FUNCTION NAME: displayMsg
+ *
+ * DESCRIPTION: thread in charge of displaying messages
+ */
+void MainWindow::displayMsg() {
+    while (isAlive) {
+        const QString msg = QString::fromStdString(node->msgLoop());
+        std::cout << msg.toStdString() << std::endl;
+        emit signal_msg(msg);
+    }
+}
 
-///**
-// * FUNCTION NAME: heartBeatRoutine
-// *
-// * DESCRIPTION: send and check heartbeat
-// */
-//void heartBeatRoutine(DNode * node) {
-//    while (1) {
-//        std::chrono::milliseconds sleepTime(HEARTFREQ); // check every 3 seconds
-//        std::this_thread::sleep_for(sleepTime);
-//        node->nodeLoopOps();
-//    }
-//}
+void MainWindow::slot_msg(QString msg) {
+    roomTextEdit->append(msg);
+}
+
+
+void MainWindow::slot_list() {
+    if (!isAlive) return;
+    const QString list = QString::fromStdString(node->getMember()->getMemberListGUI());
+    userTextEdit->setText(list);
+}
+
+
+/**
+ * FUNCTION NAME: heartBeatRoutine
+ *
+ * DESCRIPTION: send and check heartbeat
+ */
+void MainWindow::heartBeatRoutine() {
+    while (isAlive) {
+        std::chrono::milliseconds sleepTime(HEARTFREQ); // check every HEARTFREQ seconds
+        std::this_thread::sleep_for(sleepTime);
+        node->nodeLoopOps();
+    }
+}
+
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     setupUi(this);
     stackedWidget->setCurrentWidget(loginPage);
-
+    QObject::connect(this, SIGNAL(signal_msg(QString)), this, SLOT(slot_msg(QString)));
+    QTimer * timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(slot_list()));
+    timer->start(5000);
 }
 
 void MainWindow::on_loginButton_clicked()
 {
     node = new DNode(userLineEdit->text().toStdString(), serverLineEdit->text().toStdString());
-    // Node is up, introduced to the group
     if (node->nodeStart() == FAILURE) {
         delete node;
-        std::cout << "Fail to start the node" << std::endl;
-        std::exit(1);
-    }
-    // Node is up, introduced to the group
-    if (node->nodeStart() == FAILURE) {
-        std::cout << "Fail to start the node" << std::endl;
         std::exit(1);
     }
     stackedWidget->setCurrentWidget(chatPage);
-    QFuture<void> t1 = QtConcurrent::run(displayMsg, node);
-    QFuture<void> t2 = QtConcurrent::run(recvMsg, node);
-//    QFuture<void> t3 = QtConcurrent::run(heartBeatRoutine, node);
+    QString name = QString::fromStdString(node->getUsername() + " " + node->getMember()->getAddress());
+    nameLabel->setText(name);
+    isAlive = true;
+    std::thread t1(&MainWindow::displayMsg, this);
+    t1.detach();
+    std::thread t2(&MainWindow::recvMsg, this);
+    t2.detach();
+    std::thread t3(&MainWindow::heartBeatRoutine, this);
+    t3.detach();
+    std::thread t4(&MainWindow::sendMsgToLeader, this);
+    t4.detach();
 }
 
 
