@@ -175,6 +175,8 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
         return FAILURE;
     }
     
+    memset(buf, 0, sizeof(buf));
+    
     // To receive ACK from the server
     if ((numbytes = recvfrom(sockfd_w, buf, MAXBUFLEN - 1, 0,
                              (struct sockaddr *) &their_addr, &addr_len)) == -1) {
@@ -188,7 +190,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
 #ifdef DEBUGLOG
     if (data.find(std::string("HEARTBEAT")) == std::string::npos) {
-        std::cout << "\tDNet::DNsend: receive: " << data << std::endl;
+        std::cout << "\tDNet::DNsend: receive: " << buf << std::endl;
     }
 #endif
     

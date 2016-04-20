@@ -205,6 +205,14 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // if have not seen marker
             else {
                 node->startSnapshotByMarker(heardFrom);
+                Snapshot *s = node->getSnapshot();
+                // check whether finished snapshot
+                if (s->receivedAllMarkers()) {  // finish snapshot
+#ifdef DEBUGLOG
+                    std::cout << "SNAPSHOT FINISH BY receiving one marker!" << std::endl;
+#endif
+                    node->updateSnapshotStatus(S_NONE);
+                }
             }
             return "OK";
         } else {

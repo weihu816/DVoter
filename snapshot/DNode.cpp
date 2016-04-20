@@ -675,7 +675,7 @@ void DNode::multicastMarker(std::string marker) {
 #endif
             }
 #ifdef DEBUGLOG
-    std::cout << "\tSend marker to: " << addr.getAddress() << std::endl;
+    std::cout << "\tSend marker to member: " << addr.getAddress() << std::endl;
 #endif
         }
 
@@ -685,15 +685,15 @@ void DNode::multicastMarker(std::string marker) {
     std::string str_ack;
     std::string leader_addr_str = member_node->getLeaderAddress();
     if (leader_addr_str.compare(member_node->getAddress()) != 0) {
+#ifdef DEBUGLOG
+        std::cout << "\tabout to send marker to leader: " << leader_addr_str << std::endl;
+#endif
         Address *leader_addr = new Address(leader_addr_str);
         if (dNet->DNsend(leader_addr, marker, str_ack, 1) == FAILURE) {
     #ifdef DEBUGLOG
-            std::cout << "\tSend Maker: Fail! " << leader_addr << std::endl;
+            std::cout << "\tSend Maker: Fail! " << leader_addr_str << std::endl;
     #endif
         }
-    #ifdef DEBUGLOG
-        std::cout << "\tSend marker to: " << leader_addr << std::endl;
-    #endif
     }
 
 }
