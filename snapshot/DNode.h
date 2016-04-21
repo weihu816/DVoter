@@ -33,6 +33,7 @@ private:
     blocking_queue<std::string> message_chat_queue;
     blocking_queue<std::string> message_send_queue;
     Snapshot *snapshot;
+    int snapshotCnt;
 
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
@@ -40,6 +41,7 @@ public:
     std::mutex mtx;
     std::mutex mutex_election;
 //    std::condition_variable cv;
+    std::mutex mutex_snapshot;
 
     DNode(std::string name, std::string join_addr="");
     int nodeStart();                                                // introduce and start functions
@@ -77,7 +79,7 @@ public:
     void updateElectionStatus(int new_status);
 
     void startSnapshotByUser();
-    void startSnapshotByMarker(std::string from_addr);
+    Snapshot* startSnapshotByMarker(std::string from_addr);
     int getMessageChatQueueSize();
     int getMessageSendQueueSize();
     int getMQueueSize();
@@ -96,12 +98,14 @@ public:
     int getSnapshotStatus();
     void updateSnapshotStatus(int new_status);
     Snapshot* getSnapshot();
+    void setSnapshot(Snapshot* s);
     void recordSnapshotChannelMsg(std::string from_addr, std::string msg);
     
     virtual ~DNode() {
         if(dNet) delete dNet;
         if(member_node) delete member_node;
         if (m_queue) delete m_queue;
+        if (snapshot) delete snapshot;
     }
 };
 

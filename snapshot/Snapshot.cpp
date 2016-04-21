@@ -14,7 +14,6 @@ Snapshot::Snapshot(std::string name, std::string addr) {
     ssnode = new DNode(name, addr);        // Create Member node
     ssmember = new Member(addr);
     ssnode->m_queue = new holdback_queue(0, ssnode);
-    status = S_NONE;
     channel_marker_cnt = 0;
     channelNum = 0;
     marker_from_channel = new Channel();
@@ -66,6 +65,7 @@ void Snapshot::recordState(DNode *cur) {
             channel_markers[iter->getAddress()] = false;
         }
     }
+
     // create channel for leader
     std::string leader_addr = ssmember->getLeaderAddress();
     if (leader_addr.compare(ssmember->getAddress()) != 0) {
@@ -115,8 +115,9 @@ Channel* Snapshot::getChannel(std::string addrKey) {
 
 bool Snapshot::receivedAllMarkers() {
 #ifdef DEBUGLOG
-    std::cout << "CHANNEL NUM: " << channelNum << std::endl;
+    std::cout << "in checking receiving all " << std::endl;
     std::cout << "marker cnt: " << channel_marker_cnt << std::endl;
+    std::cout << "CHANNEL NUM: " << channelNum << std::endl;
 #endif
     if (channelNum == channel_marker_cnt) {
         // write to file
@@ -140,4 +141,8 @@ Channel* Snapshot::getMarkerFromChannel() {
 
 std::string Snapshot::getMarkerFormAddress() {
     return marker_from_addr;
+}
+
+int Snapshot::getChannelNum() {
+    return channelNum;
 }

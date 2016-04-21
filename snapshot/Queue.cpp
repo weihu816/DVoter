@@ -54,8 +54,10 @@ void holdback_queue::handle(std::string msg) {
         node->addMember(ip + ":" + port, name, true);
         
     } else if (msg_type.compare(D_M_MSG) == 0) {
-
-        node->addMessage(msg_body);
+        // addr#username::Message
+        std::string addr = msg_body.substr(0, msg_body.find("#"));
+        std::string chat_msg = msg_body.substr(msg_body.find("#") + 1);
+        node->addMessage(chat_msg);
 
     } else if (msg_type.compare(D_LEAVEANNO) == 0) {
         // name#ip:port

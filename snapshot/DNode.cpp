@@ -22,6 +22,7 @@ DNode::DNode(std::string name, std::string join_addr) : username(name) {
     } else {
         join_address = my_addr;
     }
+    snapshotCnt = 0;
 }
 
 //////////////////////////////// THREAD FUNC ////////////////////////////////
@@ -267,7 +268,7 @@ void DNode::sendMsg(std::string msg) {
     std::string self_address = member_node->address->getAddress();
     std::cout << "sendMsg" << " leader: " << leader_address << " self:" << self_address << std::endl;
     if (leader_address.compare(self_address) == 0) { // I'm the leader (sequencer)
-        std::string msgToSend = username + "::" + msg;
+        std::string msgToSend = self_address+"#"+username + "::" + msg;
         multicastMsg(msgToSend, D_M_MSG);
     } else { // Send Multicast request to the sequencer
         message_send_queue.push(msg);
@@ -287,14 +288,15 @@ void DNode::sendMsgToLeader() {
 //    while (getElectionStatus() != E_NONE) {
 //        cv.wait(lk);
 //    }
-
+    // CHAT#ip:port#username::Message
     std::string msg = message_send_queue.pop();
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
         // I'm the leader now
-        std::string msgToSend = username + "::" + msg;
+        std::string msgToSend = member_node->getAddress()+"#"+username + "::" + msg;
         multicastMsg(msgToSend, D_M_MSG);
     } else {
-        std::string str_to = std::string(D_CHAT) + "#" + username + ":: " + msg;
+        std::string str_to = std::string(D_CHAT) + "#" + member_node->getAddress()+"#"+
+                            username + ":: " + msg;
         std::string leader_address = member_node->getLeaderAddress();
         std::string str_ack;
         Address leader_addr(leader_address);
@@ -586,9 +588,12 @@ void DNode::startSnapshotByUser() {
 #ifdef DEBUGLOG
     std::cout << "in starting snapshot by user" << std::endl;
 #endif
+    //std::unique_lock<std::mutex> lk(mutex_snapshot);
     if (getSnapshotStatus() == S_NONE) {
         // initialize Snapshot object
         snapshot = new Snapshot(this->getUsername(), member_node->getAddress());
+        
+        snapshotCnt++;
         
         // update snapshot status
         updateSnapshotStatus(S_RECORDING);
@@ -602,6 +607,11 @@ void DNode::startSnapshotByUser() {
         // send out markers
         std::string str(D_MARKER+std::string("#")+member_node->getAddress());
         multicastMarker(str);
+        
+        if (snapshot->getChannelNum() == 0) {
+            std::cout << "Snapshot Complete!" << std::endl;
+            updateSnapshotStatus(S_NONE);
+        }
         
         // start record channel messages
     }
@@ -619,36 +629,42 @@ void DNode::startSnapshotByUser() {
                 When getting called, snapshot_status must be S_NONE
                 Suppose received marker from channel ck
  */
-void DNode::startSnapshotByMarker(std::string from_addr) {
+Snapshot* DNode::startSnapshotByMarker(std::string from_addr) {
 #ifdef DEBUGLOG
     std::cout << "in starting snapshot by marker" << std::endl;
 #endif
+    //std::unique_lock<std::mutex> lk(mutex_snapshot);
     // initialize Snapshot object
     snapshot = new Snapshot(this->getUsername(), member_node->getAddress());
+    
+    snapshotCnt++;
     
     // update snapshot status
     updateSnapshotStatus(S_RECORDING);
     
     // record process state
     snapshot->recordState(this);
-#ifdef DEBUGLOG
-    std::cout << "start snapshot by marker: after record state" << std::endl;
-#endif
+
     // record from where received the marker
     snapshot->setMarkerFromAddr(from_addr);
-    
+
     // empty channel ck
     Channel ck = *(snapshot->getChannel(from_addr));
     ck.clearChannel();
-    
+
     // record marker from which channel
     snapshot->recordChannelMarker(from_addr);
-    
+
     // send out markers
     std::string str(D_MARKER+std::string("#")+member_node->getAddress());
     multicastMarker(str);
     
+    if (snapshot->getChannelNum() == 0) {
+        std::cout << "Snapshot Complete!" << std::endl;
+        updateSnapshotStatus(S_NONE);
+    }
     // start record channel messages
+    return snapshot;
 }
 
 /**
@@ -660,42 +676,43 @@ void DNode::multicastMarker(std::string marker) {
 #ifdef DEBUGLOG
     std::cout << "in multicast marker" << std::endl;
 #endif
-    auto list = member_node->memberList;
-    for (auto iter = list.begin(); iter != list.end(); iter++) {
-        Address addr((*iter).getAddress());
-#ifdef DEBUGLOG
-        std::cout << "member addr: " << addr.getAddress() << std::endl;
-        std::cout << "my addr: " << member_node->getAddress() << std::endl;
-#endif
-        if (addr.getAddress().compare(member_node->getAddress()) != 0) {
-            std::string str_ack;
-            if (dNet->DNsend(&addr, marker, str_ack, 1) == FAILURE) {
-#ifdef DEBUGLOG
-    std::cout << "\tSend marker: Fail! " << addr.getAddress() << std::endl;
-#endif
-            }
-#ifdef DEBUGLOG
-    std::cout << "\tSend marker to member: " << addr.getAddress() << std::endl;
-#endif
-        }
-
-    }
+    std::string leader_address = member_node->getLeaderAddress();
+    std::string self_address = member_node->getAddress();
     
-    // send to leader
-    std::string str_ack;
-    std::string leader_addr_str = member_node->getLeaderAddress();
-    if (leader_addr_str.compare(member_node->getAddress()) != 0) {
-#ifdef DEBUGLOG
-        std::cout << "\tabout to send marker to leader: " << leader_addr_str << std::endl;
-#endif
-        Address *leader_addr = new Address(leader_addr_str);
-        if (dNet->DNsend(leader_addr, marker, str_ack, 1) == FAILURE) {
-    #ifdef DEBUGLOG
-            std::cout << "\tSend Maker: Fail! " << leader_addr_str << std::endl;
-    #endif
+    if(leader_address.compare(self_address) == 0) { // I am the leader
+        // send marker to everyone except myself
+        auto list = member_node->memberList;
+        for (auto iter = list.begin(); iter != list.end(); iter++) {
+            std::string memberAddr = iter->getAddress();
+            if(memberAddr.compare(self_address) != 0) {
+                if (sendNotice(std::string(D_MARKER) + "#" + self_address, memberAddr) == FAILURE) {
+                    std::cout << "fail to send marker to: " << memberAddr << std::endl;
+                }
+            } else {
+                std::cout << "!!! Never here in send out markers " << memberAddr << std::endl;
+            }
+        }
+    } else {
+        // I am a member and I send marker to leader and everyone else
+        if (sendNotice(std::string(D_MARKER) + "#" + self_address, leader_address) == FAILURE) {
+            std::cout << "fail to send marker to leader: " << leader_address << std::endl;
+        }
+        // send marker to everyone except myself
+        auto list = member_node->memberList;
+        for (auto iter = list.begin(); iter != list.end(); iter++) {
+            std::string memberAddr = iter->getAddress();
+            if(memberAddr.compare(self_address) != 0) {
+                if (sendNotice(std::string(D_MARKER) + "#" + self_address, memberAddr) == FAILURE) {
+                    std::cout << "fail to send marker to: " << memberAddr << std::endl;
+                }
+            } else {
+                std::cout << "!!! send markers, skip myself " << memberAddr << std::endl;
+            }
         }
     }
-
+#ifdef DEBUGLOG
+    std::cout << "COMPLETE multicast marker" << std::endl;
+#endif
 }
 
 /**
@@ -806,6 +823,9 @@ int DNode::getMQueueSequenceSeen() {
 
 Snapshot* DNode::getSnapshot() {
     return snapshot;
+}
+void DNode::setSnapshot(Snapshot* s) {
+    snapshot = s;
 }
 
 /**

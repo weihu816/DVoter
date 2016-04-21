@@ -19,10 +19,6 @@ public:
     std::queue<std::string> messages;
     
     Channel() {}
-    //    // Copy constructor
-    //    Channel(const Channel &anotherChannel);
-    //    // Overloaded = operator
-    //    Channel& operator =(const Channel &anotherChannel);
     
     void addMsg(std::string m) {
         messages.push(m);
@@ -53,11 +49,9 @@ public:
 
 class Snapshot {
 public:
-//    int seq;
-    DNode *ssnode = nullptr;
+    DNode *ssnode;
     Member *ssmember;
     int channelNum;
-    int status;
     int channel_marker_cnt;
     std::string marker_from_addr;
     Channel *marker_from_channel;
@@ -75,7 +69,7 @@ public:
     void setMarkerFromAddr(std::string from_addr);
     Channel* getMarkerFromChannel();
     std::string getMarkerFormAddress();
-    
+    int getChannelNum();
 };
 
 #endif /* Snapshot_h */

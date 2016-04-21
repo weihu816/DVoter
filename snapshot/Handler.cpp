@@ -19,7 +19,7 @@ vector<string> splitstr(string ori, char deli) {
     return tmp;
 }
 
-
+// when taking snapshot, recording incoming messages
 string Handler::process(Address & from_addr, string recv_msg) {
     
 #ifdef DEBUGLOG
@@ -42,6 +42,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
 #endif
     
     Member * nodeMember = node->getMember();
+    Snapshot *s = node->getSnapshot();
     
     if (recv_msg.find("#") == 0) { // Start with a #
         
@@ -55,16 +56,53 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string param_value(param_ip + "#" + param_port + "#" + param_name);
             node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_value));
             node->m_queue->pop();
+            
+            // snapshot
+            if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+    std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                std::string addr(param_ip+":"+param_port);
+                // only record incoming msg from channels other than ck
+                if (addr.compare(s->getMarkerFormAddress()) != 0) {
+                    Channel *c = s->getChannel(addr);
+                    c->addMsg(recv_msg);
+                }
+                else {
+                    Channel *c = s->getMarkerFromChannel();
+                    c->addMsg(recv_msg);
+                }
+            }
+            
             return "OK";
 
         } else if (strcmp(msg_type, D_M_MSG) == 0) {
             
-            // received: #MSG#SEQ#username::Message
+            // received: #MSG#SEQ#addr#username::Message
             int param_seq = atoi(strtok(NULL, "#"));
+            std::string param_addr(strtok(NULL, "#"));
             std::string param_value(strtok(NULL, "#"));
-            node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_value));
+            node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_addr+"#"+param_value));
             //node->addMessage(param_value);
             node->m_queue->pop();
+            
+            // snapshot
+            if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+    std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                // msg must be from leader
+                // only record incoming msg from channels other than ck
+                if (nodeMember->getLeaderAddress().compare(s->getMarkerFormAddress()) != 0) {
+                    Channel *c = s->getChannel(nodeMember->getLeaderAddress());
+                    c->addMsg(recv_msg);
+                }
+                else {
+                    Channel *c = s->getMarkerFromChannel();
+                    c->addMsg(recv_msg);
+                }
+            }
+            
             return "OK";
         } else if (strcmp(msg_type, D_LEAVEANNO) == 0) {
             // TODO: received: #LEAVEANNO#seq#name#ip:port sent by leader
@@ -73,6 +111,22 @@ string Handler::process(Address & from_addr, string recv_msg) {
             node->m_queue->push(std::make_pair(param_seq, "#"+std::string(msg_type)+"#"+param_name_addr));
             node->m_queue->pop();
             
+            // snapshot
+            if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+    std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                // msg must be from leader
+                // only record incoming msg from channels other than ck
+                if (nodeMember->getLeaderAddress().compare(s->getMarkerFormAddress()) != 0) {
+                    Channel *c = s->getChannel(nodeMember->getLeaderAddress());
+                    c->addMsg(recv_msg);
+                }
+                else {
+                    Channel *c = s->getMarkerFromChannel();
+                    c->addMsg(recv_msg);
+                }
+            }
             return "OK";
         }
         
@@ -80,13 +134,32 @@ string Handler::process(Address & from_addr, string recv_msg) {
         
         if (strcmp(msg_type, D_CHAT) == 0) {
 
-            // received: CHAT#Message - From node to sequencer
-            std::string recv_msg(strtok (NULL, "#"));
+            // received: CHAT#ip:port#username::Message - From node to sequencer
+            std::string addr(strtok (NULL, "#"));
+            std::string chat_msg(strtok (NULL, "#"));
             if (nodeMember->isLeader()) { // Only leader can multicast messages
-                // msg to be sent: #MSG#SEQ#username#Message
-                std::string message = recv_msg;
-                node->multicastMsg(message, D_M_MSG);
+                // msg to be sent: #MSG#SEQ#addr#username::Message
+                std::string message = chat_msg;
+                node->multicastMsg(addr+"#"+message, D_M_MSG);
             }
+            
+            // snapshot
+            if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+                std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                // only leader can receive this msg
+                // only record incoming msg from channels other than ck
+                if (addr.compare(s->getMarkerFormAddress()) != 0) {
+                    Channel *c = s->getChannel(addr);
+                    c->addMsg(recv_msg);
+                }
+                else {
+                    Channel *c = s->getMarkerFromChannel();
+                    c->addMsg(recv_msg);
+                }
+            }
+            
             return "OK";
             
         } else if (strcmp(msg_type, D_JOINREQ) == 0) {
@@ -117,14 +190,51 @@ string Handler::process(Address & from_addr, string recv_msg) {
 #ifdef DEBUGLOG
                 std::cout << "\tHandling Returns: " << message << std::endl;
 #endif
+                // snapshot
+                if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+    std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                    std::string addr(from_addr.getAddressIp()+":"+recv_port);
+                    // only record incoming msg from channels other than ck
+                    if (addr.compare(s->getMarkerFormAddress()) != 0) {
+                        Channel *c = s->getChannel(addr);
+                        c->addMsg(recv_msg);
+                    }
+                    else {
+                        Channel *c = s->getMarkerFromChannel();
+                        c->addMsg(recv_msg);
+                    }
+                }
                 return message;
                 
             } else {
 
                 // received: JOINLEADER#LEADERIP#LEADERPORT
                 // send back leader address - don't care failure, they can retry
+                std::string recv_port(strtok (NULL, "#"));
+                std::string recv_name(strtok (NULL, "#"));
+                
                 std::string message = std::string(D_JOINLEADER) + "#" + nodeMember->getLeaderAddressIp()
                 + "#" + nodeMember->getLeaderAddressPort() + "#" + nodeMember->getLeaderName();
+                
+                // snapshot
+                if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+    std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                    std::string addr(from_addr.getAddressIp()+":"+recv_port);
+                    // only record incoming msg from channels other than ck
+                    if (addr.compare(s->getMarkerFormAddress()) != 0) {
+                        Channel *c = s->getChannel(addr);
+                        c->addMsg(recv_msg);
+                    }
+                    else {
+                        Channel *c = s->getMarkerFromChannel();
+                        c->addMsg(recv_msg);
+                    }
+                }
+                
                 return message;
 
             }
@@ -139,6 +249,23 @@ string Handler::process(Address & from_addr, string recv_msg) {
 //#ifdef DEBUGLOG
 //            std::cout << "HeartBeat updated " << nodeMember->getHeartBeat(node_addr) << std::endl;
 //#endif
+            
+            // snapshot
+            if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+                std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                // only record incoming msg from channels other than ck
+                if (node_addr.compare(s->getMarkerFormAddress()) != 0) {
+                    Channel *c = s->getChannel(node_addr);
+                    c->addMsg(recv_msg);
+                }
+                else {
+                    Channel *c = s->getMarkerFromChannel();
+                    c->addMsg(recv_msg);
+                }
+            }
+            
             return "OK";
 
         } else if (strcmp(msg_type, D_ELECTION) == 0) {
@@ -160,6 +287,22 @@ string Handler::process(Address & from_addr, string recv_msg) {
                  electionThread.detach();
                  
             }
+            
+            // snapshot
+            if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+    std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                // only record incoming msg from channels other than ck
+                if (heardFrom.compare(s->getMarkerFormAddress()) != 0) {
+                    Channel *c = s->getChannel(heardFrom);
+                    c->addMsg(recv_msg);
+                }
+                else {
+                    Channel *c = s->getMarkerFromChannel();
+                    c->addMsg(recv_msg);
+                }
+            }
 
             return "OK";
             
@@ -179,6 +322,22 @@ string Handler::process(Address & from_addr, string recv_msg) {
             
             std::cout << "\tD_COOR Done" << std::endl;
                         
+            // snapshot
+            if (node->getSnapshotStatus() == S_RECORDING) {
+#ifdef DEBUGLOG
+    std::cout << "Snapshot: in handling " << msg_type << std::endl;
+#endif
+                // only record incoming msg from channels other than ck
+                if (heardFrom.compare(s->getMarkerFormAddress()) != 0) {
+                    Channel *c = s->getChannel(heardFrom);
+                    c->addMsg(recv_msg);
+                }
+                else {
+                    Channel *c = s->getMarkerFromChannel();
+                    c->addMsg(recv_msg);
+                }
+            }
+            
             return "OK";
             
         } else if (strcmp(msg_type, D_MARKER) == 0) {
@@ -186,7 +345,6 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string heardFrom(strtok(NULL, "#"));
             // if already received marker
             if (node->getSnapshotStatus() == S_RECORDING) {
-                Snapshot *s = node->getSnapshot();
                 // record received marker
                 s->recordChannelMarker(heardFrom);
                 
@@ -196,25 +354,28 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 
                 // check whether finished snapshot
                 if (s->receivedAllMarkers()) {  // finish snapshot
-#ifdef DEBUGLOG
-    std::cout << "SNAPSHOT FINISH! " << std::endl;
-#endif
+                    std::cout << "Snapshot complete! " << std::endl;
                     node->updateSnapshotStatus(S_NONE);
                 }
             }
             // if have not seen marker
             else {
-                node->startSnapshotByMarker(heardFrom);
-                Snapshot *s = node->getSnapshot();
-                // check whether finished snapshot
-                if (s->receivedAllMarkers()) {  // finish snapshot
+                Snapshot *new_s = node->startSnapshotByMarker(heardFrom);
+                node->setSnapshot(new_s);
+                
 #ifdef DEBUGLOG
-                    std::cout << "SNAPSHOT FINISH BY receiving one marker!" << std::endl;
+    std::cout << "After broadcast marker, channel num: " << new_s->getChannelNum() << std::endl;
 #endif
+                
+                // check whether finished snapshot
+                if (new_s->receivedAllMarkers()) {  // finish snapshot
+                    std::cout << "Snapshot Complete!" << std::endl;
                     node->updateSnapshotStatus(S_NONE);
                 }
             }
+            
             return "OK";
+            
         } else {
 
 #ifdef DEBUGLOG
