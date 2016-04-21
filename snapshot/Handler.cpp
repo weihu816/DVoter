@@ -354,6 +354,8 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 
                 // check whether finished snapshot
                 if (s->receivedAllMarkers()) {  // finish snapshot
+                    // write to file
+                    node->writeCheckpoint();
                     std::cout << "Snapshot complete! " << std::endl;
                     node->updateSnapshotStatus(S_NONE);
                 }
@@ -363,12 +365,10 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 Snapshot *new_s = node->startSnapshotByMarker(heardFrom);
                 node->setSnapshot(new_s);
                 
-#ifdef DEBUGLOG
-    std::cout << "After broadcast marker, channel num: " << new_s->getChannelNum() << std::endl;
-#endif
-                
                 // check whether finished snapshot
                 if (new_s->receivedAllMarkers()) {  // finish snapshot
+                    // write to file
+                    node->writeCheckpoint();
                     std::cout << "Snapshot Complete!" << std::endl;
                     node->updateSnapshotStatus(S_NONE);
                 }

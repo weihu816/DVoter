@@ -45,6 +45,10 @@ public:
             messages.push(msg);
         }
     }
+    
+    int getMsgCnt() {
+        return messages.size();
+    }
 };
 
 class Snapshot {
@@ -70,6 +74,9 @@ public:
     Channel* getMarkerFromChannel();
     std::string getMarkerFormAddress();
     int getChannelNum();
+    Member* getMember();
+    DNode* getNode();
+    std::unordered_map<std::string, Channel> getChannels();
 };
 
 #endif /* Snapshot_h */

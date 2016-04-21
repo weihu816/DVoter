@@ -7,7 +7,7 @@
  *
  * DESCRIPTION:
  */
-void holdback_queue::pop() {
+T holdback_queue::pop() {
     std::unique_lock<std::mutex> mlock(d_mutex);
     
     // Dangerous Zone
@@ -26,6 +26,7 @@ void holdback_queue::pop() {
         std::cout << "\t#holdback_queue handling: " << peek_pair.first << " " << peek_pair.second << std::endl;
 #endif
         handle(peek_pair.second.substr(1));
+        return peek_pair;
     }
 }
 

@@ -19,7 +19,7 @@ private:
     std::mutex d_mutex;
     std::condition_variable d_condition;
     std::deque<T> d_queue;
-
+    
 public:
     blocking_queue()=default;
     blocking_queue(const blocking_queue&) = delete;
@@ -67,7 +67,7 @@ private:
     std::priority_queue<T, std::vector<T>, cmp> d_queue;
     int sequence_seen;
     int sequence_next;
-
+    
 public:
     holdback_queue(int init_seen, DNode * node);
     holdback_queue(const holdback_queue&) = delete;
@@ -100,13 +100,13 @@ public:
     blocking_priority_queue() {}
     blocking_priority_queue(const blocking_priority_queue&) = delete;
     blocking_priority_queue& operator=(const blocking_priority_queue&) = delete;
-
+    
     void push(T const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
         d_queue.push(value);
         d_condition.notify_one();
     }
-
+    
     T pop() {
         std::unique_lock<std::mutex> mlock(d_mutex);
         while (d_queue.empty()) {

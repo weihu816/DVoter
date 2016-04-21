@@ -36,14 +36,14 @@ void holdback_queue::pop() {
  * DESCRIPTION:
  */
 void holdback_queue::handle(std::string msg) {
-
+    
     std::string msg_type = msg.substr(0, msg.find("#"));
     std::string msg_body = msg.substr(msg.find("#") + 1);
     
 #ifdef DEBUGLOG
     std::cout << "\tQueue handling... " << msg_type << " : " << msg_body << std::endl;
 #endif
-
+    
     if (msg_type.compare(D_M_ADDNODE) == 0) {
         
         // ip#port#name
@@ -58,7 +58,7 @@ void holdback_queue::handle(std::string msg) {
         std::string addr = msg_body.substr(0, msg_body.find("#"));
         std::string chat_msg = msg_body.substr(msg_body.find("#") + 1);
         node->addMessage(chat_msg);
-
+        
     } else if (msg_type.compare(D_LEAVEANNO) == 0) {
         // name#ip:port
         std::string leader_addr = node->getMember()->getLeaderAddress();

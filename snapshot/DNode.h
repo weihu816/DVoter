@@ -41,7 +41,6 @@ public:
     std::mutex mtx;
     std::mutex mutex_election;
 //    std::condition_variable cv;
-    std::mutex mutex_snapshot;
 
     DNode(std::string name, std::string join_addr="");
     int nodeStart();                                                // introduce and start functions
@@ -83,9 +82,6 @@ public:
     int getMessageChatQueueSize();
     int getMessageSendQueueSize();
     int getMQueueSize();
-    std::string peekMessageChatQueue();
-    std::string peekMessageSendQueue();
-    std::pair<int, std::string> peekMQueue();
     void pushMessageChatQueue(std::string);
     void pushMessageSendQueue(std::string);
     void pushMQueue(std::pair<int, std::string> value);
@@ -93,6 +89,18 @@ public:
     void setMQueueSequenceNext(int i);
     int getMQueueSequenceSeen();
     int getMQueueSequenceNext();
+    void setMessageChatQueue(blocking_queue<std::string> q);
+    void setMessageSendQueue(blocking_queue<std::string> q);
+    void setMQueue(holdback_queue q);
+    std::string popMessageChatQueue();
+    std::string popMessageSendQueue();
+    std::pair<int, std::string> popMQueue();
+    std::string peekMessageChatQueue();
+    std::string peekMessageSendQueue();
+    std::pair<int, std::string> peekMQueue();
+    blocking_queue<std::string> getMessageChatQueue();
+    blocking_queue<std::string> getMessageSendQueue();
+    holdback_queue getMQueue();
     
     void multicastMarker(std::string marker);
     int getSnapshotStatus();
@@ -100,6 +108,8 @@ public:
     Snapshot* getSnapshot();
     void setSnapshot(Snapshot* s);
     void recordSnapshotChannelMsg(std::string from_addr, std::string msg);
+    void writeCheckpoint();
+    int getSnapshotCnt();
     
     virtual ~DNode() {
         if(dNet) delete dNet;

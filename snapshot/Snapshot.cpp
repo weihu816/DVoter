@@ -25,21 +25,11 @@ void Snapshot::recordState(DNode *cur) {
 #endif
     Member* nodeMember = cur->getMember();
     ssnode->updateElectionStatus(cur->getElectionStatus());
-    // copy message chat queue
-    int size = cur->getMessageChatQueueSize();
-    for (int i = 0; i < size; i++) {
-        ssnode->pushMessageChatQueue(cur->peekMessageChatQueue());
-    }
-    // copy message send queue
-    size = cur->getMessageSendQueueSize();
-    for (int i = 0; i < size; i++) {
-        ssnode->pushMessageSendQueue(cur->peekMessageSendQueue());
-    }
-    // copy m_queue
-    size = cur->getMQueueSize();
-    for (int i = 0; i < size; i++) {
-        ssnode->pushMQueue(cur->peekMQueue());
-    }
+    
+//    ssnode->setMessageChatQueue(cur->getMessageChatQueue());
+//    ssnode->setMessageSendQueue(cur->getMessageSendQueue());
+//    ssnode->setMQueue(cur->getMQueue());
+
     int x = cur->getMQueueSequenceSeen();
     ssnode->setMQueueSequenceSeen(x);
     ssnode->setMQueueSequenceNext(cur->getMQueueSequenceSeen()+1);
@@ -120,10 +110,6 @@ bool Snapshot::receivedAllMarkers() {
     std::cout << "CHANNEL NUM: " << channelNum << std::endl;
 #endif
     if (channelNum == channel_marker_cnt) {
-        // write to file
-        
-        // reset status
-        
         return true;
     }
     else {
@@ -145,4 +131,16 @@ std::string Snapshot::getMarkerFormAddress() {
 
 int Snapshot::getChannelNum() {
     return channelNum;
+}
+
+Member* Snapshot::getMember() {
+    return ssmember;
+}
+
+DNode* Snapshot::getNode() {
+    return ssnode;
+}
+
+std::unordered_map<std::string, Channel> Snapshot::getChannels() {
+    return channels;
 }

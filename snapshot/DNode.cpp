@@ -740,6 +740,89 @@ void DNode::recordSnapshotChannelMsg(std::string from_addr, std::string msg) {
     }
 }
 
+void DNode::writeCheckpoint() {
+    std::ofstream outfile;
+    std::string fileName("Checkpoint_"+std::to_string(getSnapshotCnt())+"_"+member_node->getAddress()+".txt");
+    outfile.open (fileName);
+    
+    // output state
+    outfile << "Process state: \n";
+    Member* snapshot_member = snapshot->getMember();
+    DNode* snapshot_node = snapshot->getNode();
+    std::unordered_map<std::string, Channel> snapshot_channels = snapshot->getChannels();
+    
+    // election status
+    outfile << "Election status: " << snapshot_node->getElectionStatus() << "\n\n";
+    
+//    // message chat queue
+//    outfile << "message_chat_queue: " << "\n";
+//    int size = snapshot_node->getMessageChatQueueSize();
+//    outfile << "size: " << size << "\n";
+//    for (int i = 0; i < size; i++) {
+//        if (i == 0) {
+//            outfile << "Content: " << "\n";
+//        }
+//        outfile << snapshot_node->popMessageChatQueue() << "\n";
+//    }
+//    outfile << "\n";
+//    
+//    // copy message send queue
+//    outfile << "message_send_queue: " << "\n";
+//    size = snapshot_node->getMessageSendQueueSize();
+//    outfile << "size: " << size << "\n";
+//    for (int i = 0; i < size; i++) {
+//        if (i == 0) {
+//            outfile << "Content: " << "\n";
+//        }
+//        outfile << snapshot_node->popMessageSendQueue() << "\n";
+//    }
+//    outfile << "\n";
+//    
+//    // copy m_queue
+//    outfile << "m_queue: " << "\n";
+//    size = snapshot_node->getMQueueSize();
+//    outfile << "size: " << size << "\n";
+//    for (int i = 0; i < size; i++) {
+//        if (i == 0) {
+//            outfile << "Content: " << "\n";
+//        }
+//        std::pair<int, std::string> pair = snapshot_node->popMQueue();
+//        outfile << "sequence number: " << pair.first << ", message: " << pair.second << "\n";
+//    }
+//    outfile << "\n";
+    
+    // sequence seen
+    int x = snapshot_node->getMQueueSequenceSeen();
+    outfile << "Sequence seen: " << x << "\n\n";
+    
+    // leader information
+    outfile << "Leader name: " << snapshot_member->getLeaderName() << "\n";
+    outfile << "Leader address: " << snapshot_member->getLeaderAddress() << "\n\n";
+    
+    // member information
+    outfile << "Member list: \n";
+    auto list = snapshot_member->memberList;
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        outfile << "Username: " << iter->getUsername() << ", address: " << iter->getAddress()
+        << ", heartbeat: " << snapshot_member->getHeartBeat(iter->getAddress()) << "\n";
+    }
+    outfile << "\n";
+    
+    // output incoming messages:
+    outfile << "Channels: \n";
+    for ( auto it = snapshot_channels.begin(); it != snapshot_channels.end(); ++it) {
+        outfile << "Address: " << it->first << "\nMessages: \n";
+        Channel ch = it->second;
+        int size = ch.getMsgCnt();
+        for (int i = 0; i < size; i++) {
+            outfile << ch.retrieveMsg() << "\n";
+        }
+    }
+    outfile << "\n";
+    
+    outfile.close();
+}
+
 //////////////////////////////// GETTERS ////////////////////////////////
 
 /**
@@ -785,18 +868,6 @@ int DNode::getMQueueSize() {
     return m_queue->getHoldBackQueueSize();
 }
 
-std::string DNode::peekMessageChatQueue() {
-    return message_chat_queue.getFront();
-}
-
-std::string DNode::peekMessageSendQueue() {
-    return message_send_queue.getFront();
-}
-
-std::pair<int, std::string> DNode::peekMQueue() {
-    return m_queue->peek();
-}
-
 void DNode::pushMessageChatQueue(std::string str) {
     message_chat_queue.push(str);
 }
@@ -824,9 +895,59 @@ int DNode::getMQueueSequenceSeen() {
 Snapshot* DNode::getSnapshot() {
     return snapshot;
 }
+
 void DNode::setSnapshot(Snapshot* s) {
     snapshot = s;
 }
+//
+//int DNode::getSnapshotCnt() {
+//    return snapshotCnt;
+//}
+//
+//void DNode::setMessageChatQueue(blocking_queue<std::string> q) {
+//    message_chat_queue = q;
+//}
+
+//void DNode::setMessageSendQueue(blocking_queue<std::string> q) {
+//    message_send_queue = q;
+//}
+
+void DNode::setMQueue(holdback_queue q) {
+    m_queue = &q;
+}
+
+std::string DNode::popMessageChatQueue() {
+    return message_chat_queue.pop();
+}
+std::string DNode::popMessageSendQueue() {
+    return message_send_queue.pop();
+}
+//std::pair<int, std::string> DNode::popMQueue() {
+//    return m_queue->popFirst();
+//}
+std::string DNode::peekMessageChatQueue() {
+    return message_chat_queue.getFront();
+}
+
+std::string DNode::peekMessageSendQueue() {
+    return message_send_queue.getFront();
+}
+
+std::pair<int, std::string> DNode::peekMQueue() {
+    return m_queue->peek();
+}
+
+//blocking_queue<std::string> DNode::getMessageChatQueue() {
+//    return message_chat_queue;
+//}
+//
+//blocking_queue<std::string> DNode::getMessageSendQueue() {
+//    return message_send_queue;
+//}
+//
+//holdback_queue DNode::getMQueue() {
+//    return *m_queue;
+//}
 
 /**
  * snapshot status getter
@@ -834,6 +955,10 @@ void DNode::setSnapshot(Snapshot* s) {
 int DNode::getSnapshotStatus() {
     int toReturn = snapshot_status;
     return toReturn;
+}
+
+int DNode::getSnapshotCnt() {
+    return snapshotCnt;
 }
 
 /**
