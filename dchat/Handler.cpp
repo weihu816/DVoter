@@ -76,13 +76,32 @@ string Handler::process(Address & from_addr, string recv_msg) {
         
         if (strcmp(msg_type, D_CHAT) == 0) {
 
-            // received: CHAT#Message - From node to sequencer
+            // received: CHAT#Seq#Message - From node to sequencer
+            std::string seq_str(strtok (NULL, "#"));
             std::string recv_msg(strtok (NULL, "#"));
+            int seq = stoi(seq_str);
+            
+            std::cout << "\tD_CHAT" << seq  << " " + seq_str << std::endl;
+            
             if (nodeMember->isLeader()) { // Only leader can multicast messages
-                // msg to be sent: #MSG#SEQ#username#Message
-                std::string message = recv_msg;
-                node->multicastMsg(message, D_M_MSG);
+                
+                // Check the existence
+                auto msg_seen = node->message_seen;
+                if (msg_seen.find(nodeMember->getAddress()) == msg_seen.end()) {
+                    msg_seen[nodeMember->getAddress()] = 0;
+                }
+     
+                // Check the sequence number
+                if (seq == msg_seen[nodeMember->getAddress()] + 1) {
+                    // msg to be sent: #MSG#SEQ#username#Message
+                    std::string message = recv_msg;
+                    node->multicastMsg(message, D_M_MSG);
+                } else {
+                    return std::to_string(seq);
+                }                
+                
             }
+
             return "OK";
             
         } else if (strcmp(msg_type, D_JOINREQ) == 0) {
@@ -173,6 +192,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             node->updateElectionStatus(E_NONE);
             nodeMember->updateLeader(heardFrom, leader_name); // this one displays last leader left
             node->m_queue->resetSequence();
+            node->resetSeq();
             
             std::cout << "\tD_COOR Done" << std::endl;
                         

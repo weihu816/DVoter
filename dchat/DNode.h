@@ -27,9 +27,16 @@ private:
     DNet * dNet;
     std::string join_address;
     std::string username;
-    int election_status = E_NONE; // not in election
+    
+    // Message ready to be displayed
     blocking_queue<std::string> message_chat_queue;
-    blocking_queue<std::string> message_send_queue;
+    
+    // chat messages related
+    int seq = 1; // The seq number to be sent
+    std::map<int, std::string> message_table;
+    blocking_queue<std::pair<int, std::string>> message_send_queue;
+
+    
 
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
@@ -71,6 +78,14 @@ public:
     std::string getUsername();
     int getElectionStatus();
     void updateElectionStatus(int new_status);
+    
+    // This is for the leader (sequencer)
+    int election_status = E_NONE; // not in election
+    std::map<std::string, int> message_seen;
+    
+    void resetSeq() {
+        seq = 1;
+    }
 
     virtual ~DNode() {
         if(dNet) delete dNet;
