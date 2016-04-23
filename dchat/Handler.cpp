@@ -79,7 +79,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // received: CHAT#port#Seq#Message - From node to sequencer
             std::string port(strtok(NULL, "#"));
             std::string seq_str(strtok (NULL, "#"));
-            std::string recv_msg(strtok (NULL, "#"));
+            std::string msg(strtok (NULL, "#"));
             int seq = stoi(seq_str);
             
             std::cout << "\tD_CHAT" << seq  << " " + seq_str << std::endl;
@@ -97,7 +97,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 std::cout << "current count is " << msg_seen[address_port] << std::endl;
                 if (seq == (msg_seen[address_port] + 1)) {
                     // msg to be sent: #MSG#SEQ#username#Message
-                    std::string message = recv_msg;
+                    std::string message = msg;
                     node->multicastMsg(message, D_M_MSG);
                     msg_seen[address_port]++;
                     std::cout << "After inc " << msg_seen[address_port] << std::endl;
