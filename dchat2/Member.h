@@ -88,12 +88,9 @@ public:
     Address * address;                                      // This member's Address
     bool inited = false;                                    // boolean indicating if this member is up
     bool inGroup;                                           // boolean indicating if this member is in the group
-    int nnb;                                                // number of my neighbors (distributed)
-    std::unordered_map<std::string, time_t> heartBeatList;  // Hearbeat List
     std::vector<MemberListEntry> memberList;                // Membership table
     
-    
-    Member(std::string addr): inited(false), inGroup(false), nnb(0){
+    Member(std::string addr): inited(false), inGroup(false) {
         this->address = new Address(addr);
     }
     Member(const Member &anotherMember);                    // copy constructor
@@ -120,8 +117,6 @@ public:
         std::cout << "\tMember::addMember: " << entry.getEntry() << std::endl;
 #endif
         memberList.push_back(entry);
-        time_t curtime;
-        updateHeartBeat(ip_port, time(&curtime));
         
     }
 
@@ -197,31 +192,6 @@ public:
         return address->getAddress();
     }
     
-    
-    /**
-     * FUNCTION NAME: updateHeartBeat
-     *
-     * DESCRIPTION: updateHeartBeat
-     */
-    void updateHeartBeat(std::string addrKey, time_t heartbeat) {
-        heartBeatList[addrKey] = heartbeat;
-    }
-
-    
-    /**
-     * FUNCTION NAME: getHeartBeat
-     *
-     * DESCRIPTION: getHeartBeat
-     */
-    time_t getHeartBeat(std::string addrKey) {
-        // if found, return the heartbeat, otherwise return 0
-        auto iter = heartBeatList.find(addrKey);
-        if (iter == heartBeatList.end()) {
-            return 0;
-        } else {
-            return iter->second;
-        }
-    }
 
 };
 

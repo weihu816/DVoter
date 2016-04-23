@@ -90,7 +90,6 @@ Member::Member(const Member &anotherMember) {
     *this->address = *anotherMember.address;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
-    this->nnb = anotherMember.nnb;
     this->memberList = anotherMember.memberList;
 }
 
@@ -101,7 +100,6 @@ Member& Member::operator =(const Member& anotherMember) {
     *this->address = *anotherMember.address;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
-    this->nnb = anotherMember.nnb;
     this->memberList = anotherMember.memberList;
     return *this;
 }

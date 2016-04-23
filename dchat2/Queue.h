@@ -40,62 +40,83 @@ public:
     }
 };
 
-typedef std::pair<int, std::string> T;
 
-class holdback_queue {
-private:
-    DNode * node;
-    class cmp {
-    public:
-        cmp() {}
-        bool operator() (const T & a, const T & b) const { return b.first < a.first; }
-    };
-    std::mutex d_mutex;
-    std::condition_variable d_condition;
-    std::priority_queue<T, std::vector<T>, cmp> d_queue;
-    int sequence_seen;
-    int sequence_next;
-
+class queue_object {
 public:
-    holdback_queue(int init_seen, DNode * node);
-    holdback_queue(const holdback_queue&) = delete;
-    holdback_queue& operator=(const holdback_queue&) = delete;
-    int getSequenceSeen() {return sequence_seen;}
-    void push(T const& value);
-    void pop();
-    void handle(std::string msg);
-    int getNextSequence();
-    void resetSequence();
+    
+    int key; // logical local timestamp
+    int id; // Final timestamp is determined by id and pid
+    int pid;
+    std::string content; // Raw content of message
+    bool isDeliverable; // deliverable or not
+    
+    queue_object() : isDeliverable(false) {
+        
+    }
+    
+    queue_object(int key, std::string content) : key(key), content(content), isDeliverable(false) {
+
+    }
+
+    queue_object(const queue_object &another_queue_object) {
+        this->id = another_queue_object.id;
+        this->pid = another_queue_object.pid;
+        this->key = another_queue_object.key;
+        this->content = another_queue_object.content;
+    }
+    
+    queue_object& operator=(const queue_object& another_queue_object) {
+        this->id = another_queue_object.id;
+        this->pid = another_queue_object.pid;
+        this->key = another_queue_object.key;
+        this->content = another_queue_object.content;
+        return *this;
+    }
 };
+
 
 class blocking_priority_queue {
 private:
     class cmp {
     public:
         cmp() {}
-        bool operator() (const T & a, const T & b) const { return a.first < b.first; } // Descending
+        // Ordered by ascending order of timestamp - key
+        bool operator() (const queue_object & a, const queue_object & b) const {
+            return a.key > b.key;
+        }
     };
     std::mutex d_mutex;
     std::condition_variable d_condition;
-    std::priority_queue<T, std::vector<T>, cmp> d_queue;
+    std::priority_queue<queue_object, std::vector<queue_object>, cmp> d_queue;
     
 public:
     blocking_priority_queue() {}
     blocking_priority_queue(const blocking_priority_queue&) = delete;
     blocking_priority_queue& operator=(const blocking_priority_queue&) = delete;
 
-    void push(T const& value) {
+    void push(queue_object const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
         d_queue.push(value);
         d_condition.notify_one();
     }
 
-    T pop() {
+    queue_object pop() {
         std::unique_lock<std::mutex> mlock(d_mutex);
         while (d_queue.empty()) {
             d_condition.wait(mlock);
         }
-        T rc = d_queue.top();
+        queue_object rc = d_queue.top();
+        d_queue.pop();
+        return rc;
+    }
+    
+    void makeDeliverable() {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        if (d_queue.empty()) return;
+        for (auto i = d_queue.size()) {
+            
+        }
+        queue_object rc = d_queue.top();
         d_queue.pop();
         return rc;
     }

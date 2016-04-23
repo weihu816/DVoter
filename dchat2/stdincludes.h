@@ -59,23 +59,16 @@
 #define HEARTFREQ       2000
 #define ELECTIONTIME    4000
 
-// Multicast messages, start with a #
-#define D_M_MSG         "MSG"               // #MSG#SEQ#username::Message, multicast from the sequencer
-#define D_M_ADDNODE     "ADDNODE"           // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
-#define D_LEAVEANNO     "LEAVEANNO"         // #LEAVEANNO#seq#name#ip:port
+#define D_PROPOSE       "PROPOSE"                   // PROPOSE#MSG
+#define D_COMMIT        "COMMIT"                    // COMMIT#id#pid
 
-#define D_CHAT          "CHAT"              // CHAT#username::Message - From node to sequencer
-#define D_JOINREQ       "JOINREQ"           // JOINREQ#PORT#Name
-#define D_JOINLEADER    "JOINLEADER"        // JOINLEADER#LEADERIP#LEADERPORT#LEADERNAME
-#define D_JOINLIST      "JOINLIST"          // JOINLIST#initSeq#LEADERNAME#ip1:port1:name1:...
-#define D_HEARTBEAT     "HEARTBEAT"         // HEARTBEAT#ip:port detect failed node
-#define D_ELECTION      "ELECTION"          // ELECTION#ip:port, start election
-#define D_COOR          "COOR"              // COOR#name#ip:port, announce leadership
+#define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT#Name
+#define D_JOINLIST      "JOINLIST"                  // JOINLIST#LEADERNAME#ip1:port1:name1:...
 
+#define D_M_CHAT        "CHAT"                      // CHAT#seq#msg
+#define D_M_ADDNODE     "ADDNODE"                   // ADDNODE#seq#ip#port#name, multicast from the sequencer
 
-// Election status
-#define E_NONE  0       // not in election
-#define E_WAITANS   1   // wait for higher process's D_ANSWER
-#define E_WAITCOOR  2   // wait for higher process's D_COOR
+#define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT#ip:port detect failed node
+
 
 #endif /* STDINCLUDES_H */
