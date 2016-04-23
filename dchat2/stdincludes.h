@@ -41,6 +41,7 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <condition_variable>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -65,8 +66,8 @@
 #define D_JOINREQ       "JOINREQ"                   // JOINREQ#PORT#Name
 #define D_JOINLIST      "JOINLIST"                  // JOINLIST#LEADERNAME#ip1:port1:name1:...
 
-#define D_M_CHAT        "CHAT"                      // CHAT#seq#msg
-#define D_M_ADDNODE     "ADDNODE"                   // ADDNODE#seq#ip#port#name, multicast from the sequencer
+#define D_M_CHAT        "CHAT"                      // CHAT#msg
+#define D_M_ADDNODE     "ADDNODE"                   // ADDNODE#ip#port#name, multicast from the sequencer
 
 #define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT#ip:port detect failed node
 

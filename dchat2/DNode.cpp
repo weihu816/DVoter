@@ -13,6 +13,7 @@
  * CONSTRUCTOR
  */
 DNode::DNode(std::string name, std::string join_addr) : username(name) {
+    queue = new blocking_priority_queue(this);
     dNet = new DNet(new Handler(this));
     dNet->DNinit();
     std::string my_addr;
@@ -91,7 +92,6 @@ int DNode::nodeStart() {
 int DNode::initThisNode() {
     member_node->inited = true;
     member_node->inGroup = false;
-    member_node->memberList.clear();
     return SUCCESS;
 }
 
@@ -118,7 +118,7 @@ int DNode::nodeLeave() {
 void DNode::initMemberList(std::string member_list) {
     
 #ifdef DEBUGLOG
-    std::cout << "\tDNode::initMemberList: " << member_list  << " leaderAddr:" << leaderAddr << std::endl;
+    std::cout << "\tDNode::initMemberList: " << member_list  << std::endl;
 #endif
     
     if (member_list.empty()) return;
@@ -186,11 +186,13 @@ int DNode::introduceSelfToGroup(std::string join_addr) {
     
     if (self_addr.compare(join_addr) == 0) {
         
-        std::cout << username << " started a new chat, listening on " << member_node->getAddress() << std::endl;
         addMember(join_addr, username, true);
+        std::cout << username << " started a new chat, listening on " << member_node->getAddress() << std::endl;
+        
         
     } else {
         
+        addMember(self_addr, username, true);
         Address to_addr(join_addr);
         
         // Requst to join by contacting the member
@@ -205,16 +207,15 @@ int DNode::introduceSelfToGroup(std::string join_addr) {
 
         if (msg_type.compare(D_JOINLIST) == 0) {
             
-            // received: JOINLIST#leadername#ip1:port1:name1:ip2:port2:name2...
-            std::string recv_param = msg_ack.substr(index + 1);
-            std::string recv_name_list = recv_param.substr(0, recv_param.find("#"));
-            std::string recv_name = recv_name_list.substr(0, recv_name_list.find("#"));
-            std::string recv_list = recv_name_list.substr(recv_name_list.find("#") + 1);
-            initMemberList(recv_list);
+            // received: JOINLIST#ip1:port1:name1:ip2:port2:name2...
+            std::string param_list = msg_ack.substr(index + 1);
+            initMemberList(param_list);
 
         } else {
+
             std::cout << "(Never here) Bad behaviour in introduceSelfToGroup" << std::endl;
             return FAILURE;
+            
         }
         
     }
@@ -252,10 +253,11 @@ void DNode::sendMsg(std::string msg) {
  */
 void DNode::multicast(std::string content) {
     
+    std::cout << "[INFO] Multicast Begin " << std::endl;
     // msg is lie Bob:: Hello
     int max_id = -1;
     int max_pid = -1;
-    auto list = member_node->memberList;
+    auto list = member_node->getMemberEntryList();
     
     // Should not be no member
     if (list.size() == 0) {
@@ -300,7 +302,7 @@ void DNode::multicast(std::string content) {
     
     // 2nd COMMIT Phase
     std::cout << "[INFO] COMMIT: max_id: " << max_id << " max_pid: " << max_pid << std::endl;
-    std::string p2 = std::string(D_COMMIT) + "#" + std::to_string(max_id) + "#" + std::to_string(max_pid);
+    std::string p2 = std::string(D_COMMIT) + "#" + std::to_string(max_id) + "#" + std::to_string(max_pid); // + "#" + old_id
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         Address addr((*iter).getAddress());
         std::cout << "[INFO] COMMIT to: " << addr.getAddress() << std::endl;
@@ -328,15 +330,20 @@ void DNode::multicast(std::string content) {
 /**
  * FUNCTION NAME: nodeLoopOps
  *
- * DESCRIPTION: Check if any node hasn't responded within a timeout period and then delete
- * 				the nodes
- * 				member: start election; leader: multicast LEAVEANNO
+ * DESCRIPTION: send heart beats
  */
 void DNode::nodeLoopOps() {
-    
+
     // finish heartbeat check
-    
+    auto list = member_node->getMemberEntryList();
+    for (auto i = list.begin(); i != list.end(); i++) {
+        Address addr((*i).getAddress());
+        std::string data = std::string(D_HEARTBEAT) + "#" + por;
+        std::string ack;
+        dNet->DNsend(&addr, data, ack, 1);
+    }
     return;
+
 }
 
 

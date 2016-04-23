@@ -36,12 +36,11 @@ private:
 public:
     // largest sequence number proposed by q to group g
     int P = 0;
-    // largest agreed sequence number q has observed so far for group g
-    int A = 0;
-    std::map<int, queue_object> buffer; // id#pid to queue_object
+    // largest agreed sequence number q has observed so far for group g, id#pid
+    std::pair<int, int> A = std::make_pair(0, ::getpid());
     
     // multicst_queue will be initilized using a sequence number init_seen from the leader
-    blocking_priority_queue queue;
+    blocking_priority_queue * queue;
     
     DNode(std::string name, std::string join_addr="");
     
@@ -71,8 +70,9 @@ public:
     std::string getUsername();
     
     virtual ~DNode() {
-        if(dNet) delete dNet;
-        if(member_node) delete member_node;
+        if (dNet) delete dNet;
+        if (member_node) delete member_node;
+        if (queue) delete queue;
     }
     
     int getNextId() {

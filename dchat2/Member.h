@@ -83,12 +83,12 @@ public:
 class Member {
 private:
     std::mutex mutex_memberList;
+    std::vector<MemberListEntry> memberList;                // Membership table
 
 public:
     Address * address;                                      // This member's Address
     bool inited = false;                                    // boolean indicating if this member is up
     bool inGroup;                                           // boolean indicating if this member is in the group
-    std::vector<MemberListEntry> memberList;                // Membership table
     
     Member(std::string addr): inited(false), inGroup(false) {
         this->address = new Address(addr);
@@ -179,7 +179,9 @@ public:
      * DESCRIPTION: getMemberEntryList
      */
     std::vector<MemberListEntry> getMemberEntryList() {
+        
         return memberList;
+        
     }
     
     
