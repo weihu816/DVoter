@@ -83,14 +83,19 @@ public:
 class Member {
 private:
     std::mutex mutex_memberList;
-    std::vector<MemberListEntry> memberList;                // Membership table
 
 public:
     Address * address;                                      // This member's Address
     bool inited = false;                                    // boolean indicating if this member is up
     bool inGroup;                                           // boolean indicating if this member is in the group
+    int nnb;                                                // number of my neighbors (distributed)
+    std::unordered_map<std::string, time_t> heartBeatList;  // Hearbeat List
+    std::vector<MemberListEntry> memberList;                // Membership table
     
-    Member(std::string addr): inited(false), inGroup(false) {
+    MemberListEntry * volatile leaderEntry;                 // The leader
+    
+    
+    Member(std::string addr): inited(false), inGroup(false), nnb(0){
         this->address = new Address(addr);
     }
     Member(const Member &anotherMember);                    // copy constructor
@@ -98,65 +103,37 @@ public:
     
     virtual ~Member() {
         delete address;
+        delete leaderEntry;
     }
     
-    /**
-     * FUNCTION NAME: addMember
-     *
-     * DESCRIPTION: this is the member address list, without user name
-     */
-    void addMember(std::string ip_port, std::string name) {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        MemberListEntry entry(ip_port, name);
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            if ((*iter).getEntry() ==  entry.getEntry()) return;
-        }
-#ifdef DEBUGLOG
-        std::cout << "\tMember::addMember: " << entry.getEntry() << std::endl;
-#endif
-        memberList.push_back(entry);
-        
-    }
-
     
-    /**
-     * FUNCTION NAME: deleteMember
-     *
-     * DESCRIPTION: Delete the member from the memberlist given member address
-     */
-    std::string deleteMember(std::string memberAddr) {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            if (memberAddr.compare((*iter).getAddress()) == 0 ) {
-                std::string memberName = (*iter).username;
-                memberList.erase(iter);
-                return memberName;
-            }
-        }
-        return "";
+    /*---------- Getter Methods ----------*/
+    std::string getLeaderAddress() {
+        return  leaderEntry->getAddress();
+    }
+    
+    std::string getLeaderAddressIp() {
+        return leaderEntry->ip;
+    }
+    
+    std::string getLeaderAddressPort() {
+        return std::to_string(leaderEntry->port);
+    }
+    
+    std::string getLeaderName() {
+        return  leaderEntry->username;
     }
 
-    /**
-     * FUNCTION NAME: getMemberList
-     *
-     * DESCRIPTION: get MemberList
-     */
-    std::string getMemberList() {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        std::string list = "";
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            list += (*iter).getEntry();
-            if (iter != memberList.end()-1) list += "#";
-        }
-        return list;
-        
+    bool isLeader() {
+        return (getLeaderAddress().compare(address->getAddress()) == 0);
     }
+    
+    void updateLeader(Address leaderAddr, std::string leaderName);
+    void addMember(std::string ip_port, std::string name);
+    std::string deleteMember(std::string memberAddr);
+    std::string getMemberList();
+    std::string getMemberListGUI();
+    
     
     /**
      * FUNCTION NAME: printMemberList
@@ -179,9 +156,7 @@ public:
      * DESCRIPTION: getMemberEntryList
      */
     std::vector<MemberListEntry> getMemberEntryList() {
-        
         return memberList;
-        
     }
     
     
@@ -194,6 +169,31 @@ public:
         return address->getAddress();
     }
     
+    
+    /**
+     * FUNCTION NAME: updateHeartBeat
+     *
+     * DESCRIPTION: updateHeartBeat
+     */
+    void updateHeartBeat(std::string addrKey, time_t heartbeat) {
+        heartBeatList[addrKey] = heartbeat;
+    }
+
+    
+    /**
+     * FUNCTION NAME: getHeartBeat
+     *
+     * DESCRIPTION: getHeartBeat
+     */
+    time_t getHeartBeat(std::string addrKey) {
+        // if found, return the heartbeat, otherwise return 0
+        auto iter = heartBeatList.find(addrKey);
+        if (iter == heartBeatList.end()) {
+            return 0;
+        } else {
+            return iter->second;
+        }
+    }
 
 };
 

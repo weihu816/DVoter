@@ -231,25 +231,76 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     
     // Handle received message
     std::string recv_msg(buf);
-    std::string send_msg = handler->process(fromaddr, recv_msg);
+    
+    //////////////////////// Priorty ///////////////////////
+
+    int priority = findPriorty(recv_msg);
+    msg_obj_queue.push(socket_queue_item(priority, sockfd, &their_addr, fromaddr, recv_msg));
+    processByPriority();
+    return SUCCESS; // don't care about the handling for now..
     
 #ifdef DEBUGLOG
     printf("\tsend back: %s\n", send_msg.c_str());
 #endif
     
-    // Fail to handle message, simply no sending back, let the send timeout
-    if (send_msg.empty()) return FAILURE;
+//    // Fail to handle message, simply no sending back, let the send timeout
+//    if (send_msg.empty()) return FAILURE;
+//    
+//    // Send ack back
+//    strcpy(buf, send_msg.c_str());
+//    
+//    if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
+//                           (struct sockaddr *) &their_addr, addr_len)) == -1) {
+//        perror("sendto");
+//        return FAILURE;
+//    }
+//    
+//    return SUCCESS;
+}
+
+int DNet::processByPriority() {
+    char buf[MAXBUFLEN];
+    long numbytes;
     
-    // Send ack back
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // sleep for
+    
+    socket_queue_item poped = msg_obj_queue.pop();
+    
+    std::cout << "poped message: " + poped.message << std::endl;
+    
+    std::string send_msg = handler->process(poped.from_addr, poped.message);
+    if(send_msg.empty()) return FAILURE;
+    
     strcpy(buf, send_msg.c_str());
-    
-    if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
-                           (struct sockaddr *) &their_addr, addr_len)) == -1) {
+
+    if ((numbytes = sendto(poped.sockfd, buf, strlen(buf) + 1, 0,
+                            (struct sockaddr *) &poped.their_addr, sizeof(poped.their_addr))) == -1) {
         perror("sendto");
         return FAILURE;
     }
-    
     return SUCCESS;
+}
+
+int DNet::findPriorty(std::string recv_msg) {
+    char cstr[MAXBUFLEN];
+    strcpy(cstr, recv_msg.c_str());
+    char * msg_type = strtok(cstr, "#");
+    
+    // for testing
+//    std::cout << "Log: priority : " + recv_msg << std::endl;
+//    std::cout << "Log: priority : " << msg_type << std::endl;
+    
+    if (strcmp(msg_type, D_M_MSG) == 0 || strcmp(msg_type, D_CHAT) == 0) { // chat messag has low priority
+        std::cout << "# priority : chat" << std::endl;
+        return 9;
+    } else if ( strcmp(msg_type, D_HEARTBEAT) == 0 || strcmp(msg_type, D_ELECTION) == 0 || strcmp(msg_type, D_COOR) == 0){
+        // important
+        std::cout << "# priority : important" << std::endl;
+        return 0;
+    } else {
+        std::cout << "# priority : ..." << std::endl;
+        return 5;
+    }
 }
 
 /**
@@ -299,29 +350,6 @@ int DNet::DNinfo(std::string & addr) {
 #endif
     
     return SUCCESS;
-}
-
-/**
- * FUNCTION NAME: encrypt
- *
- * DESCRIPTION: encrypt
- */
-std::string DNet::encrypt(std::string data, std::string key) {
-    std::string tmp(key);
-    while (key.size() < data.size())
-        key += tmp;
-    for (std::string::size_type i = 0; i < data.size(); ++i)
-        data[i] ^= key[i];
-    return data;
-}
-
-/**
- * FUNCTION NAME: decrypt
- *
- * DESCRIPTION: decrypt
- */
-std::string DNet::decrypt(std::string data, std::string key) {
-    return encrypt(data, key);
 }
 
 
