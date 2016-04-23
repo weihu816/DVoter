@@ -40,8 +40,11 @@ void sendMsg(DNode * node) {
         std::cin.getline(msg, MAXBUFLEN - 1);
         if (strlen(msg) != 0) {
             std::string str(msg);
-            if (str.compare("SS") == 0) {
+            if (str.compare("S") == 0) {
                 node->startSnapshotByUser();  // SNAPSHOT
+            }
+            else if (str.compare("SS") == 0) {
+                node->showSnapshot();
             }
             else {
                 node->sendMsg(std::string(msg));
@@ -65,6 +68,7 @@ void displayMsg(DNode * node) {
     while (isAlive) {
         std::string msg = node->msgLoop();
         std::cout << msg << std::endl;
+        node->addDisplayMsg(msg);
     }
 }
 

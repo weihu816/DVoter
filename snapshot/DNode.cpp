@@ -67,6 +67,10 @@ int DNode::nodeStart() {
     if (member_node->getAddress().compare(join_address) != 0) {
         std::cout << username << " joining a new chat on " << join_address;
         std::cout << ", listening on " << member_node->getAddress() << std::endl;
+        // for snapshot
+        std::string msg(username + " joining a new chat on " + join_address +
+                        ", listening on " + member_node->getAddress());
+        addDisplayMsg(msg);
     }
     if( initThisNode() == FAILURE ) {
         std::cout << "init_thisnode failed. Exit." << std::endl;
@@ -81,6 +85,14 @@ int DNode::nodeStart() {
     std::cout << member_node->getLeaderName() << " " << member_node->getLeaderAddress() << " (Leader)" << std::endl;
     member_node->printMemberList();
     if (member_node->isLeader()) std::cout << "Waiting for others to join" << std::endl;
+    // for snapshot
+    std::string msg("Start chatting. Current users: \n" + member_node->getLeaderName() + " " +
+                    member_node->getLeaderAddress() + " (Leader)\n");
+    std::vector<MemberListEntry> list(member_node->getMemberEntryList());
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        msg += (*iter).username + " " + (*iter).getAddress() + "\n";
+    }
+    addDisplayMsg(msg);
 
     return SUCCESS;
 }
@@ -152,6 +164,9 @@ void DNode::addMember(std::string ip_port, std::string name, bool toPrint){
     member_node->addMember(ip_port, name);
     if (toPrint) {
         std::cout << "NOTICE " << name << " joined on " << ip_port << std::endl;
+        // for snapshot
+        std::string msg("NOTICE " + name + " joined on " + ip_port);
+        addDisplayMsg(msg);
     }
 }
 
@@ -168,6 +183,9 @@ void DNode::deleteMember(std::string memberAddr){
     std::string memberName = member_node->deleteMember(memberAddr);
     if(!memberName.empty()) {
         std::cout << "NOTICE " << memberName << " left the chat or crashed" << std::endl;
+        // for snapshot
+        std::string msg("NOTICE " + memberName + " left the chat or crashed");
+        addDisplayMsg(msg);
     }
 }
 
@@ -588,7 +606,7 @@ void DNode::startSnapshotByUser() {
 #ifdef DEBUGLOG
     std::cout << "in starting snapshot by user" << std::endl;
 #endif
-    //std::unique_lock<std::mutex> lk(mutex_snapshot);
+    std::unique_lock<std::mutex> lk(mutex_snapshot);
     if (getSnapshotStatus() == S_NONE) {
         // initialize Snapshot object
         snapshot = new Snapshot(this->getUsername(), member_node->getAddress());
@@ -633,7 +651,7 @@ Snapshot* DNode::startSnapshotByMarker(std::string from_addr) {
 #ifdef DEBUGLOG
     std::cout << "in starting snapshot by marker" << std::endl;
 #endif
-    //std::unique_lock<std::mutex> lk(mutex_snapshot);
+    std::unique_lock<std::mutex> lk(mutex_snapshot);
     // initialize Snapshot object
     snapshot = new Snapshot(this->getUsername(), member_node->getAddress());
     
@@ -711,7 +729,7 @@ void DNode::multicastMarker(std::string marker) {
         }
     }
 #ifdef DEBUGLOG
-    std::cout << "COMPLETE multicast marker" << std::endl;
+    std::cout << "Complete multicast marker" << std::endl;
 #endif
 }
 
@@ -740,9 +758,12 @@ void DNode::recordSnapshotChannelMsg(std::string from_addr, std::string msg) {
     }
 }
 
-void DNode::writeCheckpoint() {
+/***
+ * static function for writing checkpoint for current node
+ ***/
+void doWriting(Snapshot* snapshot, Member* member_node, int idx) {
     std::ofstream outfile;
-    std::string fileName("Checkpoint_"+std::to_string(getSnapshotCnt())+"_"+member_node->getAddress()+".txt");
+    std::string fileName("Checkpoint_"+std::to_string(idx)+"_"+member_node->getAddress()+".txt");
     outfile.open (fileName);
     
     // output state
@@ -754,42 +775,42 @@ void DNode::writeCheckpoint() {
     // election status
     outfile << "Election status: " << snapshot_node->getElectionStatus() << "\n\n";
     
-//    // message chat queue
-//    outfile << "message_chat_queue: " << "\n";
-//    int size = snapshot_node->getMessageChatQueueSize();
-//    outfile << "size: " << size << "\n";
-//    for (int i = 0; i < size; i++) {
-//        if (i == 0) {
-//            outfile << "Content: " << "\n";
-//        }
-//        outfile << snapshot_node->popMessageChatQueue() << "\n";
-//    }
-//    outfile << "\n";
-//    
-//    // copy message send queue
-//    outfile << "message_send_queue: " << "\n";
-//    size = snapshot_node->getMessageSendQueueSize();
-//    outfile << "size: " << size << "\n";
-//    for (int i = 0; i < size; i++) {
-//        if (i == 0) {
-//            outfile << "Content: " << "\n";
-//        }
-//        outfile << snapshot_node->popMessageSendQueue() << "\n";
-//    }
-//    outfile << "\n";
-//    
-//    // copy m_queue
-//    outfile << "m_queue: " << "\n";
-//    size = snapshot_node->getMQueueSize();
-//    outfile << "size: " << size << "\n";
-//    for (int i = 0; i < size; i++) {
-//        if (i == 0) {
-//            outfile << "Content: " << "\n";
-//        }
-//        std::pair<int, std::string> pair = snapshot_node->popMQueue();
-//        outfile << "sequence number: " << pair.first << ", message: " << pair.second << "\n";
-//    }
-//    outfile << "\n";
+    //    // message chat queue
+    //    outfile << "message_chat_queue: " << "\n";
+    //    int size = snapshot_node->getMessageChatQueueSize();
+    //    outfile << "size: " << size << "\n";
+    //    for (int i = 0; i < size; i++) {
+    //        if (i == 0) {
+    //            outfile << "Content: " << "\n";
+    //        }
+    //        outfile << snapshot_node->popMessageChatQueue() << "\n";
+    //    }
+    //    outfile << "\n";
+    //
+    //    // copy message send queue
+    //    outfile << "message_send_queue: " << "\n";
+    //    size = snapshot_node->getMessageSendQueueSize();
+    //    outfile << "size: " << size << "\n";
+    //    for (int i = 0; i < size; i++) {
+    //        if (i == 0) {
+    //            outfile << "Content: " << "\n";
+    //        }
+    //        outfile << snapshot_node->popMessageSendQueue() << "\n";
+    //    }
+    //    outfile << "\n";
+    //
+    //    // copy m_queue
+    //    outfile << "m_queue: " << "\n";
+    //    size = snapshot_node->getMQueueSize();
+    //    outfile << "size: " << size << "\n";
+    //    for (int i = 0; i < size; i++) {
+    //        if (i == 0) {
+    //            outfile << "Content: " << "\n";
+    //        }
+    //        std::pair<int, std::string> pair = snapshot_node->popMQueue();
+    //        outfile << "sequence number: " << pair.first << ", message: " << pair.second << "\n";
+    //    }
+    //    outfile << "\n";
     
     // sequence seen
     int x = snapshot_node->getMQueueSequenceSeen();
@@ -803,13 +824,17 @@ void DNode::writeCheckpoint() {
     outfile << "Member list: \n";
     auto list = snapshot_member->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
+        char buff[20];
+        time_t t = snapshot_member->getHeartBeat(iter->getAddress());
+        strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
         outfile << "Username: " << iter->getUsername() << ", address: " << iter->getAddress()
-        << ", heartbeat: " << snapshot_member->getHeartBeat(iter->getAddress()) << "\n";
+        << ", last contact time: " << buff << "\n";
     }
     outfile << "\n";
     
     // output incoming messages:
     outfile << "Channels: \n";
+    std::unordered_map<std::string, Channel> temp_c = snapshot->getChannels();
     for ( auto it = snapshot_channels.begin(); it != snapshot_channels.end(); ++it) {
         outfile << "Address: " << it->first << "\nMessages: \n";
         Channel ch = it->second;
@@ -819,8 +844,145 @@ void DNode::writeCheckpoint() {
         }
     }
     outfile << "\n";
+    snapshot->setChannels(temp_c);
+    
+    outfile << "Message history: \n";
+    std::deque<std::pair<time_t, std::string>> temp_q = snapshot_node->getDisplayMessageQueue();
+    while (!temp_q.empty()) {
+        std::pair<time_t, std::string> pair = temp_q.front();
+        temp_q.pop_front();
+        char buff[20];
+        time_t t = pair.first;
+        strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
+        outfile << buff << ": \n" << pair.second << std::endl;
+    }
+    outfile << "\n";
     
     outfile.close();
+    std::cout << "---- Write checkpoint to disk done ----\n";
+}
+
+void DNode::writeCheckpoint() {
+    std::thread writethread(doWriting, snapshot, member_node, getSnapshotCnt());
+    writethread.detach();
+}
+
+void DNode::showSnapshot() {
+    if (getSnapshotCnt() == 0) {
+        std::cout << "No snapshot" << std::endl;
+    }
+    else if (getSnapshotStatus() == S_RECORDING) {
+        std::cout << "Taking snapshot now! Try later!" << std::endl;
+    }
+    else {
+        doDisplaySnapshot();
+    }
+}
+
+void DNode::doDisplaySnapshot() {
+    // output state
+    std::cout << "Process state: \n";
+    Member* snapshot_member = snapshot->getMember();
+    DNode* snapshot_node = snapshot->getNode();
+    std::unordered_map<std::string, Channel> snapshot_channels = snapshot->getChannels();
+    
+    // election status
+    std::cout << "Election status: " << snapshot_node->getElectionStatus() << "\n\n";
+    
+    // sequence seen
+    int x = snapshot_node->getMQueueSequenceSeen();
+    std::cout << "Sequence seen: " << x << "\n\n";
+    
+    // leader information
+    std::cout << "Leader name: " << snapshot_member->getLeaderName() << "\n";
+    std::cout << "Leader address: " << snapshot_member->getLeaderAddress() << "\n\n";
+    
+    // member information
+    std::cout << "Member list: \n";
+    auto list = snapshot_member->memberList;
+    for (auto iter = list.begin(); iter != list.end(); iter++) {
+        char buff[20];
+        time_t t = snapshot_member->getHeartBeat(iter->getAddress());
+        strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
+        std::cout << "Username: " << iter->getUsername() << ", address: " << iter->getAddress()
+        << ", last contact time: " << buff << "\n";
+    }
+    std::cout << "\n";
+    
+    // output incoming messages:
+    
+    std::cout << "Channels: \n";
+    std::unordered_map<std::string, Channel> temp_c = snapshot->getChannels();
+    for ( auto it = snapshot_channels.begin(); it != snapshot_channels.end(); ++it) {
+        std::cout << "Address: " << it->first << "\nMessages: \n";
+        Channel ch = it->second;
+        int size = ch.getMsgCnt();
+        for (int i = 0; i < size; i++) {
+            std::cout << ch.retrieveMsg() << "\n";
+        }
+    }
+    std::cout << "\n";
+    snapshot->setChannels(temp_c);
+    
+    std::cout << "Messasge history: \n";
+    std::deque<std::pair<time_t, std::string>> temp_q = snapshot_node->getDisplayMessageQueue();
+    while (!temp_q.empty()) {
+        std::pair<time_t, std::string> pair = temp_q.front();
+        temp_q.pop_front();
+        char buff[20];
+        time_t t = pair.first;
+        strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
+        std::cout << buff << ": \n" << pair.second << std::endl;
+    }
+    std::cout << "\n";
+    std::cout << "End of snapshot.\n";
+    std::cout << "---------------------------------------\n";
+}
+
+
+//////////////////////////////// MESSAGE QUEUES //////////////////////////
+void DNode::addDisplayMsg(std::string msg) {
+    time_t  now;
+    time(&now);
+    std::pair<time_t, std::string> p = std::make_pair(now, msg);
+    display_msg_queue.push_back(p);
+}
+
+std::pair<time_t, std::string> DNode::peekDisplayMsg() {
+    if (!display_msg_queue.empty())
+        return display_msg_queue.front();
+    else {
+        time_t now;
+        time(&now);
+        std::pair<time_t, std::string> p(now, "");
+        return p;
+    }
+}
+
+std::pair<time_t, std::string> DNode::popDisplayMsg() {
+    if (!isDisplayMsgQueueEmpty()) {
+        std::pair<time_t, std::string> p(peekDisplayMsg());
+        display_msg_queue.pop_front();
+        return p;
+    }
+    else {
+        time_t now;
+        time(&now);
+        std::pair<time_t, std::string> p(now, "");
+        return p;
+    }
+}
+
+bool DNode::isDisplayMsgQueueEmpty() {
+    return display_msg_queue.empty();
+}
+
+std::deque<std::pair<time_t, std::string>> DNode::getDisplayMessageQueue() {
+    return display_msg_queue;
+}
+
+void DNode::setDisplayMessageQueue(std::deque<std::pair<time_t, std::string>> q) {
+    display_msg_queue = q;
 }
 
 //////////////////////////////// GETTERS ////////////////////////////////

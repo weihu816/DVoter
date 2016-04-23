@@ -70,6 +70,8 @@ void Snapshot::recordState(DNode *cur) {
         channel_markers[leader_addr] = false;
     }
     
+    // copy message queue
+    ssnode->setDisplayMessageQueue(cur->getDisplayMessageQueue());
 }
 
 void Snapshot::recordChannelMarker(std::string from_addr) {
@@ -143,4 +145,8 @@ DNode* Snapshot::getNode() {
 
 std::unordered_map<std::string, Channel> Snapshot::getChannels() {
     return channels;
+}
+
+void Snapshot::setChannels(std::unordered_map<std::string, Channel> c) {
+    channels = c;
 }

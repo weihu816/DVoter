@@ -34,12 +34,14 @@ private:
     blocking_queue<std::string> message_send_queue;
     Snapshot *snapshot;
     int snapshotCnt;
+    std::deque<std::pair<time_t, std::string>> display_msg_queue;
 
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
     holdback_queue * m_queue;
     std::mutex mtx;
     std::mutex mutex_election;
+    std::mutex mutex_snapshot;
 //    std::condition_variable cv;
 
     DNode(std::string name, std::string join_addr="");
@@ -110,6 +112,15 @@ public:
     void recordSnapshotChannelMsg(std::string from_addr, std::string msg);
     void writeCheckpoint();
     int getSnapshotCnt();
+    void showSnapshot();
+    void doDisplaySnapshot();
+    
+    void addDisplayMsg(std::string msg);
+    std::pair<time_t, std::string> peekDisplayMsg();
+    std::pair<time_t, std::string> popDisplayMsg();
+    bool isDisplayMsgQueueEmpty();
+    std::deque<std::pair<time_t, std::string>> getDisplayMessageQueue();
+    void setDisplayMessageQueue(std::deque<std::pair<time_t, std::string>> q);
     
     virtual ~DNode() {
         if(dNet) delete dNet;

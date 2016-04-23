@@ -47,7 +47,7 @@ public:
     }
     
     int getMsgCnt() {
-        return messages.size();
+        return (int)messages.size();
     }
 };
 
@@ -77,6 +77,7 @@ public:
     Member* getMember();
     DNode* getNode();
     std::unordered_map<std::string, Channel> getChannels();
+    void setChannels(std::unordered_map<std::string, Channel> c);
 };
 
 #endif /* Snapshot_h */
