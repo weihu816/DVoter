@@ -76,7 +76,8 @@ string Handler::process(Address & from_addr, string recv_msg) {
         
         if (strcmp(msg_type, D_CHAT) == 0) {
 
-            // received: CHAT#Seq#Message - From node to sequencer
+            // received: CHAT#port#Seq#Message - From node to sequencer
+            std::string port(strtok(NULL, "#"));
             std::string seq_str(strtok (NULL, "#"));
             std::string recv_msg(strtok (NULL, "#"));
             int seq = stoi(seq_str);
@@ -84,21 +85,22 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::cout << "\tD_CHAT" << seq  << " " + seq_str << std::endl;
             
             if (nodeMember->isLeader()) { // Only leader can multicast messages
-                
+                std::string address_port = from_addr.getAddressIp()+":"+port;
+    
                 // Check the existence
                 auto & msg_seen = node->message_seen;
-                if (msg_seen.find(from_addr.getAddressIp()) == msg_seen.end()) {
-                    msg_seen[from_addr.getAddressIp()] = 0;
+                if (msg_seen.find(address_port) == msg_seen.end()) {
+                    msg_seen[address_port] = 0;
                 }
      
                 // Check the sequence number
-                std::cout << "current count is " << msg_seen[from_addr.getAddressIp()] << std::endl;
-                if (seq == (msg_seen[from_addr.getAddressIp()] + 1)) {
+                std::cout << "current count is " << msg_seen[address_port] << std::endl;
+                if (seq == (msg_seen[address_port] + 1)) {
                     // msg to be sent: #MSG#SEQ#username#Message
                     std::string message = recv_msg;
                     node->multicastMsg(message, D_M_MSG);
-                    msg_seen[from_addr.getAddressIp()]++;
-                    std::cout << "After inc " << msg_seen[from_addr.getAddressIp()] << std::endl;
+                    msg_seen[address_port]++;
+                    std::cout << "After inc " << msg_seen[address_port] << std::endl;
                 } else {
                     return std::to_string(seq);
                 }                

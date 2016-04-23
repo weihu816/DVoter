@@ -288,14 +288,14 @@ void DNode::sendMsgToLeader() {
     
     auto msg_pair = message_send_queue.pop();
 
-    std::unique_lock<std::mutex> lk(mutex_election);
+    std::unique_lock<std::mutex> lk(mutex_election); // message with port
 
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
         // I'm the leader now
         std::string msgToSend = username + ":: " + msg_pair.second;
         multicastMsg(msgToSend, D_M_MSG);
     } else {
-        std::string str_to = std::string(D_CHAT) + "#" + std::to_string(msg_pair.first) + "#"
+        std::string str_to = std::string(D_CHAT) + "#" + std::to_string(member_node->address->port) +"#" + std::to_string(msg_pair.first) + "#"
             + username + ":: " + msg_pair.second;
         std::string leader_address = member_node->getLeaderAddress();
         std::string str_ack;
