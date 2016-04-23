@@ -72,7 +72,7 @@ int DNode::nodeStart() {
         return FAILURE;
     }
     if( introduceSelfToGroup(join_address, false) == FAILURE ) {
-        std::cout << "Sorry no chat is active on " << member_node->getAddress()
+        std::cout << "Sorry no chat is active on " << join_address
         << ", try again later.\nBye." << std::endl;
         return FAILURE;
     }
@@ -304,14 +304,14 @@ void DNode::sendMsgToLeader() {
             // If the response is not OK, then it is a number that the leader current seen
             std::string ok("OK");
             if (strcmp(str_ack.c_str(), ok.c_str()) != 0) {
-                std::cout << "ACK from leader: " << str_ack << std::endl;
+                std::cout << str_to << " ACK from leader: " << str_ack << std::endl;
                 int ack = stoi(str_ack);
                 // if the ack seq number is less seq - 1, we need to resend that message
                 while (ack + 1 < seq) {
                     std::string resend_ack;
                     std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(ack) + "#"
                     + username + ":: " + message_table[ack];
-                    std::cout << resend_str << std::endl;
+                    std::cout << "Resend " + resend_str << std::endl;
                     dNet->DNsend(&leader_addr, resend_str, resend_ack, 1);
                     ack++;
                 }

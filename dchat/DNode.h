@@ -84,6 +84,7 @@ public:
     std::map<std::string, int> message_seen;
     
     void resetSeq() {
+        message_seen.clear();
         seq = 1;
     }
 
