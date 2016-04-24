@@ -77,10 +77,10 @@ void recvMsg(DNode * node) {
 // process loop
 void processMsg(DNode * node) {
     while (isAlive) {
-        std::chrono::milliseconds sleepTime(500); // sleep for 0.5 sec
+        std::chrono::milliseconds sleepTime(300); // sleep for 0.3 sec
         std::this_thread::sleep_for(sleepTime);
 #ifdef DEBUGLOG2
-        std::cout << "slept: 500" << std::endl;
+        std::cout << "slept: 300" << std::endl;
 #endif
         node->processLoop();
     }
