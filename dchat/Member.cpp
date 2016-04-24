@@ -189,9 +189,9 @@ std::string Member::getMemberList() {
 std::string Member::getMemberListGUI() {
     
     std::unique_lock<std::mutex> lk(mutex_memberList);
-    std::string str = "Leader: " + getLeaderName() + " " +  getLeaderAddress() + "\n";
+    std::string str = getLeaderAddress() + " " + getLeaderName() + " (Leader)" +"\n";
     for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-        str += (*iter).getEntry();
+        str += (*iter).getAddress() + " " + (*iter).getUsername();
         if (iter != memberList.end()-1) str += "\n";
     }
     return str;

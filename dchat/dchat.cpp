@@ -131,7 +131,7 @@ int main(int argc, const char * argv[]) {
     std::thread thread_displayMsg(displayMsg, node);
     // Thread: Track heartbeat
     std::thread thread_heartbeat(heartBeatRoutine, node);
-    
+    // Thread: Send message to leader
     std::thread thread_sendMsgToLeader(sendMsgToLeader, node);
 
     thread_sendMsg.join();
