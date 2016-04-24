@@ -464,13 +464,15 @@ void DNode::startElection() {
     
     // Wait for COOR message ..........
     updateElectionStatus(E_WAITCOOR);
-    lk.unlock();
     
     std::cout << "Wait for COOR message .........." << std::endl;
     std::chrono::milliseconds sleepTime(ELECTIONTIME);
     std::this_thread::sleep_for(sleepTime);
     
     if(getElectionStatus() == E_WAITCOOR) {
+        
+        lk.unlock();
+        
         std::cout << "No COOR message .........." << std::endl;
         updateElectionStatus(E_NONE);
         startElection();
