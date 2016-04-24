@@ -248,7 +248,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 }
 
 void DNode::addMessage(std::string msg) {
-    message_chat_queue.push(msg);
+    message_chat_queue.push_back(msg);
 #ifdef DEBUGLOG
     std::cout << "\tpush to message_chat_queue" << std::endl;
 #endif
@@ -275,7 +275,7 @@ void DNode::sendMsg(std::string msg) {
         multicastMsg(msgToSend, D_M_MSG);
     } else { // Send Multicast request to the sequencer
         message_table[seq] = msg;
-        message_send_queue.push(std::make_pair(seq, msg));
+        message_send_queue.push_back(std::make_pair(seq, msg));
         seq++;
     }
     
@@ -289,22 +289,29 @@ void DNode::sendMsg(std::string msg) {
  */
 void DNode::sendMsgToLeader() {
     
-    
     auto msg_pair = message_send_queue.pop();
-
+    
     std::unique_lock<std::mutex> lk(mutex_election); // message with port
-
+    // Wait for election to be finished
+    while (getElectionStatus() != E_NONE) {
+        d_condition.wait(lk);
+    }
+    
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
+        
         // I'm the leader now
         std::string msgToSend = username + ":: " + msg_pair.second;
         multicastMsg(msgToSend, D_M_MSG);
+        
     } else {
+        
         std::string str_to = std::string(D_CHAT) + "#" + std::to_string(member_node->address->port) +"#" + std::to_string(msg_pair.first) + "#"
-            + username + ":: " + msg_pair.second;
+        + username + ":: " + msg_pair.second;
         std::string leader_address = member_node->getLeaderAddress();
         std::string str_ack;
         Address leader_addr(leader_address);
         if (dNet->DNsend(&leader_addr, str_to, str_ack, 1) == SUCCESS) {
+            
             // If the response is not OK, then it is a number that the leader current seen
             std::string ok("OK");
             if (strcmp(str_ack.c_str(), ok.c_str()) != 0) {
@@ -313,17 +320,30 @@ void DNode::sendMsgToLeader() {
                 // if the ack seq number is less seq - 1, we need to resend that message
                 while (ack + 1 < seq) {
                     std::string resend_ack;
-                    std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(ack) + "#"
+                    std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(member_node->address->port) + "#" + std::to_string(ack) + "#"
                     + username + ":: " + message_table[ack];
                     std::cout << "Resend " + resend_str << std::endl;
                     dNet->DNsend(&leader_addr, resend_str, resend_ack, 1);
                     ack++;
                 }
             }
+            
+        } else {
+            
+            // std::cout << "Did not hear back form the leader" << std::endl;
+            // We think the leader is not responding
+            // However we are not sure if the leader has multicast this message or not
+            message_send_queue.push_front(msg_pair);
+            lk.unlock();
+            std::chrono::milliseconds sleepTime(1000);
+            std::this_thread::sleep_for(sleepTime);
+            
         }
+        
     }
     
 }
+
 
 
 /**
@@ -574,25 +594,6 @@ void DNode::nodeLoopOps() {
     // finish heartbeat check
     return;
 }
-
-
-/**
- * Check heart beat of a given address
- * Return SUCCESS if the node is alive and Failure otherwise
- */
-int DNode::checkHeartbeat(std::string address) {
-    time_t current;
-    time(&current);
-    time_t heartbeat = member_node->getHeartBeat(address);
-    if(difftime(current, heartbeat) > TIMEOUT / 1000) {
-#ifdef DEBUGLOG
-        std::cout << address << " !!! " << difftime(current, heartbeat) << std::endl;
-#endif
-        return FAILURE;
-    }
-    return SUCCESS;
-}
-
 
 //////////////////////////////// GETTERS ////////////////////////////////
 

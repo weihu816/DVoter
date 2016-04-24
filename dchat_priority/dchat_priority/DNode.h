@@ -36,6 +36,8 @@ private:
     std::map<int, std::string> message_table;
     blocking_queue<std::pair<int, std::string>> message_send_queue;
 
+    int election_status = E_NONE; // not in election
+    std::condition_variable d_condition; // for sending messages
     
 
 public:
@@ -82,12 +84,23 @@ public:
     void updateElectionStatus(int new_status);
     
     // This is for the leader (sequencer)
-    int election_status = E_NONE; // not in election
     std::map<std::string, int> message_seen;
     
     void resetSeq() {
         message_seen.clear();
+        d_condition.notify_all();
+        message_table.clear();
+        std::deque<std::pair<int, std::string>> temp;
+        while (message_send_queue.size() > 0) {
+            temp.push_back(message_send_queue.pop());
+        }
+        message_send_queue.clear();
         seq = 1;
+        for (auto pair : temp) {
+            message_send_queue.push_back(std::make_pair(seq, pair.second));
+            message_table[seq] = pair.second;
+            seq++;
+        }
     }
 
     virtual ~DNode() {

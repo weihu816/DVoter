@@ -56,8 +56,9 @@
 //#define DEBUGLOG    1
 
 #define MAXBUFLEN       512
-#define TIMEOUT         3000
-#define HEARTFREQ       3000
+#define HEARTFREQ       5000
+#define COORTIMEOUT     8000
+#define ENCRYPTKEY      13
 #define ELECTIONTIME    4000
 
 // Multicast messages, start with a #

@@ -57,10 +57,11 @@
 //#define DEBUGLOG2   1
 
 #define MAXBUFLEN       512
-#define HEARTFREQ       3000
-#define ELECTIONTIME    4000
+#define HEARTFREQ       5000
+#define COORTIMEOUT     8000
+#define ENCRYPTKEY      13
 
-#define TRAFFICFREQ 10000 // check traffic every 10 secs 
+#define TRAFFICFREQ 5000 // check traffic every 10 secs
 #define MAXRATE     100
 #define SLOWINT     500
 #define D_FAST      "FAST"

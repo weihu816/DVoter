@@ -63,9 +63,14 @@ public:
     blocking_queue()=default;
     blocking_queue(const blocking_queue&) = delete;
     blocking_queue& operator=(const blocking_queue&) = delete;
-    void push(T const& value) {
+    void push_back(T const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
         d_queue.push_back(value);
+        d_condition.notify_one();
+    }
+    void push_front(T const& value) {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        d_queue.push_front(value);
         d_condition.notify_one();
     }
     T pop() {
@@ -86,7 +91,14 @@ public:
         d_queue.pop_front();
         return true;
     }
-    
+    long size() {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        return d_queue.size();
+    }
+    void clear() {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        d_queue.clear();
+    }
 };
 
 typedef std::pair<int, std::string> T;

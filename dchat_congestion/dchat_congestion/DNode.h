@@ -38,6 +38,7 @@ private:
     blocking_queue<std::pair<int, std::string>> message_send_queue;
     
     int election_status = E_NONE; // not in election
+    std::condition_variable d_condition; // for sending messages
 
 public:
     // traffic congestion
@@ -106,9 +107,22 @@ public:
     int getElectionStatus();
     
     // Reset seqience number and leader message counter
+    // Notify if the message sending is currently blocked
     void resetSeq() {
         message_seen.clear();
+        d_condition.notify_all();
+        message_table.clear();
+        std::deque<std::pair<int, std::string>> temp;
+        while (message_send_queue.size() > 0) {
+            temp.push_back(message_send_queue.pop());
+        }
+        message_send_queue.clear();
         seq = 1;
+        for (auto pair : temp) {
+            message_send_queue.push_back(std::make_pair(seq, pair.second));
+            message_table[seq] = pair.second;
+            seq++;
+        }
     }
 
     virtual ~DNode() {

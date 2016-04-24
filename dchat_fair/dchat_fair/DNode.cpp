@@ -244,7 +244,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 }
 
 void DNode::addMessage(std::string msg) {
-    message_chat_queue.push(msg);
+    message_chat_queue.push_back(msg);
 #ifdef DEBUGLOG
     std::cout << "\tpush to message_chat_queue" << std::endl;
 #endif
@@ -272,7 +272,7 @@ void DNode::sendMsg(std::string msg) {
         //multicastMsg(msgToSend, D_M_MSG);
     } else { // Send Multicast request to the sequencer
         message_table[seq] = msg;
-        message_send_queue.push(std::make_pair(seq, msg));
+        message_send_queue.push_back(std::make_pair(seq, msg));
         seq++;
     }
     
@@ -492,7 +492,7 @@ void DNode::startElection() {
     lk.unlock();
     
     std::cout << "Wait for COOR message .........." << std::endl;
-    std::chrono::milliseconds sleepTime(ELECTIONTIME);
+    std::chrono::milliseconds sleepTime(COORTIMEOUT);
     std::this_thread::sleep_for(sleepTime);
     
     if(getElectionStatus() == E_WAITCOOR) {
@@ -566,24 +566,6 @@ void DNode::nodeLoopOps() {
     
     // finish heartbeat check
     return;
-}
-
-
-/**
- * Check heart beat of a given address
- * Return SUCCESS if the node is alive and Failure otherwise
- */
-int DNode::checkHeartbeat(std::string address) {
-    time_t current;
-    time(&current);
-    time_t heartbeat = member_node->getHeartBeat(address);
-    if(difftime(current, heartbeat) > TIMEOUT / 1000) {
-#ifdef DEBUGLOG
-        std::cout << address << " !!! " << difftime(current, heartbeat) << std::endl;
-#endif
-        return FAILURE;
-    }
-    return SUCCESS;
 }
 
 

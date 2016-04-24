@@ -243,7 +243,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
         // process in another way... first put in queue
         std::string from_ip_port = fromaddr.ip +":"+ recv_port;
         //std::cout << "\tRecv from: " <<  from_ip_port << std::endl;
-        leader_round_table[from_ip_port].push(socket_queue_item(sockfd, &their_addr, fromaddr, recv_msg));
+        leader_round_table[from_ip_port].push_back(socket_queue_item(sockfd, &their_addr, fromaddr, recv_msg));
         processByRoundTable();
         return SUCCESS;
     } else {
@@ -272,7 +272,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
 }
 
 int DNet::processByRoundTable() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // sleep for 0.9 sec
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // sleep for 0.5 sec
     
     char buf[MAXBUFLEN];
     long numbytes;
