@@ -10,14 +10,12 @@
 #include "stdincludes.h"
 #include "Member.h"
 #include "Handler.h"
-#include "Queue.h"
 
 class DNet {
 private:
     int sockfd;
     int port;
     Handler * handler;
-    blocking_priority_queue msg_obj_queue;
     
 public:
     DNet(Handler * handler);
@@ -34,9 +32,6 @@ public:
     int DNrecv(Address & fromaddr, std::string & data);
     int DNcleanup();
     void * get_in_addr(struct sockaddr *sa);
-    
-    int findPriorty(std::string recv_msg);
-    int processByPriority();
 
 };
 

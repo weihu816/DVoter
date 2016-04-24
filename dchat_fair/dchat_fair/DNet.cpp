@@ -229,74 +229,86 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     << std::endl;
 #endif
     
-    // Handle received message
     std::string recv_msg(buf);
     
-    //////////////////////// Priorty ///////////////////////
-
-    int priority = findPriorty(recv_msg);
-    msg_obj_queue.push(socket_queue_item(priority, sockfd, &their_addr, fromaddr, recv_msg));
-    processByPriority();
-    return SUCCESS; // don't care about the handling for now..
-    
-#ifdef DEBUGLOG
-    printf("\tsend back: %s\n", send_msg.c_str());
-#endif
-    
-//    // Fail to handle message, simply no sending back, let the send timeout
-//    if (send_msg.empty()) return FAILURE;
-//    
-//    // Send ack back
-//    strcpy(buf, send_msg.c_str());
-//    
-//    if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
-//                           (struct sockaddr *) &their_addr, addr_len)) == -1) {
-//        perror("sendto");
-//        return FAILURE;
-//    }
-//    
-//    return SUCCESS;
-}
-
-int DNet::processByPriority() {
-    char buf[MAXBUFLEN];
-    long numbytes;
-    
-    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // sleep for 0.9 sec
-    
-    socket_queue_item poped = msg_obj_queue.pop();
-    
-    std::cout << "poped message: " + poped.message << std::endl;
-    
-    std::string send_msg = handler->process(poped.from_addr, poped.message);
-    if(send_msg.empty()) return FAILURE;
-    
-    strcpy(buf, send_msg.c_str());
-
-    if ((numbytes = sendto(poped.sockfd, buf, strlen(buf) + 1, 0,
-                            (struct sockaddr *) &poped.their_addr, sizeof(poped.their_addr))) == -1) {
-        perror("sendto");
-        return FAILURE;
-    }
-    return SUCCESS;
-}
-
-int DNet::findPriorty(std::string recv_msg) {
+    // get message type and port from message
     char cstr[MAXBUFLEN];
     strcpy(cstr, recv_msg.c_str());
     char * msg_type = strtok(cstr, "#");
+    std::string recv_port(strtok (NULL, "#"));
     
-    if (strcmp(msg_type, D_M_MSG) == 0 || strcmp(msg_type, D_CHAT) == 0) { // chat messag has low priority
-        return 9;
-    } else if ( strcmp(msg_type, D_HEARTBEAT) == 0 || strcmp(msg_type, D_ELECTION) == 0 || strcmp(msg_type, D_COOR) == 0){
-        std::cout << "# priority : important" << std::endl;
-        // important messages regrading heartbeat and election
-        return 0;
+    if(handler->amLeader() && recv_msg.find("#") != 0 && strcmp(msg_type, D_JOINREQ) != 0 && strcmp(msg_type, D_HEARTBEAT) != 0) { // am leader, not broadcast, not join request, not heartbeat..
+        std::cout << "\tI am the leader, put things in queue...\n" << std::endl;
+        // process in another way... first put in queue
+        std::string from_ip_port = fromaddr.ip +":"+ recv_port;
+        std::cout << "\tRecv from: " <<  from_ip_port << std::endl;
+        leader_round_table[from_ip_port].push(socket_queue_item(sockfd, &their_addr, fromaddr, recv_msg));
+        processByRoundTable();
+        return SUCCESS;
     } else {
-        // middle level messages
-        std::cout << "# priority : middle" << std::endl;
-        return 5;
+        
+        // if I am not leader: Handle received message
+        std::string send_msg = handler->process(fromaddr, recv_msg);
+        
+#ifdef DEBUGLOG
+        printf("\tsend back: %s\n", send_msg.c_str());
+#endif
+        
+        // Fail to handle message, simply no sending back, let the send timeout
+        if (send_msg.empty()) return FAILURE;
+        
+        // Send ack back
+        strcpy(buf, send_msg.c_str());
+        
+        if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
+                               (struct sockaddr *) &their_addr, addr_len)) == -1) {
+            perror("sendto");
+            return FAILURE;
+        }
+        
+        return SUCCESS;
     }
+}
+
+int DNet::processByRoundTable() {
+    char buf[MAXBUFLEN];
+    long numbytes;
+    int ite;
+    std::string targetKey;
+    // pop one from the queue (round-robin) and process
+    int memberListLength = handler->getMemberListLength();
+    
+    socket_queue_item poped;
+    for (ite = 0; ite <= memberListLength; ite++) {
+        printf("try POP...The current member List Counter is %d\n", tableCounter);
+        targetKey = handler->getMemberAddrByIndex(tableCounter);
+        std::cout << "target key is : " << targetKey << std::endl;
+        if(leader_round_table[targetKey].tryPop(poped)) {
+            std::cout << "found msg in queue, processing.. " << std::endl;
+
+            if(targetKey.compare(handler->getAddress()) == 0) {
+                // I may receive my own chat messages
+                handler->multicast(poped.message, D_M_MSG);
+                tableCounter++;
+                return SUCCESS;
+            }
+            
+            tableCounter++;
+            std::string send_msg = handler->process(poped.from_addr, poped.message);
+            if(send_msg.empty()) return FAILURE;
+            strcpy(buf, send_msg.c_str());
+            
+            if ((numbytes = sendto(poped.sockfd, buf, strlen(buf) + 1, 0,
+                                   (struct sockaddr *) &poped.their_addr, sizeof(poped.their_addr))) == -1) {
+                perror("sendto");
+                return FAILURE;
+            }
+            return SUCCESS;
+        }
+        tableCounter++;
+    }
+    return FAILURE;
+    
     
 }
 

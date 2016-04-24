@@ -9,16 +9,39 @@
 
 using namespace std;
 
-vector<string> splitstr(string ori, char deli) {
-    vector<string> tmp;
-    stringstream ss(ori);
-    string tok;
-    while (getline(ss, tok, deli)) {
-        tmp.push_back(tok);
-    }
-    return tmp;
+string Handler::getAddress() {
+    return node->getMember()->getAddress();
 }
 
+/**
+ * Tell if the owner of this handler is the leader
+ */
+int Handler::amLeader() {
+    return node->getMember()->isLeader();
+}
+
+int Handler::getMemberListLength() {
+    return node->getMember()->getMemberlistLength();
+}
+
+void Handler::multicast(string msg, string type) {
+    node->multicastMsg(msg, type);
+}
+
+/**
+ * Return the ip:port of i^th member
+ * if the index i = -1 return ip:port of the leader
+ */
+string Handler::getMemberAddrByIndex(int &tableCounter) {
+    Member * nodeMember = node->getMember();
+    if(tableCounter >= nodeMember->getMemberlistLength()) {
+        tableCounter = -1;
+    }
+    if(tableCounter == -1) {
+        return node->getMember()->getAddress(); // return leader's address
+    }
+    return node->getMember()->getMemberAddrByIndex(tableCounter);
+}
 
 string Handler::process(Address & from_addr, string recv_msg) {
     
@@ -79,10 +102,10 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // received: CHAT#port#Seq#Message - From node to sequencer
             std::string port(strtok(NULL, "#"));
             std::string seq_str(strtok (NULL, "#"));
-            std::string recv_msg(strtok (NULL, "#"));
+            std::string msg(strtok (NULL, "#"));
             int seq = stoi(seq_str);
             
-            //std::cout << "\tD_CHAT" << seq  << " " + seq_str << std::endl;
+            std::cout << "\tD_CHAT" << seq  << " " + seq_str << std::endl;
             
             if (nodeMember->isLeader()) { // Only leader can multicast messages
                 std::string address_port = from_addr.getAddressIp()+":"+port;
@@ -94,13 +117,13 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 }
      
                 // Check the sequence number
-                //std::cout << "current count is " << msg_seen[address_port] << std::endl;
+                std::cout << "current count is " << msg_seen[address_port] << std::endl;
                 if (seq == (msg_seen[address_port] + 1)) {
                     // msg to be sent: #MSG#SEQ#username#Message
-                    std::string message = recv_msg;
+                    std::string message = msg;
                     node->multicastMsg(message, D_M_MSG);
                     msg_seen[address_port]++;
-                    //std::cout << "After inc " << msg_seen[address_port] << std::endl;
+                    std::cout << "After inc " << msg_seen[address_port] << std::endl;
                 } else {
                     return std::to_string(seq);
                 }                
@@ -151,7 +174,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             }
         } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
             
-            // received: HEARTBEAT#ip:port
+            // received: HEARTBEAT#port
             // know node at from_addr is still there, update heartbeat for node at from_addr
             std::string node_addr(strtok(NULL, "#"));
             time_t timev;
