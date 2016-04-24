@@ -262,7 +262,7 @@ int DNet::processByPriority() {
     char buf[MAXBUFLEN];
     long numbytes;
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // sleep for 0.9 sec
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // sleep for 0.5 sec
     
     socket_queue_item poped = msg_obj_queue.pop();
     

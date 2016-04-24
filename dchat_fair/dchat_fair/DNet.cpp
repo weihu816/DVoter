@@ -236,6 +236,7 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     strcpy(cstr, recv_msg.c_str());
     char * msg_type = strtok(cstr, "#");
     std::string recv_port(strtok (NULL, "#"));
+    std::cout << "\tMsg type: " << msg_type << std::endl;
     
     if(handler->amLeader() && recv_msg.find("#") != 0 && strcmp(msg_type, D_JOINREQ) != 0 && strcmp(msg_type, D_HEARTBEAT) != 0) { // am leader, not broadcast, not join request, not heartbeat..
         std::cout << "\tI am the leader, put things in queue...\n" << std::endl;
@@ -271,6 +272,8 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
 }
 
 int DNet::processByRoundTable() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // sleep for 0.9 sec
+    
     char buf[MAXBUFLEN];
     long numbytes;
     int ite;
