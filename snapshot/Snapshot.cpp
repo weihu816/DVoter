@@ -10,6 +10,9 @@
 #include "DNode.h"
 #include "Member.h"
 
+/***
+ * Constructor of Snapshot
+ ***/
 Snapshot::Snapshot(std::string name, std::string addr) {
     ssnode = new DNode(name, addr);        // Create Member node
     ssmember = new Member(addr);
@@ -19,6 +22,11 @@ Snapshot::Snapshot(std::string name, std::string addr) {
     marker_from_channel = new Channel();
 }
 
+/***
+ * FUNCTION NAME: recordState
+ *
+ * DESCRIPTION: record current state of process
+ ***/
 void Snapshot::recordState(DNode *cur) {
 #ifdef DEBUGLOG
     std::cout << "In SNAPSHOT recording state" << std::endl;
@@ -70,6 +78,11 @@ void Snapshot::recordState(DNode *cur) {
     ssnode->setDisplayMessageQueue(cur->getDisplayMessageQueue());
 }
 
+/***
+ * FUNCTION NAME: recordChannelMarker
+ *
+ * DESCRIPTION: record where a marker comes from
+ ***/
 void Snapshot::recordChannelMarker(std::string from_addr) {
     if (!getChannelMarkerReceived(from_addr)) {
         channel_markers[from_addr] = true;
@@ -172,10 +185,16 @@ DNode* Snapshot::getNode() {
     return ssnode;
 }
 
+/***
+ * channels map getter
+ ***/
 std::unordered_map<std::string, Channel> Snapshot::getChannels() {
     return channels;
 }
 
+/***
+ * channels setter
+ ***/
 void Snapshot::setChannels(std::unordered_map<std::string, Channel> c) {
     channels = c;
 }

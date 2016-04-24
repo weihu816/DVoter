@@ -825,11 +825,23 @@ void doWriting(Snapshot* snapshot, Member* member_node, int idx) {
     std::cout << "---- Write checkpoint to disk done ----\n";
 }
 
+/**
+ * FUNCTION NAME: writeCheckpoint
+ *
+ * DESCRIPTION: start a thread to do disk write
+                write snapshot to file
+ */
 void DNode::writeCheckpoint() {
     std::thread writethread(doWriting, snapshot, member_node, getSnapshotCnt());
     writethread.detach();
 }
 
+/**
+ * FUNCTION NAME: showSnapshot
+ *
+ * DESCRIPTION: check whether there is snapshot to be displayed
+                if so, call method to display snapshot to stdout
+ */
 void DNode::showSnapshot() {
     if (getSnapshotCnt() == 0) {
         std::cout << "No snapshot" << std::endl;
@@ -842,6 +854,12 @@ void DNode::showSnapshot() {
     }
 }
 
+/**
+ * FUNCTION NAME: doDisplaySnapshot
+ *
+ * DESCRIPTION: print process state, channel messages to stdout
+                only prints most recent snapshot
+ */
 void DNode::doDisplaySnapshot() {
     // output state
     std::cout << "Process state: \n";
@@ -904,6 +922,9 @@ void DNode::doDisplaySnapshot() {
 
 
 //////////////////////////////// MESSAGE QUEUES //////////////////////////
+/**
+ * add item to rear of display_msg_queue
+ */
 void DNode::addDisplayMsg(std::string msg) {
     time_t  now;
     time(&now);
@@ -911,6 +932,9 @@ void DNode::addDisplayMsg(std::string msg) {
     display_msg_queue.push_back(p);
 }
 
+/**
+ * get first item form display_msg queue
+ */
 std::pair<time_t, std::string> DNode::peekDisplayMsg() {
     if (!display_msg_queue.empty())
         return display_msg_queue.front();
@@ -922,6 +946,9 @@ std::pair<time_t, std::string> DNode::peekDisplayMsg() {
     }
 }
 
+/**
+ * pop from display msg queue
+ */
 std::pair<time_t, std::string> DNode::popDisplayMsg() {
     if (!isDisplayMsgQueueEmpty()) {
         std::pair<time_t, std::string> p(peekDisplayMsg());
@@ -936,19 +963,28 @@ std::pair<time_t, std::string> DNode::popDisplayMsg() {
     }
 }
 
+/**
+ * check whether display_msg_queue is empty
+ */
 bool DNode::isDisplayMsgQueueEmpty() {
     return display_msg_queue.empty();
 }
 
+/**
+ * display_msg_queue getter
+ */
 std::deque<std::pair<time_t, std::string>> DNode::getDisplayMessageQueue() {
     return display_msg_queue;
 }
 
+/**
+ * display_msg_queue setter
+ */
 void DNode::setDisplayMessageQueue(std::deque<std::pair<time_t, std::string>> q) {
     display_msg_queue = q;
 }
 
-//////////////////////////////// GETTERS ////////////////////////////////
+//////////////////////////////// GETTERS & SETTERS ////////////////////////////////
 
 /**
  * dNet getter
@@ -981,69 +1017,121 @@ int DNode::getElectionStatus() {
     return toReturn;
 }
 
+/**
+ * message_chat_queue size getter
+ */
 int DNode::getMessageChatQueueSize() {
     return message_chat_queue.getSize();
 }
 
+/**
+ * message_send_queue_size getter
+ */
 int DNode::getMessageSendQueueSize() {
     return message_send_queue.getSize();
 }
 
+/**
+ * m_queue size getter
+ */
 int DNode::getMQueueSize() {
     return m_queue->getHoldBackQueueSize();
 }
 
+/**
+ * push to message_chat_queue
+ */
 void DNode::pushMessageChatQueue(std::string str) {
     message_chat_queue.push(str);
 }
 
+/**
+ * push to message send queue
+ */
 void DNode::pushMessageSendQueue(std::string str) {
     message_send_queue.push(str);
 }
 
+/**
+* push to m_queue
+*/
 void DNode::pushMQueue(std::pair<int, std::string> value) {
     m_queue->push(value);
 }
 
+/**
+* sequence number setter
+*/
 void DNode::setMQueueSequenceSeen(int i) {
     m_queue->setSequenceSeen(i);
 }
 
+/**
+ * next sequence number getter
+ */
 void DNode::setMQueueSequenceNext(int i) {
     m_queue->setSequenceNext(i);
 }
 
+/**
+ * sequence number getter
+ */
 int DNode::getMQueueSequenceSeen() {
     return m_queue->getSequenceSeen();
 }
 
+/**
+ * node snapshot getter
+ */
 Snapshot* DNode::getSnapshot() {
     return snapshot;
 }
 
+/**
+ * node snapshot setter
+ */
 void DNode::setSnapshot(Snapshot* s) {
     snapshot = s;
 }
 
+/**
+ * m_queue_setter
+ */
 void DNode::setMQueue(holdback_queue q) {
     m_queue = &q;
 }
 
+/**
+ * pop from message_chat_queue
+ */
 std::string DNode::popMessageChatQueue() {
     return message_chat_queue.pop();
 }
+
+/**
+ * pop form message_send_queue
+ */
 std::string DNode::popMessageSendQueue() {
     return message_send_queue.pop();
 }
 
+/**
+ * get first message form message_chat_queue
+ */
 std::string DNode::peekMessageChatQueue() {
     return message_chat_queue.getFront();
 }
 
+/**
+ * get first message form message_send_queue
+ */
 std::string DNode::peekMessageSendQueue() {
     return message_send_queue.getFront();
 }
 
+/**
+* get first message from m_queue
+*/
 std::pair<int, std::string> DNode::peekMQueue() {
     return m_queue->peek();
 }
@@ -1056,6 +1144,9 @@ int DNode::getSnapshotStatus() {
     return toReturn;
 }
 
+/**
+ * snapshot count getter
+ */
 int DNode::getSnapshotCnt() {
     return snapshotCnt;
 }
