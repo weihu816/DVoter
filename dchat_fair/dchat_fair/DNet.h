@@ -42,7 +42,7 @@ public:
     
     int processByRoundTable();
     void pushToQueue(std::string self_address, std::string msgToSend) {
-        std::cout << "trying push to queue..." << std::endl;
+        //std::cout << "trying push to queue..." << std::endl;
         leader_round_table[self_address].push(socket_queue_item(0, nullptr, Address(), msgToSend));
         processByRoundTable(); // pop and process one message
     }

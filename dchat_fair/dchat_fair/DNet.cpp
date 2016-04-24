@@ -236,13 +236,13 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     strcpy(cstr, recv_msg.c_str());
     char * msg_type = strtok(cstr, "#");
     std::string recv_port(strtok (NULL, "#"));
-    std::cout << "\tMsg type: " << msg_type << std::endl;
+    //std::cout << "\tMsg type: " << msg_type << std::endl;
     
     if(handler->amLeader() && recv_msg.find("#") != 0 && strcmp(msg_type, D_JOINREQ) != 0 && strcmp(msg_type, D_HEARTBEAT) != 0) { // am leader, not broadcast, not join request, not heartbeat..
-        std::cout << "\tI am the leader, put things in queue...\n" << std::endl;
+        //std::cout << "\tI am the leader, put things in queue...\n" << std::endl;
         // process in another way... first put in queue
         std::string from_ip_port = fromaddr.ip +":"+ recv_port;
-        std::cout << "\tRecv from: " <<  from_ip_port << std::endl;
+        //std::cout << "\tRecv from: " <<  from_ip_port << std::endl;
         leader_round_table[from_ip_port].push(socket_queue_item(sockfd, &their_addr, fromaddr, recv_msg));
         processByRoundTable();
         return SUCCESS;
@@ -283,11 +283,11 @@ int DNet::processByRoundTable() {
     
     socket_queue_item poped;
     for (ite = 0; ite <= memberListLength; ite++) {
-        printf("try POP...The current member List Counter is %d\n", tableCounter);
+        //printf("try POP...The current member List Counter is %d\n", tableCounter);
         targetKey = handler->getMemberAddrByIndex(tableCounter);
-        std::cout << "target key is : " << targetKey << std::endl;
+        //std::cout << "target key is : " << targetKey << std::endl;
         if(leader_round_table[targetKey].tryPop(poped)) {
-            std::cout << "found msg in queue, processing.. " << std::endl;
+            //std::cout << "found msg in queue, processing.. " << std::endl;
 
             if(targetKey.compare(handler->getAddress()) == 0) {
                 // I may receive my own chat messages

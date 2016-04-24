@@ -539,7 +539,7 @@ void DNode::nodeLoopOps() {
                 // check heartbeat
                 // if(checkHeartbeat(memberAddr) == FAILURE) {
                 if (sendNotice(std::string(D_HEARTBEAT) + "#" + self_port, memberAddr) == FAILURE) {
-                    std::cout << "!!! checkHeartbeat fail " << memberAddr << std::endl;
+                    //std::cout << "!!! checkHeartbeat fail " << memberAddr << std::endl;
                     // exceed timeout limit
                     deleteMember(memberAddr);
                     // std::string message_leave = memberAddr;
@@ -549,7 +549,7 @@ void DNode::nodeLoopOps() {
 #endif
                 }
             } else {
-                std::cout << "!!! Never here in nodeLoopOps " << memberAddr << std::endl;
+                //std::cout << "!!! Never here in nodeLoopOps " << memberAddr << std::endl;
             }
         }
     } else {

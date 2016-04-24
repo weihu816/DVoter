@@ -231,8 +231,9 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     
     // Handle received message
     std::string recv_msg(buf);
-    
+#ifdef DEBUGLOG2
     std::cout << "pushed message: " + recv_msg << std::endl;
+#endif
     //////////////////////// Priorty ///////////////////////
 
     int priority = findPriorty(recv_msg);
@@ -262,8 +263,9 @@ int DNet::processByPriority() {
     
     socket_queue_item poped = msg_obj_queue.pop();
     
+#ifdef DEBUGLOG2
     std::cout << "poped message: " + poped.message << std::endl;
-    
+#endif
     std::string send_msg = handler->process(poped.from_addr, poped.message);
     if(send_msg.empty()) return FAILURE;
     
@@ -285,12 +287,16 @@ int DNet::findPriorty(std::string recv_msg) {
     if (strcmp(msg_type, D_M_MSG) == 0 || strcmp(msg_type, D_CHAT) == 0) { // chat messag has low priority
         return 0;
     } else if ( strcmp(msg_type, D_HEARTBEAT) == 0 || strcmp(msg_type, D_ELECTION) == 0 || strcmp(msg_type, D_COOR) == 0){
+#ifdef DEBUGLOG2
         std::cout << "# priority : important" << std::endl;
         // important messages regrading heartbeat and election
+#endif
         return 9;
     } else {
+#ifdef DEBUGLOG2
         // middle level messages
         std::cout << "# priority : middle" << std::endl;
+#endif
         return 5;
     }
     

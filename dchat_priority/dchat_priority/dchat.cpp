@@ -79,7 +79,9 @@ void processMsg(DNode * node) {
     while (isAlive) {
         std::chrono::milliseconds sleepTime(500); // sleep for 0.5 sec
         std::this_thread::sleep_for(sleepTime);
+#ifdef DEBUGLOG2
         std::cout << "slept: 500" << std::endl;
+#endif
         node->processLoop();
     }
 }
