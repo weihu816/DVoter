@@ -239,7 +239,7 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 }
 
 void DNode::addMessage(std::string msg) {
-    message_chat_queue.push(msg);
+    message_chat_queue.push_back(msg);
 #ifdef DEBUGLOG
     std::cout << "\tpush to message_chat_queue" << std::endl;
 #endif
@@ -266,7 +266,7 @@ void DNode::sendMsg(std::string msg) {
         multicastMsg(msgToSend, D_M_MSG);
     } else { // Send Multicast request to the sequencer
         message_table[seq] = msg;
-        message_send_queue.push(std::make_pair(seq, msg));
+        message_send_queue.push_back(std::make_pair(seq, msg));
         seq++;
     }
     
@@ -280,22 +280,30 @@ void DNode::sendMsg(std::string msg) {
  */
 void DNode::sendMsgToLeader() {
     
-    
     auto msg_pair = message_send_queue.pop();
-
+    
     std::unique_lock<std::mutex> lk(mutex_election); // message with port
+    // Wait for election to be finished
+    while (getElectionStatus() != E_NONE) {
+        d_condition.wait(lk);
+    }
 
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
+        
         // I'm the leader now
         std::string msgToSend = username + ":: " + msg_pair.second;
         multicastMsg(msgToSend, D_M_MSG);
+        
     } else {
+        
         std::string str_to = std::string(D_CHAT) + "#" + std::to_string(member_node->address->port) +"#" + std::to_string(msg_pair.first) + "#"
             + username + ":: " + msg_pair.second;
         std::string leader_address = member_node->getLeaderAddress();
         std::string str_ack;
         Address leader_addr(leader_address);
+        std::cout << "sendMsgToLeader: " << leader_address << std::endl;
         if (dNet->DNsend(&leader_addr, str_to, str_ack, 1) == SUCCESS) {
+            
             // If the response is not OK, then it is a number that the leader current seen
             std::string ok("OK");
             if (strcmp(str_ack.c_str(), ok.c_str()) != 0) {
@@ -311,7 +319,20 @@ void DNode::sendMsgToLeader() {
                     ack++;
                 }
             }
+            
+        } else {
+            
+            // We think the leader is not responding
+            // However we are not sure if the leader has multicast this message or not
+            message_send_queue.push_front(msg_pair);
+            lk.unlock();
+            
+            std::cout << "The leader does not ack back for the chat message request" << std::endl;
+            std::chrono::milliseconds sleepTime(1000);
+            std::this_thread::sleep_for(sleepTime);
+            
         }
+        
     }
     
 }
@@ -441,7 +462,7 @@ void DNode::startElection() {
     // Send Election to leader as well
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) > 0) {
         int status = sendNotice(std::string(D_ELECTION) + "#" + member_node->getAddress(), member_node->getLeaderAddress());
-        std::cout << "Send Election to " << member_node->getLeaderAddress() << " [status] " << status << std::endl;
+        std::cout << "Send Election to " << member_node->getLeaderAddress() << " : " << status << std::endl;
         if (status == SUCCESS) {
             send_count++;
         }
@@ -455,10 +476,14 @@ void DNode::startElection() {
         member_node->deleteMember(member_node->getAddress());
         // Update leader address
         member_node->updateLeader(*(member_node->address), username);
+        
+        // However, once notice is sent the server is ready to receive message, so we lock it ???
         // Multicast COOR message to the rest of nodes
         multicastNotice(std::string(D_COOR) + "#" + username + "#" + member_node->getAddress());
         
         m_queue->resetSequence();
+        resetSeq();
+        
         return;
     }
     
@@ -467,7 +492,7 @@ void DNode::startElection() {
     lk.unlock();
     
     std::cout << "Wait for COOR message .........." << std::endl;
-    std::chrono::milliseconds sleepTime(ELECTIONTIME);
+    std::chrono::milliseconds sleepTime(COORTIMEOUT);
     std::this_thread::sleep_for(sleepTime);
     
     if(getElectionStatus() == E_WAITCOOR) {

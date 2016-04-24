@@ -38,12 +38,14 @@ private:
     blocking_queue<std::pair<int, std::string>> message_send_queue;
     
     int election_status = E_NONE; // not in election
+    std::condition_variable d_condition; // for sending messages
 
 public:
     // multicst_queue will be initilized using a sequence number init_seen from the leader
     holdback_queue * m_queue;
     std::mutex mtx;
     std::mutex mutex_election;
+//    std::mutex mutex_message;
 
     DNode(std::string name, std::string join_addr="");
     int nodeStart();                                // introduce and start functions
@@ -84,9 +86,21 @@ public:
     int getElectionStatus();
     
     // Reset seqience number and leader message counter
+    // Notify if the message sending is currently blocked
     void resetSeq() {
         message_seen.clear();
+        d_condition.notify_all();
+        message_table.clear();
+        std::deque<std::pair<int, std::string>> temp;
+        while (message_send_queue.size() > 0) {
+            temp.push_back(message_send_queue.pop());
+        }
+        message_send_queue.clear();
         seq = 1;
+        for (auto pair : temp) {
+            message_send_queue.push_back(std::make_pair(seq, pair.second));
+            seq++;
+        }
     }
 
     virtual ~DNode() {
