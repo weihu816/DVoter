@@ -173,6 +173,12 @@ void DNode::addMember(std::string ip_port, std::string name, bool toPrint){
  */
 void DNode::deleteMember(std::string memberAddr){
     std::string memberName = member_node->deleteMember(memberAddr);
+    // deal with case where in taking snapshot but member left
+    if (getSnapshotStatus() == S_RECORDING) {
+        // delete the channel
+        snapshot->channels.erase(memberAddr);
+        snapshot->channelNum--;
+    }
     if(!memberName.empty()) {
         std::cout << "NOTICE " << memberName << " left the chat or crashed" << std::endl;
         // for snapshot

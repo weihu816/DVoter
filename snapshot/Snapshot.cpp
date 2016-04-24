@@ -15,7 +15,6 @@
  ***/
 Snapshot::Snapshot(std::string name, std::string addr, DNode* node) {
     ssnode = node;        // Create Member node
-    
     ssmember = new Member(addr);
     ssnode->m_queue = new holdback_queue(0, ssnode);
     channel_marker_cnt = 0;
@@ -121,7 +120,7 @@ Channel* Snapshot::getChannel(std::string addrKey) {
  *              have been received
  ***/
 bool Snapshot::receivedAllMarkers() {
-    if (channelNum == channel_marker_cnt) {
+    if (channelNum <= channel_marker_cnt) {
         return true;
     }
     else {
