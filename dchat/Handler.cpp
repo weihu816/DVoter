@@ -84,7 +84,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             int seq = stoi(seq_str);
             
             if (nodeMember->isLeader()) { // Only leader can multicast messages
-                std::string address_port = from_addr.getAddressIp()+":"+port;
+                std::string address_port = from_addr.getAddressIp() + ":" + port;
     
                 // Check the existence
                 auto & msg_seen = node->message_seen;

@@ -311,7 +311,7 @@ void DNode::sendMsgToLeader() {
                 // if the ack seq number is less seq - 1, we need to resend that message
                 while (ack + 1 < seq) {
                     std::string resend_ack;
-                    std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(ack) + "#"
+                    std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(member_node->address->port) + "#" + std::to_string(ack) + "#"
                     + username + ":: " + message_table[ack];
                     std::cout << "Resend " + resend_str << std::endl;
                     dNet->DNsend(&leader_addr, resend_str, resend_ack, 1);
@@ -321,6 +321,7 @@ void DNode::sendMsgToLeader() {
             
         } else {
             
+            std::cout << "Did not hear back form the leader" << std::endl;
             // We think the leader is not responding
             // However we are not sure if the leader has multicast this message or not
             message_send_queue.push_front(msg_pair);
