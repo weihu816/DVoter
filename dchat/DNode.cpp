@@ -382,7 +382,7 @@ int DNode::sendNotice(std::string notice, std::string destAddress) {
     Address addr(destAddress);
     std::string str_ack;
     
-    if (dNet->DNsend(&addr, notice, str_ack, 1) == FAILURE) {
+    if (dNet->DNsend(&addr, notice, str_ack, 3) == FAILURE) {
         
 #ifdef DEBUGLOG
         std::cout << "\tsendNotice: Fail! " << addr.getAddress() << std::endl;
