@@ -99,6 +99,7 @@ public:
         seq = 1;
         for (auto pair : temp) {
             message_send_queue.push_back(std::make_pair(seq, pair.second));
+            message_table[seq] = pair.second;
             seq++;
         }
     }

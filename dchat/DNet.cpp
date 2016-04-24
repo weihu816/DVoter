@@ -340,7 +340,7 @@ int DNet::DNinfo(std::string & addr) {
  *                            false if do decipher
  */
 void DNet::cipher(char* str, bool encrypt) {
-    int size = strlen(str);
+    long size = strlen(str);
     char pivot;
     int i = 0;
     for (i = 0; i < size; i++) {

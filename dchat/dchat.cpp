@@ -123,7 +123,7 @@ int main(int argc, const char * argv[]) {
         return 0;
     }
     
-    // Thread: Listening for input
+    // Thread: Listening for inputSend notice to
     std::thread thread_sendMsg(sendMsg, node);
     // Thread: Receive chat messages
     std::thread thread_recvMsg(recvMsg, node);
