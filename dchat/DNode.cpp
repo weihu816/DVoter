@@ -326,8 +326,6 @@ void DNode::sendMsgToLeader() {
             // However we are not sure if the leader has multicast this message or not
             message_send_queue.push_front(msg_pair);
             lk.unlock();
-            
-            std::cout << "The leader does not ack back for the chat message request" << std::endl;
             std::chrono::milliseconds sleepTime(1000);
             std::this_thread::sleep_for(sleepTime);
             
@@ -530,7 +528,6 @@ void DNode::nodeLoopOps() {
             std::string memberAddr = iter->getAddress();
             if(memberAddr.compare(self_address) != 0) {
                 if (sendNotice(std::string(D_HEARTBEAT) + "#" + self_address, memberAddr) == FAILURE) {
-                    std::cout << "!!! checkHeartbeat fail " << memberAddr << std::endl;
                     // exceed timeout limit
                     deleteMember(memberAddr);
                     // std::string message_leave = memberAddr;

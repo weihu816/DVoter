@@ -67,7 +67,6 @@ void holdback_queue::handle(std::string msg) {
         else {
             // I am a member, i need to delete the leaving member
             // delete the member from the memberList and display message in node function
-            std::cout << " === " << msg << std::endl;
             node->deleteMember(msg_body);
         }
     }
