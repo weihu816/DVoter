@@ -93,7 +93,6 @@ string Handler::process(Address & from_addr, string recv_msg) {
                 }
      
                 // Check the sequence number
-                std::cout << "current count is " << msg_seen[address_port] << std::endl;
                 if (seq == (msg_seen[address_port] + 1)) {
                     // msg to be sent: #MSG#SEQ#username#Message
                     std::string message = msg;
