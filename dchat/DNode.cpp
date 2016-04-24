@@ -321,7 +321,7 @@ void DNode::sendMsgToLeader() {
             
         } else {
             
-            std::cout << "Did not hear back form the leader" << std::endl;
+            // std::cout << "Did not hear back form the leader" << std::endl;
             // We think the leader is not responding
             // However we are not sure if the leader has multicast this message or not
             message_send_queue.push_front(msg_pair);

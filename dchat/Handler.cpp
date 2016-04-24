@@ -98,8 +98,9 @@ string Handler::process(Address & from_addr, string recv_msg) {
                     std::string message = msg;
                     node->multicastMsg(message, D_M_MSG);
                     msg_seen[address_port]++;
-                } else {
-                    return std::to_string(seq);
+                    return "OK";
+                } else if (seq > (msg_seen[address_port] + 1)) {
+                    return std::to_string(msg_seen[address_port] + 1);
                 }                
                 
             }
@@ -175,7 +176,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             
         } else if (strcmp(msg_type, D_COOR) == 0) {
             
-            std::cout << "\tReceive D_COOR " << std::endl;
+            // std::cout << "\tReceive D_COOR " << std::endl;
 
             std::unique_lock<std::mutex> lk(node->mutex_election);
 
@@ -188,7 +189,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             node->m_queue->resetSequence();
             node->resetSeq();
             
-            std::cout << "\tD_COOR Done" << std::endl;
+            // std::cout << "\tD_COOR Done" << std::endl;
                         
             return "OK";
             
