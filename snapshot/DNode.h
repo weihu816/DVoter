@@ -84,6 +84,8 @@ public:
     std::string getUsername();
     int getElectionStatus();
     void updateElectionStatus(int new_status);
+    // This is for the leader (sequencer)
+    std::map<std::string, int> message_seen;
 
     void startSnapshotByUser();
     Snapshot* startSnapshotByMarker(std::string from_addr);
@@ -127,6 +129,25 @@ public:
     bool isDisplayMsgQueueEmpty();
     std::deque<std::pair<time_t, std::string>> getDisplayMessageQueue();
     void setDisplayMessageQueue(std::deque<std::pair<time_t, std::string>> q);
+    
+    // Reset seqience number and leader message counter
+    // Notify if the message sending is currently blocked
+    void resetSeq() {
+        message_seen.clear();
+        d_condition.notify_all();
+        message_table.clear();
+        std::deque<std::pair<int, std::string>> temp;
+        while (message_send_queue.size() > 0) {
+            temp.push_back(message_send_queue.pop());
+        }
+        message_send_queue.clear();
+        seq = 1;
+        for (auto pair : temp) {
+            message_send_queue.push_back(std::make_pair(seq, pair.second));
+            message_table[seq] = pair.second;
+            seq++;
+        }
+    }
     
     virtual ~DNode() {
         if(dNet) delete dNet;

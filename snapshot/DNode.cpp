@@ -305,7 +305,7 @@ void DNode::sendMsgToLeader() {
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
         
         // I'm the leader now
-        std::string msgToSend = username + ":: " + msg_pair.second;
+        std::string msgToSend = member_node->getAddress()+"#"+username + ":: " + msg_pair.second;
         multicastMsg(msgToSend, D_M_MSG);
         
     } else {

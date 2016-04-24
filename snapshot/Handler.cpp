@@ -134,13 +134,31 @@ string Handler::process(Address & from_addr, string recv_msg) {
         
         if (strcmp(msg_type, D_CHAT) == 0) {
 
-            // received: CHAT#ip:port#username::Message - From node to sequencer
-            std::string addr(strtok (NULL, "#"));
-            std::string chat_msg(strtok (NULL, "#"));
+            // received: CHAT#port#Seq#Message - From node to sequencer
+            std::string port(strtok(NULL, "#"));
+            std::string seq_str(strtok (NULL, "#"));
+            std::string msg(strtok (NULL, "#"));
+            int seq = stoi(seq_str);
+            
             if (nodeMember->isLeader()) { // Only leader can multicast messages
-                // msg to be sent: #MSG#SEQ#addr#username::Message
-                std::string message = chat_msg;
-                node->multicastMsg(addr+"#"+message, D_M_MSG);
+                std::string address_port = from_addr.getAddressIp()+":"+port;
+                
+                // Check the existence
+                auto & msg_seen = node->message_seen;
+                if (msg_seen.find(address_port) == msg_seen.end()) {
+                    msg_seen[address_port] = 0;
+                }
+                
+                // Check the sequence number
+                if (seq == (msg_seen[address_port] + 1)) {
+                    // msg to be sent: #MSG#SEQ#addr#username::Message
+                    std::string message = from_addr.getAddressIp()+":"+port+"#"+msg;
+                    node->multicastMsg(message, D_M_MSG);
+                    msg_seen[address_port]++;
+                } else {
+                    return std::to_string(seq);
+                }
+                
             }
             
             // snapshot
@@ -148,6 +166,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
 #ifdef DEBUGLOG
                 std::cout << "Snapshot: in handling " << msg_type << std::endl;
 #endif
+                std::string addr(from_addr.getAddressIp()+":"+port);
                 // only leader can receive this msg
                 // only record incoming msg from channels other than ck
                 if (addr.compare(s->getMarkerFormAddress()) != 0) {

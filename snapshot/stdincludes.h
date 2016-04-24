@@ -53,6 +53,7 @@
 
 // You can comment out the following line
 //#define DEBUGLOG    1
+//#define CIPHERLOG   1
 
 #define MAXBUFLEN       512
 #define HEARTFREQ       3000
@@ -64,7 +65,7 @@
 #define D_M_ADDNODE     "ADDNODE"           // #ADDNODE#SEQ#ip#port#name, multicast from the sequencer
 #define D_LEAVEANNO     "LEAVEANNO"         // #LEAVEANNO#seq#name#ip:port
 
-#define D_CHAT          "CHAT"              // CHAT#ip:port#username::Message - From node to sequencer
+#define D_CHAT          "CHAT"              // CHAT#port#Seq#username::Message - From node to sequencer
 #define D_JOINREQ       "JOINREQ"           // JOINREQ#PORT#Name
 #define D_JOINLEADER    "JOINLEADER"        // JOINLEADER#LEADERIP#LEADERPORT#LEADERNAME
 #define D_JOINLIST      "JOINLIST"          // JOINLIST#initSeq#LEADERNAME#ip1:port1:name1:...
