@@ -50,15 +50,12 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 
-//using namespace std;
-
 // You can comment out the following line
 //#define DEBUGLOG    1
+//#define INFOLOG    1
 
 #define MAXBUFLEN       512
-#define TIMEOUT         3000
 #define HEARTFREQ       2000
-#define ELECTIONTIME    4000
 
 #define D_PROPOSE       "PROPOSE"                   // PROPOSE#MSG
 #define D_COMMIT        "COMMIT"                    // COMMIT#id#pid
@@ -69,7 +66,7 @@
 #define D_M_CHAT        "CHAT"                      // CHAT#msg
 #define D_M_ADDNODE     "ADDNODE"                   // ADDNODE#ip#port#name, multicast from the sequencer
 
-#define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT#ip:port detect failed node
+#define D_HEARTBEAT     "HEARTBEAT"                 // HEARTBEAT#port detect failed node
 
 
 #endif /* STDINCLUDES_H */

@@ -252,8 +252,11 @@ void DNode::sendMsg(std::string msg) {
  * DESCRIPTION: Multicast a notice to all the members
  */
 void DNode::multicast(std::string content) {
-    
+
+#ifdef INFOLOG
     std::cout << "[INFO] Multicast Begin " << std::endl;
+#endif
+
     // msg is lie Bob:: Hello
     int max_id = -1;
     int max_pid = -1;
@@ -271,8 +274,9 @@ void DNode::multicast(std::string content) {
     std::string p1 = std::string(D_PROPOSE) + "#" + content;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         Address addr((*iter).getAddress());
+#ifdef INFOLOG
         std::cout << "[INFO] Propose to: " << addr.getAddress() << std::endl;
-        
+#endif
         std::string str_propose;
         if (dNet->DNsend(&addr, p1, str_propose, 3) == SUCCESS) {
             
@@ -280,8 +284,9 @@ void DNode::multicast(std::string content) {
             int id = std::stoi(str_propose.substr(0, str_propose.find("#")));
             int pid = std::stoi(str_propose.substr(str_propose.find("#") + 1));
             old_ids.push_back(id);
-            
+#ifdef INFOLOG
             std::cout << "[INFO] Recv Propose: " << id << " pid: " << pid << " from: " << addr.getAddress() << std::endl;
+#endif
             if (id > max_id) {
                 max_id = id;
                 max_pid = pid;
@@ -293,19 +298,24 @@ void DNode::multicast(std::string content) {
             
         } else {
             
-            // TODO: Failure handling
-            std::cout << "\tMulticast: Fail! " << addr.getAddress() << std::endl;
+            // Failure handling
+            std::cout << "(Multicast) Notice: " << (*iter).getUsername() << " left the chat or crashed" << std::endl;
+            member_node->deleteMember((*iter).getAddress());
             return;
             
         }
     }
     
     // 2nd COMMIT Phase
+#ifdef INFOLOG
     std::cout << "[INFO] COMMIT: max_id: " << max_id << " max_pid: " << max_pid << std::endl;
+#endif
     std::string p2 = std::string(D_COMMIT) + "#" + std::to_string(max_id) + "#" + std::to_string(max_pid); // + "#" + old_id
     for (auto iter = list.begin(); iter != list.end(); iter++) {
         Address addr((*iter).getAddress());
+#ifdef INFOLOG
         std::cout << "[INFO] COMMIT to: " << addr.getAddress() << std::endl;
+#endif
         
         std::string str_ack;
         int old_id = old_ids.front();
@@ -334,13 +344,18 @@ void DNode::multicast(std::string content) {
  */
 void DNode::nodeLoopOps() {
 
-    // finish heartbeat check
+    // Finish heartbeat check
     auto list = member_node->getMemberEntryList();
     for (auto i = list.begin(); i != list.end(); i++) {
         Address addr((*i).getAddress());
-        std::string data = std::string(D_HEARTBEAT) + "#" + por;
+        std::string data = std::string(D_HEARTBEAT) + "#" + member_node->address->getAddressPort() + "#" + (*i).getUsername();
         std::string ack;
-        dNet->DNsend(&addr, data, ack, 1);
+        // Wait for ack and can retry for three times at maximum
+        if (dNet->DNsend(&addr, data, ack, 3) == FAILURE) {
+            // Node is failed
+            std::cout << "Notice: " << (*i).getUsername() << " left the chat or crashed" << std::endl;
+            member_node->deleteMember((*i).getAddress());
+        }
     }
     return;
 

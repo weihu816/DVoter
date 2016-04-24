@@ -90,14 +90,39 @@ public:
     bool inited = false;                                    // boolean indicating if this member is up
     bool inGroup;                                           // boolean indicating if this member is in the group
     
-    Member(std::string addr): inited(false), inGroup(false) {
-        this->address = new Address(addr);
-    }
-    Member(const Member &anotherMember);                    // copy constructor
-    Member& operator =(const Member &anotherMember);        // Assignment operator overloading
+    Member(std::string addr): inited(false), inGroup(false) { this->address = new Address(addr); }
+    Member(const Member &anotherMember);
+    Member& operator =(const Member &anotherMember);
+    virtual ~Member() { delete address; }
     
-    virtual ~Member() {
-        delete address;
+    std::vector<MemberListEntry> getMemberEntryList() { return memberList; }
+    std::string getAddress() { return address->getAddress(); }
+    
+    /**
+     * FUNCTION NAME: printMemberList
+     *
+     * DESCRIPTION: print MemberList
+     */
+    void printMemberList() {
+        std::unique_lock<std::mutex> lk(mutex_memberList);
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            std::cout << (*iter).username << " " << (*iter).getAddress() << std::endl;
+        }
+    }
+    
+    /**
+     * FUNCTION NAME: getMemberList
+     *
+     * DESCRIPTION: get MemberList
+     */
+    std::string getMemberListStr() {
+        std::unique_lock<std::mutex> lk(mutex_memberList);
+        std::string list = "";
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            list += (*iter).getEntry();
+            if (iter != memberList.end() - 1) list += "#";
+        }
+        return list;
     }
     
     /**
@@ -106,20 +131,26 @@ public:
      * DESCRIPTION: this is the member address list, without user name
      */
     void addMember(std::string ip_port, std::string name) {
-        
         std::unique_lock<std::mutex> lk(mutex_memberList);
-        
         MemberListEntry entry(ip_port, name);
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
             if ((*iter).getEntry() ==  entry.getEntry()) return;
         }
-#ifdef DEBUGLOG
-        std::cout << "\tMember::addMember: " << entry.getEntry() << std::endl;
-#endif
         memberList.push_back(entry);
-        
     }
-
+    
+    /**
+     * FUNCTION NAME: existsMember
+     *
+     * DESCRIPTION: if the member exists
+     */
+    bool existsMember(std::string ip_port) {
+        std::unique_lock<std::mutex> lk(mutex_memberList);
+        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
+            if ((*iter).getAddress() == ip_port) return true;
+        }
+        return false;
+    }
     
     /**
      * FUNCTION NAME: deleteMember
@@ -127,9 +158,7 @@ public:
      * DESCRIPTION: Delete the member from the memberlist given member address
      */
     std::string deleteMember(std::string memberAddr) {
-        
         std::unique_lock<std::mutex> lk(mutex_memberList);
-        
         for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
             if (memberAddr.compare((*iter).getAddress()) == 0 ) {
                 std::string memberName = (*iter).username;
@@ -139,62 +168,6 @@ public:
         }
         return "";
     }
-
-    /**
-     * FUNCTION NAME: getMemberList
-     *
-     * DESCRIPTION: get MemberList
-     */
-    std::string getMemberList() {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        std::string list = "";
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            list += (*iter).getEntry();
-            if (iter != memberList.end()-1) list += "#";
-        }
-        return list;
-        
-    }
-    
-    /**
-     * FUNCTION NAME: printMemberList
-     *
-     * DESCRIPTION: print MemberList
-     */
-    void printMemberList() {
-        
-        std::unique_lock<std::mutex> lk(mutex_memberList);
-        
-        for (auto iter = memberList.begin(); iter != memberList.end(); iter++) {
-            std::cout << (*iter).username << " " << (*iter).getAddress() << std::endl;
-        }
-    }
-    
-    
-    /**
-     * FUNCTION NAME: getMemberEntryList
-     *
-     * DESCRIPTION: getMemberEntryList
-     */
-    std::vector<MemberListEntry> getMemberEntryList() {
-        
-        return memberList;
-        
-    }
-    
-    
-    /**
-     * FUNCTION NAME: getAddress
-     *
-     * DESCRIPTION: getAddress
-     */
-    std::string getAddress() {
-        return address->getAddress();
-    }
-    
-
 };
 
 #endif /* MEMBER_H */

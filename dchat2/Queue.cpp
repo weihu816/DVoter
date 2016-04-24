@@ -39,7 +39,9 @@ void blocking_priority_queue::makeDeliverable(int k) {
     while (i != d_queue.end()) {
         if ((*i).isDeliverable) {
             std::string content(p->content);
+#ifdef INFOLOG
             std::cout << "\t[INFO] Deliverable: " << p->content << std::endl;
+#endif
             std::string param_header = content.substr(0, content.find("#"));
             std::string param_body = content.substr(content.find("#") + 1);
             
