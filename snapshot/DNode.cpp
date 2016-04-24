@@ -763,7 +763,7 @@ void DNode::recordSnapshotChannelMsg(std::string from_addr, std::string msg) {
  ***/
 void doWriting(Snapshot* snapshot, Member* member_node, int idx) {
     std::ofstream outfile;
-    std::string fileName("Checkpoint_"+std::to_string(idx)+"_"+member_node->getAddress()+".txt");
+    std::string fileName("Checkpoint_" + member_node->getAddress() + "_" + std::to_string(idx) + ".txt");
     outfile.open (fileName);
     
     // output state
@@ -774,43 +774,6 @@ void doWriting(Snapshot* snapshot, Member* member_node, int idx) {
     
     // election status
     outfile << "Election status: " << snapshot_node->getElectionStatus() << "\n\n";
-    
-    //    // message chat queue
-    //    outfile << "message_chat_queue: " << "\n";
-    //    int size = snapshot_node->getMessageChatQueueSize();
-    //    outfile << "size: " << size << "\n";
-    //    for (int i = 0; i < size; i++) {
-    //        if (i == 0) {
-    //            outfile << "Content: " << "\n";
-    //        }
-    //        outfile << snapshot_node->popMessageChatQueue() << "\n";
-    //    }
-    //    outfile << "\n";
-    //
-    //    // copy message send queue
-    //    outfile << "message_send_queue: " << "\n";
-    //    size = snapshot_node->getMessageSendQueueSize();
-    //    outfile << "size: " << size << "\n";
-    //    for (int i = 0; i < size; i++) {
-    //        if (i == 0) {
-    //            outfile << "Content: " << "\n";
-    //        }
-    //        outfile << snapshot_node->popMessageSendQueue() << "\n";
-    //    }
-    //    outfile << "\n";
-    //
-    //    // copy m_queue
-    //    outfile << "m_queue: " << "\n";
-    //    size = snapshot_node->getMQueueSize();
-    //    outfile << "size: " << size << "\n";
-    //    for (int i = 0; i < size; i++) {
-    //        if (i == 0) {
-    //            outfile << "Content: " << "\n";
-    //        }
-    //        std::pair<int, std::string> pair = snapshot_node->popMQueue();
-    //        outfile << "sequence number: " << pair.first << ", message: " << pair.second << "\n";
-    //    }
-    //    outfile << "\n";
     
     // sequence seen
     int x = snapshot_node->getMQueueSequenceSeen();
@@ -1061,18 +1024,6 @@ Snapshot* DNode::getSnapshot() {
 void DNode::setSnapshot(Snapshot* s) {
     snapshot = s;
 }
-//
-//int DNode::getSnapshotCnt() {
-//    return snapshotCnt;
-//}
-//
-//void DNode::setMessageChatQueue(blocking_queue<std::string> q) {
-//    message_chat_queue = q;
-//}
-
-//void DNode::setMessageSendQueue(blocking_queue<std::string> q) {
-//    message_send_queue = q;
-//}
 
 void DNode::setMQueue(holdback_queue q) {
     m_queue = &q;
@@ -1084,9 +1035,7 @@ std::string DNode::popMessageChatQueue() {
 std::string DNode::popMessageSendQueue() {
     return message_send_queue.pop();
 }
-//std::pair<int, std::string> DNode::popMQueue() {
-//    return m_queue->popFirst();
-//}
+
 std::string DNode::peekMessageChatQueue() {
     return message_chat_queue.getFront();
 }
@@ -1098,18 +1047,6 @@ std::string DNode::peekMessageSendQueue() {
 std::pair<int, std::string> DNode::peekMQueue() {
     return m_queue->peek();
 }
-
-//blocking_queue<std::string> DNode::getMessageChatQueue() {
-//    return message_chat_queue;
-//}
-//
-//blocking_queue<std::string> DNode::getMessageSendQueue() {
-//    return message_send_queue;
-//}
-//
-//holdback_queue DNode::getMQueue() {
-//    return *m_queue;
-//}
 
 /**
  * snapshot status getter

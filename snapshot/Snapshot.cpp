@@ -25,10 +25,6 @@ void Snapshot::recordState(DNode *cur) {
 #endif
     Member* nodeMember = cur->getMember();
     ssnode->updateElectionStatus(cur->getElectionStatus());
-    
-//    ssnode->setMessageChatQueue(cur->getMessageChatQueue());
-//    ssnode->setMessageSendQueue(cur->getMessageSendQueue());
-//    ssnode->setMQueue(cur->getMQueue());
 
     int x = cur->getMQueueSequenceSeen();
     ssnode->setMQueueSequenceSeen(x);
@@ -96,6 +92,11 @@ bool Snapshot::getChannelMarkerReceived(std::string addrKey) {
     }
 }
 
+/***
+ * FUNCTION NAME: getChannel
+ *
+ * DESCRIPTION: get channel by address
+ ***/
 Channel* Snapshot::getChannel(std::string addrKey) {
     auto iter = channels.find(addrKey);
     if (iter == channels.end()) {
@@ -105,6 +106,12 @@ Channel* Snapshot::getChannel(std::string addrKey) {
     }
 }
 
+/***
+ * FUNCTION NAME: receivedAllMarkers
+ *
+ * DESCRIPTION: check whether all the markers from other processes 
+ *              have been received
+ ***/
 bool Snapshot::receivedAllMarkers() {
 #ifdef DEBUGLOG
     std::cout << "in checking receiving all " << std::endl;
@@ -119,26 +126,48 @@ bool Snapshot::receivedAllMarkers() {
     }
 }
 
+/***
+ * FUNCTION NAME: setMarkerFromAddr
+ *
+ * DESCRIPTION: set marker_from_addr, indicating through which process
+ *              the marker is received
+ ***/
 void Snapshot::setMarkerFromAddr(std::string from_addr) {
     marker_from_addr = from_addr;
 }
 
+/////////////////////////// GETTERS ///////////////////////////////
+/**
+ * get channel who initialzed the snapshot
+ */
 Channel* Snapshot::getMarkerFromChannel() {
     return marker_from_channel;
 }
 
+/**
+ * snapshot initializer address getter
+ */
 std::string Snapshot::getMarkerFormAddress() {
     return marker_from_addr;
 }
 
+/**
+ * channel number getter
+ */
 int Snapshot::getChannelNum() {
     return channelNum;
 }
 
+/**
+ * get member to whom this snapshot belongs to
+ */
 Member* Snapshot::getMember() {
     return ssmember;
 }
 
+/**
+ * get node to which this snapshot belongs to
+ */
 DNode* Snapshot::getNode() {
     return ssnode;
 }
