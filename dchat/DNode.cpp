@@ -301,7 +301,6 @@ void DNode::sendMsgToLeader() {
         std::string leader_address = member_node->getLeaderAddress();
         std::string str_ack;
         Address leader_addr(leader_address);
-        std::cout << "sendMsgToLeader: " << leader_address << std::endl;
         if (dNet->DNsend(&leader_addr, str_to, str_ack, 1) == SUCCESS) {
             
             // If the response is not OK, then it is a number that the leader current seen
