@@ -140,27 +140,6 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string msg(strtok (NULL, "#"));
             int seq = stoi(seq_str);
             
-            if (nodeMember->isLeader()) { // Only leader can multicast messages
-                std::string address_port = from_addr.getAddressIp()+":"+port;
-                
-                // Check the existence
-                auto & msg_seen = node->message_seen;
-                if (msg_seen.find(address_port) == msg_seen.end()) {
-                    msg_seen[address_port] = 0;
-                }
-                
-                // Check the sequence number
-                if (seq == (msg_seen[address_port] + 1)) {
-                    // msg to be sent: #MSG#SEQ#addr#username::Message
-                    std::string message = from_addr.getAddressIp()+":"+port+"#"+msg;
-                    node->multicastMsg(message, D_M_MSG);
-                    msg_seen[address_port]++;
-                } else {
-                    return std::to_string(seq);
-                }
-                
-            }
-            
             // snapshot
             if (node->getSnapshotStatus() == S_RECORDING) {
 #ifdef DEBUGLOG
@@ -178,6 +157,28 @@ string Handler::process(Address & from_addr, string recv_msg) {
                     c->addMsg(recv_msg);
                 }
             }
+            
+            if (nodeMember->isLeader()) { // Only leader can multicast messages
+                std::string address_port = from_addr.getAddressIp()+":"+port;
+                
+                // Check the existence
+                auto & msg_seen = node->message_seen;
+                if (msg_seen.find(address_port) == msg_seen.end()) {
+                    msg_seen[address_port] = 0;
+                }
+                
+                // Check the sequence number
+                if (seq == (msg_seen[address_port] + 1)) {
+                    // msg to be sent: #MSG#SEQ#addr#username::Message
+                    std::string message = from_addr.getAddressIp()+":"+port+"#"+msg;
+                    node->multicastMsg(message, D_M_MSG);
+                    msg_seen[address_port]++;
+                } else if (seq > (msg_seen[address_port] + 1)) {
+                    return std::to_string(msg_seen[address_port] + 1);
+                }
+                
+            }
+            
             
             return "OK";
             
