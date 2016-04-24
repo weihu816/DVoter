@@ -47,9 +47,6 @@ void Snapshot::recordState(DNode *cur) {
     ssmember->leaderEntry = nodeMember->leaderEntry;
     auto list = nodeMember->memberList;
     for (auto iter = list.begin(); iter != list.end(); iter++) {
-#ifdef DEBUGLOG
-        std::cout << "in creating channel loop: " << channelNum << std::endl;
-#endif
         if (iter->getAddress().compare(ssmember->getAddress()) != 0) {
             Channel *c = new Channel();
             channelNum++;
@@ -65,9 +62,6 @@ void Snapshot::recordState(DNode *cur) {
     if (leader_addr.compare(ssmember->getAddress()) != 0) {
         Channel *c = new Channel();
         channelNum++;
-#ifdef DEBUGLOG
-        std::cout << "in creating channel for leader: " << channelNum << std::endl;
-#endif
         // one channel for each member in member list
         channels[leader_addr] = *c;
         // initialize with false
@@ -126,11 +120,6 @@ Channel* Snapshot::getChannel(std::string addrKey) {
  *              have been received
  ***/
 bool Snapshot::receivedAllMarkers() {
-#ifdef DEBUGLOG
-    std::cout << "in checking receiving all " << std::endl;
-    std::cout << "marker cnt: " << channel_marker_cnt << std::endl;
-    std::cout << "CHANNEL NUM: " << channelNum << std::endl;
-#endif
     if (channelNum == channel_marker_cnt) {
         return true;
     }

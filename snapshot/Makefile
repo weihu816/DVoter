@@ -2,9 +2,9 @@ EXE = dchat
 
 CC	= g++
 
-HEADERS		= BlockingQueue.h DNet.h DNode.h Handler.h Member.h stdincludes.h
+HEADERS		= BlockingQueue.h DNet.h DNode.h Handler.h Member.h stdincludes.h Snapshot.h
 
-C_SRCS		= dchat.cpp DNet.cpp DNode.cpp Handler.cpp Member.cpp
+C_SRCS		= dchat.cpp DNet.cpp DNode.cpp Handler.cpp Member.cpp Snapshot.cpp
 
 C_OBJS		= dchat.o DNet.o DNode.o Handler.o Member.o
 

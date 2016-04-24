@@ -40,10 +40,10 @@ void sendMsg(DNode * node) {
         std::cin.getline(msg, MAXBUFLEN - 1);
         if (strlen(msg) != 0) {
             std::string str(msg);
-            if (str.compare("S") == 0) {
-                node->startSnapshotByUser();  // SNAPSHOT
+            if (str.compare("take snapshot") == 0) {
+                node->startSnapshotByUser();  // start snapshot
             }
-            else if (str.compare("SS") == 0) {
+            else if (str.compare("show snapshot") == 0) {
                 node->showSnapshot();
             }
             else {

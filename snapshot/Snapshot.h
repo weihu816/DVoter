@@ -59,11 +59,11 @@ public:
     int channel_marker_cnt;
     std::string marker_from_addr;
     Channel *marker_from_channel;
-    
+
     std::unordered_map<std::string, bool> channel_markers;  // <address, received_marker> pair
-    
+
     std::unordered_map<std::string, Channel> channels;  // <address, channel> pair
-    
+
     Snapshot(std::string name, std::string addr);
     void recordState(DNode* cur);
     void recordChannelMarker(std::string from_addr);

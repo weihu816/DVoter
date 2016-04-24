@@ -70,9 +70,7 @@
 #define D_JOINLIST      "JOINLIST"          // JOINLIST#initSeq#LEADERNAME#ip1:port1:name1:...
 #define D_HEARTBEAT     "HEARTBEAT"         // HEARTBEAT#ip:port detect failed node
 #define D_ELECTION      "ELECTION"          // ELECTION#ip:port, start election
-//#define D_ANSWER        "ANSWER"            // ANSWER#ip:port, answer to election message
 #define D_COOR          "COOR"              // COOR#name#ip:port, announce leadership
-//#define D_LEAVE         "LEAVE"             // LEAVE#name#ip:port
 #define D_MARKER        "MARKER"            // MARKER#ip:port, multicast to all others
 
 
@@ -84,7 +82,5 @@
 // Snapshot status
 #define S_NONE 0        // not in taking snapshot
 #define S_RECORDING 1   // first time see marker, start recording
-//#define S_SEENMARKER 2  // have already seen marker, is now recording msgs
-
 
 #endif /* STDINCLUDES_H */

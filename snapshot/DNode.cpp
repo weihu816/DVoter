@@ -156,11 +156,6 @@ void DNode::initMemberList(std::string member_list, std::string leaderAddr) {
  * DESCRIPTION:
  */
 void DNode::addMember(std::string ip_port, std::string name, bool toPrint){
-    
-#ifdef DEBUGLOG
-    std::cout << "\tDNode::addMember: " << ip_port  << " " << name << std::endl;
-#endif
-
     member_node->addMember(ip_port, name);
     if (toPrint) {
         std::cout << "NOTICE " << name << " joined on " << ip_port << std::endl;
@@ -177,9 +172,6 @@ void DNode::addMember(std::string ip_port, std::string name, bool toPrint){
  * DESCRIPTION: delete member from the memberList
  */
 void DNode::deleteMember(std::string memberAddr){
-#ifdef DEBUGLOG
-    std::cout << "DNode::deleteMember... " << std::endl;
-#endif
     std::string memberName = member_node->deleteMember(memberAddr);
     if(!memberName.empty()) {
         std::cout << "NOTICE " << memberName << " left the chat or crashed" << std::endl;
@@ -201,10 +193,6 @@ void DNode::deleteMember(std::string memberAddr){
 int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 
     std::string self_addr = member_node->getAddress();
-
-#ifdef DEBUGLOG
-    std::cout << "\tDNode::introduceSelfToGroup: " << self_addr << " (self) vs " << join_addr << std::endl;
-#endif
 
     if (self_addr.compare(join_addr) == 0) {
         
@@ -264,9 +252,6 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 
 void DNode::addMessage(std::string msg) {
     message_chat_queue.push(msg);
-//#ifdef DEBUGLOG
-//    std::cout << "\tpush to message_chat_queue" << std::endl;
-//#endif
 }
 
 
@@ -301,11 +286,6 @@ void DNode::sendMsg(std::string msg) {
  *              No request will be send to leader if election in process
  */
 void DNode::sendMsgToLeader() {
-
-//    std::unique_lock<std::mutex> lk(mutex_election);
-//    while (getElectionStatus() != E_NONE) {
-//        cv.wait(lk);
-//    }
     // CHAT#ip:port#username::Message
     std::string msg = message_send_queue.pop();
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
@@ -336,10 +316,6 @@ void DNode::multicastMsg(std::string msg, std::string type) {
         
     int seq = m_queue->getNextSequence();
 
-//#ifdef DEBUGLOG
-//    std::cout << "\tmulticastMsg: seq: " << seq << " msg: " << msg << " type: " << type << std::endl;
-//#endif
-
     std::string send_msg =  "#" + type + "#" + std::to_string(seq) + "#" + msg;
     // Send to group members
     auto list = member_node->memberList;
@@ -354,9 +330,6 @@ void DNode::multicastMsg(std::string msg, std::string type) {
             member_node->deleteMember((*iter).getAddress());
             multicastMsg(iter->getAddress(), D_LEAVEANNO);
         }
-//#ifdef DEBUGLOG
-//        std::cout << "\tMulticast: " << send_msg << " to: " << addr.getAddress() << std::endl;
-//#endif
     }
     // Send to self
     m_queue->push(std::make_pair(seq, "#"+ type + "#" + msg));
@@ -374,17 +347,9 @@ int DNode::sendNotice(std::string notice, std::string destAddress) {
     std::string str_ack;
     
     if (dNet->DNsend(&addr, notice, str_ack, 1) == FAILURE) {
-        
-//#ifdef DEBUGLOG
-//        std::cout << "\tsendNotice: Fail! " << addr.getAddress() << std::endl;
-//#endif
         return FAILURE;
         
     } else {
-        
-//#ifdef DEBUGLOG
-//    std::cout << "Send notice to: " << addr.getAddress() << std::endl;
-//#endif
         return SUCCESS;
         
     }
@@ -404,37 +369,12 @@ void DNode::multicastNotice(std::string notice) {
         Address addr((*iter).getAddress());
         std::string str_ack;
         if (dNet->DNsend(&addr, notice, str_ack, 2) == FAILURE) {
-//#ifdef DEBUGLOG
-//            std::cout << "\tSendNotice: Fail! " << addr.getAddress() << std::endl;
-//#endif
         }
-//#ifdef DEBUGLOG
-        std::cout << "\tSend notice to: " << notice << " " << addr.getAddress() << std::endl;
-//#endif
     }
 }
 
 
 //////////////////////////////// LEADER ELECTION ////////////////////////////////
-
-///**
-// * FUNCTION NAME: electionHandler
-// *
-// * DESCRIPTION: Handle the case if the potential fails during the election process
-// */
-//void electionHandler(DNode * node) {
-//    // waits some time for D_COOR
-//    std::cout << "electionHandler~~" << std::endl;
-//    if (node->getElectionStatus() == E_WAITCOOR) {
-//        std::chrono::milliseconds sleepTime(ELECTIONTIME);
-//        std::this_thread::sleep_for(sleepTime);
-//        
-//        if(node->getElectionStatus() == E_WAITCOOR) {
-//            node->updateElectionStatus(E_NONE);
-//            node->startElection();
-//        }
-//    }
-//}
 
 /**
  * FUNCTION NAME: startElection, called by a member
@@ -529,10 +469,6 @@ void DNode::nodeLoopOps() {
         // have the leader broadcast a heartbeat
         // multicastNotice(std::string(D_HEARTBEAT) + "#" + self_address);
         
-#ifdef DEBUGLOG
-    //std::cout << "\tLeader sent out heartbeat. " << std::endl;
-#endif
-        
         // check every one's heartbeat in the memberlist (except myself)
         auto list = member_node->memberList;
         for (auto iter = list.begin(); iter != list.end(); iter++) {
@@ -548,9 +484,6 @@ void DNode::nodeLoopOps() {
                     deleteMember(memberAddr);
                     // std::string message_leave = memberAddr;
                     multicastMsg(memberAddr, D_LEAVEANNO);
-#ifdef DEBUGLOG
-                    std::cout << "\tSent out leave announcement. " << std::endl;
-#endif
                 }
             } else {
                  std::cout << "!!! Never here in nodeLoopOps " << memberAddr << std::endl;
@@ -566,9 +499,6 @@ void DNode::nodeLoopOps() {
 //        if(checkHeartbeat(leader_address) == FAILURE) {
         
         if (sendNotice(std::string(D_HEARTBEAT) + "#" + self_address, leader_address) == FAILURE) {
-#ifdef DEBUGLOG
-            std::cout << "\tLeader failed. " << std::endl;
-#endif
 
             lk.unlock();
             startElection();
@@ -603,9 +533,6 @@ int DNode::checkHeartbeat(std::string address) {
  * DESCRIPTION: start taking snapshot, only get called through stdin
  */
 void DNode::startSnapshotByUser() {
-#ifdef DEBUGLOG
-    std::cout << "in starting snapshot by user" << std::endl;
-#endif
     std::unique_lock<std::mutex> lk(mutex_snapshot);
     if (getSnapshotStatus() == S_NONE) {
         // initialize Snapshot object
@@ -618,9 +545,6 @@ void DNode::startSnapshotByUser() {
         
         // record process state
         snapshot->recordState(this);
-#ifdef DEBUGLOG
-        std::cout << "start snapshot by user: after record state" << std::endl;
-#endif
         
         // send out markers
         std::string str(D_MARKER+std::string("#")+member_node->getAddress());
@@ -648,9 +572,6 @@ void DNode::startSnapshotByUser() {
                 Suppose received marker from channel ck
  */
 Snapshot* DNode::startSnapshotByMarker(std::string from_addr) {
-#ifdef DEBUGLOG
-    std::cout << "in starting snapshot by marker" << std::endl;
-#endif
     std::unique_lock<std::mutex> lk(mutex_snapshot);
     // initialize Snapshot object
     snapshot = new Snapshot(this->getUsername(), member_node->getAddress());
@@ -691,9 +612,6 @@ Snapshot* DNode::startSnapshotByMarker(std::string from_addr) {
  * DESCRIPTION: Multicast a maker to all the members
  */
 void DNode::multicastMarker(std::string marker) {
-#ifdef DEBUGLOG
-    std::cout << "in multicast marker" << std::endl;
-#endif
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->getAddress();
     
@@ -723,14 +641,9 @@ void DNode::multicastMarker(std::string marker) {
                 if (sendNotice(std::string(D_MARKER) + "#" + self_address, memberAddr) == FAILURE) {
                     std::cout << "fail to send marker to: " << memberAddr << std::endl;
                 }
-            } else {
-                std::cout << "!!! send markers, skip myself " << memberAddr << std::endl;
             }
         }
     }
-#ifdef DEBUGLOG
-    std::cout << "Complete multicast marker" << std::endl;
-#endif
 }
 
 /**
@@ -738,9 +651,6 @@ void DNode::multicastMarker(std::string marker) {
  */
 void DNode::updateSnapshotStatus(int new_status) {
     snapshot_status = new_status;
-#ifdef DEBUGLOG
-    std::cout << "\tSnapshot status update: " << new_status << std::endl;
-#endif
 }
 
 void DNode::recordSnapshotChannelMsg(std::string from_addr, std::string msg) {
@@ -817,7 +727,7 @@ void doWriting(Snapshot* snapshot, Member* member_node, int idx) {
         char buff[20];
         time_t t = pair.first;
         strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
-        outfile << buff << ": \n" << pair.second << std::endl;
+        outfile << buff << ": \n\t" << pair.second << std::endl;
     }
     outfile << "\n";
     
@@ -905,7 +815,7 @@ void DNode::doDisplaySnapshot() {
     std::cout << "\n";
     snapshot->setChannels(temp_c);
     
-    std::cout << "Messasge history: \n";
+    std::cout << "Message history: \n";
     std::deque<std::pair<time_t, std::string>> temp_q = snapshot_node->getDisplayMessageQueue();
     while (!temp_q.empty()) {
         std::pair<time_t, std::string> pair = temp_q.front();
@@ -913,7 +823,7 @@ void DNode::doDisplaySnapshot() {
         char buff[20];
         time_t t = pair.first;
         strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
-        std::cout << buff << ": \n" << pair.second << std::endl;
+        std::cout << buff << ": \n\t" << pair.second << std::endl;
     }
     std::cout << "\n";
     std::cout << "End of snapshot.\n";
@@ -1159,8 +1069,5 @@ void DNode::updateElectionStatus(int new_status) {
     mtx.lock();
     election_status = new_status;
     mtx.unlock();
-#ifdef DEBUGLOG
-    std::cout << "\tElection status update: " << new_status << std::endl;
-#endif
 
 }
