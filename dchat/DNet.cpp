@@ -165,6 +165,14 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
     
     // Send message
     strcpy(buf, data.c_str());
+    // cipher
+#ifdef CIPHERLOG
+    std::cout << "Before encryption: " << buf << std::endl;
+#endif
+    cipher(buf, true);
+#ifdef CIPHERLOG
+    std::cout << "After encryption: " << buf << std::endl;
+#endif
     if ((numbytes = sendto(sockfd_w, buf, strlen(buf) + 1, 0, p->ai_addr, p->ai_addrlen)) == -1) {
 #ifdef DEBUGLOG
         perror("sendto");
@@ -173,6 +181,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
         return FAILURE;
     }
     
+    memset(buf, 0, sizeof(buf));
     // To receive ACK from the server
     if ((numbytes = recvfrom(sockfd_w, buf, MAXBUFLEN - 1, 0,
                              (struct sockaddr *) &their_addr, &addr_len)) == -1) {
@@ -187,7 +196,14 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
 #ifdef DEBUGLOG
     std::cout << "\tDNet::DNsend: receive: " << data << std::endl;
 #endif
-    
+    // decipher
+#ifdef CIPHERLOG
+    std::cout << "Before decryption: " << buf << std::endl;
+#endif
+    cipher(buf, false);
+#ifdef CIPHERLOG
+    std::cout << "After decryption: " << buf << std::endl;
+#endif
     ack = std::string(buf, numbytes);
     close(sockfd_w);
     freeaddrinfo(servinfo);
@@ -215,7 +231,14 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
 #endif
         return FAILURE;
     }
-    
+    // decipher
+#ifdef CIPHERLOG
+    std::cout << "Before decryption: " << buf << std::endl;
+#endif
+    cipher(buf, false);
+#ifdef CIPHERLOG
+    std::cout << "After decryption: " << buf << std::endl;
+#endif
     // copy their_addr to fromaddr
     fromaddr.ip = std::string(inet_ntop(their_addr.ss_family,
                                         get_in_addr((struct sockaddr *) &their_addr), s, sizeof s));
@@ -241,14 +264,21 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     if (send_msg.empty()) return FAILURE;
     
     // Send ack back
+    memset(buf, 0, sizeof(buf));
     strcpy(buf, send_msg.c_str());
-    
+    // cipher
+#ifdef CIPHERLOG
+    std::cout << "Before encryption: " << buf << std::endl;
+#endif
+    cipher(buf, true);
+#ifdef CIPHERLOG
+    std::cout << "After encryption: " << buf << std::endl;
+#endif
     if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
                            (struct sockaddr *) &their_addr, addr_len)) == -1) {
         perror("sendto");
         return FAILURE;
     }
-    
     return SUCCESS;
 }
 
@@ -301,4 +331,32 @@ int DNet::DNinfo(std::string & addr) {
     return SUCCESS;
 }
 
+/**
+ * FUNCTION NAME: cipher
+ *
+ * DESCRIPTION: do substitution cipher before sending out message
+ *              do decipher after receiving message
+ *              bool encrypt: true if do cipher
+ *                            false if do decipher
+ */
+void DNet::cipher(char* str, bool encrypt) {
+    int size = strlen(str);
+    char pivot;
+    int i = 0;
+    for (i = 0; i < size; i++) {
+        if (!std::isalpha(str[i])) {  // only encrypt letters
+            str[i] = str[i];
+            continue;
+        }
+        bool isUpper = std::isupper(str[i]);
+        pivot = isUpper ? 'A' : 'a';
+        if (encrypt) {    // encryption
+            str[i] = pivot+(str[i]-pivot+ENCRYPTKEY)%26;
+        }
+        else {          // decryption
+            str[i] = pivot+(str[i]-pivot+26-ENCRYPTKEY)%26;
+        }
+    }
+    str[i] = '\0';
+}
 

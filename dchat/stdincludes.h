@@ -54,10 +54,12 @@
 
 // You can comment out the following line
 //#define DEBUGLOG    1
+#define CIPHERLOG   1
 
 #define MAXBUFLEN       512
 #define HEARTFREQ       3000
 #define ELECTIONTIME    4000
+#define ENCRYPTKEY      13
 
 // Multicast messages, start with a #
 #define D_M_MSG         "MSG"               // #MSG#SEQ#username::Message, multicast from the sequencer

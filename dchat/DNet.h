@@ -32,6 +32,7 @@ public:
     int DNrecv(Address & fromaddr, std::string & data);
     int DNcleanup();
     void * get_in_addr(struct sockaddr *sa);
+    void cipher(char* str, bool encrypt);
 
 };
 
