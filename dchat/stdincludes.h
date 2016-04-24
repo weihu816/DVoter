@@ -58,14 +58,9 @@
 
 #define MAXBUFLEN       512
 #define HEARTFREQ       3000
-<<<<<<< Updated upstream
-#define ELECTIONTIME    4000
-#define ENCRYPTKEY      13
-||||||| merged common ancestors
-#define ELECTIONTIME    4000
-=======
 #define COORTIMEOUT     8000
->>>>>>> Stashed changes
+#define ENCRYPTKEY      13
+
 
 // Multicast messages, start with a #
 #define D_M_MSG         "MSG"               // #MSG#SEQ#username::Message, multicast from the sequencer
