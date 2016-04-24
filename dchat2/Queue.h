@@ -52,7 +52,7 @@ public:
 
     }
 
-    queue_object(const queue_object &another_queue_object) {
+    queue_object(const queue_object & another_queue_object) {
         this->key = another_queue_object.key;
         this->id = another_queue_object.id;
         this->pid = another_queue_object.pid;
@@ -60,7 +60,7 @@ public:
         this->isDeliverable = another_queue_object.isDeliverable;
     }
     
-    queue_object& operator=(const queue_object& another_queue_object) {
+    queue_object& operator=(const queue_object & another_queue_object) {
         this->key = another_queue_object.key;
         this->id = another_queue_object.id;
         this->pid = another_queue_object.pid;
@@ -79,7 +79,8 @@ private:
     std::deque<queue_object> d_queue;
     
     static bool cmp(const queue_object & a, const queue_object & b) {
-        return a.key < b.key;
+        if (a.id != b.id) return a.id < b.id;
+        else return a.pid < b.pid;
     }
 
     DNode * node;
