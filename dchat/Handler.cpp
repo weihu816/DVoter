@@ -83,8 +83,6 @@ string Handler::process(Address & from_addr, string recv_msg) {
             std::string msg(strtok (NULL, "#"));
             int seq = stoi(seq_str);
             
-            std::cout << "\tD_CHAT" << seq  << " " + seq_str << std::endl;
-            
             if (nodeMember->isLeader()) { // Only leader can multicast messages
                 std::string address_port = from_addr.getAddressIp()+":"+port;
     
@@ -101,7 +99,6 @@ string Handler::process(Address & from_addr, string recv_msg) {
                     std::string message = msg;
                     node->multicastMsg(message, D_M_MSG);
                     msg_seen[address_port]++;
-                    std::cout << "After inc " << msg_seen[address_port] << std::endl;
                 } else {
                     return std::to_string(seq);
                 }                
