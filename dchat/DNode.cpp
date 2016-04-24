@@ -117,11 +117,7 @@ int DNode::nodeLeave() {
  *              ip1:port1:name1:ip2:port2:name2: ...
  */
 void DNode::initMemberList(std::string member_list) {
-    
-#ifdef DEBUGLOG
-    std::cout << "\tDNode::initMemberList: " << member_list  << " leaderAddr:" << leaderAddr << std::endl;
-#endif
-    
+
     if (member_list.empty()) return;
     char * cstr = new char[member_list.length() + 1];
     std::string addr;
@@ -543,14 +539,6 @@ void DNode::nodeLoopOps() {
 
 
 //////////////////////////////// GETTERS ////////////////////////////////
-
-/**
- * dNet getter
- */
-DNet * DNode::getDNet() {
-    return dNet;
-}
-
 /**
  * member_node getter
  */

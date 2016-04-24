@@ -67,10 +67,7 @@ public:
     void updateElectionStatus(int new_status);
     // This is for the leader (sequencer)
     std::map<std::string, int> message_seen;
-    
-    
-    
-    
+
     // Total ordered multicast
     void multicastMsg(std::string msg, std::string type);
     
@@ -83,7 +80,6 @@ public:
     
     // Getters
     Member* getMember();
-    DNet* getDNet();
     std::string getUsername();
     int getElectionStatus();
     

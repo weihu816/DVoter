@@ -63,6 +63,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             node->m_queue->pop();
             return "OK";
         } else if (strcmp(msg_type, D_LEAVEANNO) == 0) {
+            
             // TODO: received: #LEAVEANNO#seq#name#ip:port sent by leader
             int param_seq = atoi(strtok(NULL, "#"));
             std::string param_name_addr(strtok(NULL, "#"));
@@ -151,13 +152,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             }
         } else if (strcmp(msg_type, D_HEARTBEAT) == 0) {
             
-            // received: HEARTBEAT#ip:port
-            // know node at from_addr is still there, update heartbeat for node at from_addr
-            std::string node_addr(strtok(NULL, "#"));
-
-#ifdef DEBUGLOG
-            std::cout << "HeartBeat updated " << nodeMember->getHeartBeat(node_addr) << std::endl;
-#endif
+            // received: HEARTBEAT#port
             return "OK";
 
         } else if (strcmp(msg_type, D_ELECTION) == 0) {
