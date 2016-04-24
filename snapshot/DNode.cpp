@@ -257,12 +257,11 @@ int DNode::introduceSelfToGroup(std::string join_addr, bool isSureLeaderAddr) {
 }
 
 void DNode::addMessage(std::string msg) {
-    message_chat_queue.push(msg);
+    message_chat_queue.push_back(msg);
 }
 
 
 //////////////////////////////// SEND MSG FUNC ////////////////////////////////
-
 
 /**
  * FUNCTION NAME: sendMsg
@@ -275,11 +274,14 @@ void DNode::sendMsg(std::string msg) {
     
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
+    
     if (leader_address.compare(self_address) == 0) { // I'm the leader (sequencer)
         std::string msgToSend = self_address+"#"+username + "::" + msg;
         multicastMsg(msgToSend, D_M_MSG);
     } else { // Send Multicast request to the sequencer
-        message_send_queue.push(msg);
+        message_table[seq] = msg;
+        message_send_queue.push_back(std::make_pair(seq, msg));
+        seq++;
     }
     
 }
@@ -291,25 +293,61 @@ void DNode::sendMsg(std::string msg) {
  *              No request will be send to leader if election in process
  */
 void DNode::sendMsgToLeader() {
-    // CHAT#ip:port#username::Message
-    std::string msg = message_send_queue.pop();
+    
+    auto msg_pair = message_send_queue.pop();
+    
+    std::unique_lock<std::mutex> lk(mutex_election); // message with port
+    // Wait for election to be finished
+    while (getElectionStatus() != E_NONE) {
+        d_condition.wait(lk);
+    }
+    
     if (member_node->getLeaderAddress().compare(member_node->getAddress()) == 0) {
+        
         // I'm the leader now
-        std::string msgToSend = member_node->getAddress()+"#"+username + "::" + msg;
+        std::string msgToSend = username + ":: " + msg_pair.second;
         multicastMsg(msgToSend, D_M_MSG);
+        
     } else {
-        std::string str_to = std::string(D_CHAT) + "#" + member_node->getAddress()+"#"+
-                            username + ":: " + msg;
+        
+        std::string str_to = std::string(D_CHAT) + "#" + std::to_string(member_node->address->port) +"#" + std::to_string(msg_pair.first) + "#"
+        + username + ":: " + msg_pair.second;
         std::string leader_address = member_node->getLeaderAddress();
         std::string str_ack;
         Address leader_addr(leader_address);
-        if (dNet->DNsend(&leader_addr, str_to, str_ack, 1) == FAILURE) {
-            std::cout << "Fail to send: " << str_to << std::endl;
+        std::cout << "sendMsgToLeader: " << leader_address << std::endl;
+        if (dNet->DNsend(&leader_addr, str_to, str_ack, 1) == SUCCESS) {
+            
+            // If the response is not OK, then it is a number that the leader current seen
+            std::string ok("OK");
+            if (strcmp(str_ack.c_str(), ok.c_str()) != 0) {
+                std::cout << str_to << " ACK from leader: " << str_ack << std::endl;
+                int ack = stoi(str_ack);
+                // if the ack seq number is less seq - 1, we need to resend that message
+                while (ack + 1 < seq) {
+                    std::string resend_ack;
+                    std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(ack) + "#"
+                    + username + ":: " + message_table[ack];
+                    std::cout << "Resend " + resend_str << std::endl;
+                    dNet->DNsend(&leader_addr, resend_str, resend_ack, 1);
+                    ack++;
+                }
+            }
+            
+        } else {
+            
+            // We think the leader is not responding
+            // However we are not sure if the leader has multicast this message or not
+            message_send_queue.push_front(msg_pair);
+            lk.unlock();
+            std::chrono::milliseconds sleepTime(1000);
+            std::this_thread::sleep_for(sleepTime);
+            
         }
+        
     }
-
+    
 }
-
 
 /**
  * FUNCTION NAME: multicastMsg
@@ -440,7 +478,7 @@ void DNode::startElection() {
     lk.unlock();
 
     std::cout << "Wait for COOR message .........." << std::endl;
-    std::chrono::milliseconds sleepTime(ELECTIONTIME);
+    std::chrono::milliseconds sleepTime(COORTIMEOUT);
     std::this_thread::sleep_for(sleepTime);
     
     if(getElectionStatus() == E_WAITCOOR) {
@@ -513,22 +551,6 @@ void DNode::nodeLoopOps() {
 
     // finish heartbeat check
     return;
-}
-
-
-/**
- * Check heart beat of a given address
- * Return SUCCESS if the node is alive and Failure otherwise
- */
-int DNode::checkHeartbeat(std::string address) {
-    time_t current;
-    time(&current);
-    time_t heartbeat = member_node->getHeartBeat(address);
-    if(difftime(current, heartbeat) > TIMEOUT / 1000) {
-        std::cout << address << " !!! " << difftime(current, heartbeat) << std::endl;
-        return FAILURE;
-    }
-    return SUCCESS;
 }
 
 //////////////////////////////// SNAPSHOT ////////////////////////////////
@@ -933,41 +955,6 @@ int DNode::getElectionStatus() {
 }
 
 /**
- * message_chat_queue size getter
- */
-int DNode::getMessageChatQueueSize() {
-    return message_chat_queue.getSize();
-}
-
-/**
- * message_send_queue_size getter
- */
-int DNode::getMessageSendQueueSize() {
-    return message_send_queue.getSize();
-}
-
-/**
- * m_queue size getter
- */
-int DNode::getMQueueSize() {
-    return m_queue->getHoldBackQueueSize();
-}
-
-/**
- * push to message_chat_queue
- */
-void DNode::pushMessageChatQueue(std::string str) {
-    message_chat_queue.push(str);
-}
-
-/**
- * push to message send queue
- */
-void DNode::pushMessageSendQueue(std::string str) {
-    message_send_queue.push(str);
-}
-
-/**
 * push to m_queue
 */
 void DNode::pushMQueue(std::pair<int, std::string> value) {
@@ -1021,27 +1008,6 @@ void DNode::setMQueue(holdback_queue q) {
  */
 std::string DNode::popMessageChatQueue() {
     return message_chat_queue.pop();
-}
-
-/**
- * pop form message_send_queue
- */
-std::string DNode::popMessageSendQueue() {
-    return message_send_queue.pop();
-}
-
-/**
- * get first message form message_chat_queue
- */
-std::string DNode::peekMessageChatQueue() {
-    return message_chat_queue.getFront();
-}
-
-/**
- * get first message form message_send_queue
- */
-std::string DNode::peekMessageSendQueue() {
-    return message_send_queue.getFront();
 }
 
 /**

@@ -24,9 +24,14 @@ public:
     blocking_queue()=default;
     blocking_queue(const blocking_queue&) = delete;
     blocking_queue& operator=(const blocking_queue&) = delete;
-    void push(T const& value) {
+    void push_back(T const& value) {
         std::unique_lock<std::mutex> mlock(d_mutex);
         d_queue.push_back(value);
+        d_condition.notify_one();
+    }
+    void push_front(T const& value) {
+        std::unique_lock<std::mutex> mlock(d_mutex);
+        d_queue.push_front(value);
         d_condition.notify_one();
     }
     T pop() {
@@ -38,17 +43,13 @@ public:
         d_queue.pop_front();
         return rc;
     }
-    int getSize() {
+    long size() {
         std::unique_lock<std::mutex> mlock(d_mutex);
-        int size = d_queue.size();
-        d_condition.notify_one();
-        return size;
+        return d_queue.size();
     }
-    T getFront() {  // without pop
+    void clear() {
         std::unique_lock<std::mutex> mlock(d_mutex);
-        T rc = d_queue.front();
-        d_condition.notify_one();
-        return rc;
+        d_queue.clear();
     }
 };
 

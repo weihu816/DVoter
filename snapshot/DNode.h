@@ -31,7 +31,13 @@ private:
     int election_status = E_NONE; // not in election
     int snapshot_status = S_NONE;   // not taking snapshot
     blocking_queue<std::string> message_chat_queue;
-    blocking_queue<std::string> message_send_queue;
+    
+    // chat messages related
+    int seq = 1; // The seq number to be sent
+    std::map<int, std::string> message_table;
+    blocking_queue<std::pair<int, std::string>> message_send_queue;
+    
+    std::condition_variable d_condition; // for sending messages
     Snapshot *snapshot;
     int snapshotCnt;
     std::deque<std::pair<time_t, std::string>> display_msg_queue;
