@@ -154,9 +154,7 @@ string Handler::process(Address & from_addr, string recv_msg) {
             // received: HEARTBEAT#ip:port
             // know node at from_addr is still there, update heartbeat for node at from_addr
             std::string node_addr(strtok(NULL, "#"));
-            time_t timev;
-            time(&timev);
-            nodeMember->updateHeartBeat(node_addr, timev);
+
 #ifdef DEBUGLOG
             std::cout << "HeartBeat updated " << nodeMember->getHeartBeat(node_addr) << std::endl;
 #endif

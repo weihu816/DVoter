@@ -12,7 +12,7 @@
 /**
  * CLASS NAME: Address
  *
- * DESCRIPTION: Class representing the address of a single node
+ * DESCRIPTION: Address class
  */
 class Address {
 public:
@@ -88,14 +88,10 @@ public:
     Address * address;                                      // This member's Address
     bool inited = false;                                    // boolean indicating if this member is up
     bool inGroup;                                           // boolean indicating if this member is in the group
-    int nnb;                                                // number of my neighbors (distributed)
-    std::unordered_map<std::string, time_t> heartBeatList;  // Hearbeat List
     std::vector<MemberListEntry> memberList;                // Membership table
+    MemberListEntry * leaderEntry;                          // The leader
     
-    MemberListEntry * volatile leaderEntry;                 // The leader
-    
-    
-    Member(std::string addr): inited(false), inGroup(false), nnb(0){
+    Member(std::string addr): inited(false), inGroup(false) {
         this->address = new Address(addr);
     }
     Member(const Member &anotherMember);                    // copy constructor
@@ -169,32 +165,6 @@ public:
         return address->getAddress();
     }
     
-    
-    /**
-     * FUNCTION NAME: updateHeartBeat
-     *
-     * DESCRIPTION: updateHeartBeat
-     */
-    void updateHeartBeat(std::string addrKey, time_t heartbeat) {
-        heartBeatList[addrKey] = heartbeat;
-    }
-
-    
-    /**
-     * FUNCTION NAME: getHeartBeat
-     *
-     * DESCRIPTION: getHeartBeat
-     */
-    time_t getHeartBeat(std::string addrKey) {
-        // if found, return the heartbeat, otherwise return 0
-        auto iter = heartBeatList.find(addrKey);
-        if (iter == heartBeatList.end()) {
-            return 0;
-        } else {
-            return iter->second;
-        }
-    }
-
 };
 
 #endif /* MEMBER_H */

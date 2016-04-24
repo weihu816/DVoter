@@ -52,7 +52,7 @@
 
 // You can comment out the following line
 //#define DEBUGLOG    1
-//#define INFOLOG    1
+#define INFOLOG    1
 
 #define MAXBUFLEN       512
 #define HEARTFREQ       2000

@@ -86,7 +86,6 @@ Member::Member(const Member &anotherMember) {
     *this->leaderEntry = *anotherMember.leaderEntry;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
-    this->nnb = anotherMember.nnb;
     this->memberList = anotherMember.memberList;
 }
 
@@ -98,7 +97,6 @@ Member& Member::operator =(const Member& anotherMember) {
     *this->leaderEntry = *anotherMember.leaderEntry;
     this->inited = anotherMember.inited;
     this->inGroup = anotherMember.inGroup;
-    this->nnb = anotherMember.nnb;
     this->memberList = anotherMember.memberList;
     return *this;
 }
@@ -112,7 +110,6 @@ void Member::updateLeader(Address leaderAddr, std::string leaderName) {
     
     if (getLeaderAddress().compare(leaderAddr.getAddress()) == 0) return;
     std::cout << "NOTICE " << leaderEntry->getUsername() << " left the chat or crashed." << std::endl;
-    heartBeatList.erase(leaderEntry->getAddress());
     std::string leader_ip_port = leaderAddr.getAddress();
     leaderEntry = new MemberListEntry(leader_ip_port, leaderName);
     
@@ -143,8 +140,6 @@ void Member::addMember(std::string ip_port, std::string name) {
     std::cout << "\tMember::addMember: " << entry.getEntry() << std::endl;
 #endif
     memberList.push_back(entry);
-    time_t curtime;
-    updateHeartBeat(ip_port, time(&curtime));
     
 }
 

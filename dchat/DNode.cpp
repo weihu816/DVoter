@@ -92,7 +92,6 @@ int DNode::nodeStart() {
 int DNode::initThisNode() {
     member_node->inited = true;
     member_node->inGroup = false;
-    member_node->nnb = 0;
     member_node->memberList.clear();
     return SUCCESS;
 }
@@ -413,25 +412,6 @@ void DNode::multicastNotice(std::string notice) {
 
 //////////////////////////////// LEADER ELECTION ////////////////////////////////
 
-///**
-// * FUNCTION NAME: electionHandler
-// *
-// * DESCRIPTION: Handle the case if the potential fails during the election process
-// */
-//void electionHandler(DNode * node) {
-//    // waits some time for D_COOR
-//    std::cout << "electionHandler~~" << std::endl;
-//    if (node->getElectionStatus() == E_WAITCOOR) {
-//        std::chrono::milliseconds sleepTime(ELECTIONTIME);
-//        std::this_thread::sleep_for(sleepTime);
-//
-//        if(node->getElectionStatus() == E_WAITCOOR) {
-//            node->updateElectionStatus(E_NONE);
-//            node->startElection();
-//        }
-//    }
-//}
-
 /**
  * FUNCTION NAME: startElection, called by a member
  *
@@ -522,29 +502,18 @@ void DNode::nodeLoopOps() {
     
     if(leader_address.compare(self_address) == 0) { // I am the leader
         
-        // have the leader broadcast a heartbeat
-#ifdef DEBUGLOG
-        //std::cout << "\tLeader sent out heartbeat. " << std::endl;
-#endif
-        
         // check every one's heartbeat in the memberlist (except myself)
         auto list = member_node->memberList;
         for (auto iter = list.begin(); iter != list.end(); iter++) {
             
             std::string memberAddr = iter->getAddress();
             if(memberAddr.compare(self_address) != 0) {
-                
-                // check heartbeat
-                // if(checkHeartbeat(memberAddr) == FAILURE) {
                 if (sendNotice(std::string(D_HEARTBEAT) + "#" + self_address, memberAddr) == FAILURE) {
                     std::cout << "!!! checkHeartbeat fail " << memberAddr << std::endl;
                     // exceed timeout limit
                     deleteMember(memberAddr);
                     // std::string message_leave = memberAddr;
                     multicastMsg(memberAddr, D_LEAVEANNO);
-#ifdef DEBUGLOG
-                    std::cout << "\tSent out leave announcement. " << std::endl;
-#endif
                 }
             } else {
                 std::cout << "!!! Never here in nodeLoopOps " << memberAddr << std::endl;
@@ -561,6 +530,7 @@ void DNode::nodeLoopOps() {
             std::cout << "\tLeader failed. " << std::endl;
 #endif
             
+            // Must release the locak before start election
             lk.unlock();
             startElection();
             
@@ -569,24 +539,6 @@ void DNode::nodeLoopOps() {
     
     // finish heartbeat check
     return;
-}
-
-
-/**
- * Check heart beat of a given address
- * Return SUCCESS if the node is alive and Failure otherwise
- */
-int DNode::checkHeartbeat(std::string address) {
-    time_t current;
-    time(&current);
-    time_t heartbeat = member_node->getHeartBeat(address);
-    if(difftime(current, heartbeat) > TIMEOUT / 1000) {
-#ifdef DEBUGLOG
-        std::cout << address << " !!! " << difftime(current, heartbeat) << std::endl;
-#endif
-        return FAILURE;
-    }
-    return SUCCESS;
 }
 
 
