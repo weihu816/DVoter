@@ -59,6 +59,7 @@ public:
     int channel_marker_cnt;
     std::string marker_from_addr;
     Channel *marker_from_channel;
+    std::deque<std::pair<time_t, std::string>> msg_queue;   // message history with timestamp
 
     std::unordered_map<std::string, bool> channel_markers;  // <address, received_marker> pair
 
@@ -78,6 +79,8 @@ public:
     DNode* getNode();
     std::unordered_map<std::string, Channel> getChannels();
     void setChannels(std::unordered_map<std::string, Channel> c);
+    void setMsgQueue(std::deque<std::pair<time_t, std::string>> q);
+    std::deque<std::pair<time_t, std::string>> getMsgQueue();
 };
 
 #endif /* Snapshot_h */

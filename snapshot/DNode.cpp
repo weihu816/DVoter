@@ -326,7 +326,7 @@ void DNode::sendMsgToLeader() {
                 // if the ack seq number is less seq - 1, we need to resend that message
                 while (ack + 1 < seq) {
                     std::string resend_ack;
-                    std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(ack) + "#"
+                    std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(member_node->address->port) + "#" + std::to_string(ack) + "#"
                     + username + ":: " + message_table[ack];
                     std::cout << "Resend " + resend_str << std::endl;
                     dNet->DNsend(&leader_addr, resend_str, resend_ack, 1);
@@ -642,6 +642,11 @@ void DNode::multicastMarker(std::string marker) {
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->getAddress();
     
+#ifdef CHANNELDEMO
+    std::chrono::milliseconds sleepTime(2500);
+    std::this_thread::sleep_for(sleepTime);
+#endif
+    
     if(leader_address.compare(self_address) == 0) { // I am the leader
         // send marker to everyone except myself
         auto list = member_node->memberList;
@@ -747,7 +752,7 @@ void doWriting(Snapshot* snapshot, Member* member_node, int idx) {
     snapshot->setChannels(temp_c);
     
     outfile << "Message history: \n";
-    std::deque<std::pair<time_t, std::string>> temp_q = snapshot_node->getDisplayMessageQueue();
+    std::deque<std::pair<time_t, std::string>> temp_q = snapshot->getMsgQueue();
     while (!temp_q.empty()) {
         std::pair<time_t, std::string> pair = temp_q.front();
         temp_q.pop_front();
@@ -843,7 +848,7 @@ void DNode::doDisplaySnapshot() {
     snapshot->setChannels(temp_c);
     
     std::cout << "Message history: \n";
-    std::deque<std::pair<time_t, std::string>> temp_q = snapshot_node->getDisplayMessageQueue();
+    std::deque<std::pair<time_t, std::string>> temp_q = snapshot->getMsgQueue();
     while (!temp_q.empty()) {
         std::pair<time_t, std::string> pair = temp_q.front();
         temp_q.pop_front();

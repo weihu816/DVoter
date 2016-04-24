@@ -69,7 +69,7 @@ void Snapshot::recordState(DNode *cur) {
     }
     
     // copy message queue
-    ssnode->setDisplayMessageQueue(cur->getDisplayMessageQueue());
+    setMsgQueue(ssnode->getDisplayMessageQueue());
 }
 
 /***
@@ -186,4 +186,12 @@ std::unordered_map<std::string, Channel> Snapshot::getChannels() {
  ***/
 void Snapshot::setChannels(std::unordered_map<std::string, Channel> c) {
     channels = c;
+}
+
+void Snapshot::setMsgQueue(std::deque<std::pair<time_t, std::string> > q) {
+    msg_queue = q;
+}
+
+std::deque<std::pair<time_t, std::string>> Snapshot::getMsgQueue() {
+    return msg_queue;
 }

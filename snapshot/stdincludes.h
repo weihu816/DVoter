@@ -54,6 +54,7 @@
 // You can comment out the following line
 //#define DEBUGLOG    1
 //#define CIPHERLOG   1
+//#define CHANNELDEMO   1
 
 #define MAXBUFLEN       512
 #define HEARTFREQ       3000
