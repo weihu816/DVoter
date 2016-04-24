@@ -182,12 +182,7 @@ int DNet::DNsend(Address * addr, std::string data, std::string & ack, int times)
         // not getting ack within timeout
         close(sockfd_w);
         return DNsend(addr, data, ack, times - 1);
-    }
-    
-#ifdef DEBUGLOG
-    std::cout << "\tDNet::DNsend: receive: " << data << std::endl;
-#endif
-    
+    }    
     ack = std::string(buf, numbytes);
     close(sockfd_w);
     freeaddrinfo(servinfo);
@@ -231,69 +226,25 @@ int DNet::DNrecv(Address &fromaddr, std::string &data) {
     
     // Handle received message
     std::string recv_msg(buf);
+    std::string send_msg = handler->process(fromaddr, recv_msg);
     
-    std::cout << "pushed message: " + recv_msg << std::endl;
-    //////////////////////// Priorty ///////////////////////
-
-    int priority = findPriorty(recv_msg);
+#ifdef DEBUGLOG
+    printf("\tsend back: %s\n", send_msg.c_str());
+#endif
     
-    msg_obj_queue.push(socket_queue_item(priority, sockfd, &their_addr, fromaddr, recv_msg));
-    //processByPriority();
-    return SUCCESS; // don't care about the handling for now..
+    // Fail to handle message, simply no sending back, let the send timeout
+    if (send_msg.empty()) return FAILURE;
     
-//    // Fail to handle message, simply no sending back, let the send timeout
-//    if (send_msg.empty()) return FAILURE;
-//    
-//    // Send ack back
-//    strcpy(buf, send_msg.c_str());
-//    
-//    if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
-//                           (struct sockaddr *) &their_addr, addr_len)) == -1) {
-//        perror("sendto");
-//        return FAILURE;
-//    }
-//    
-//    return SUCCESS;
-}
-
-int DNet::processByPriority() {
-    char buf[MAXBUFLEN];
-    long numbytes;
-    
-    socket_queue_item poped = msg_obj_queue.pop();
-    
-    std::cout << "poped message: " + poped.message << std::endl;
-    
-    std::string send_msg = handler->process(poped.from_addr, poped.message);
-    if(send_msg.empty()) return FAILURE;
-    
+    // Send ack back
     strcpy(buf, send_msg.c_str());
-
-    if ((numbytes = sendto(poped.sockfd, buf, strlen(buf) + 1, 0,
-                            (struct sockaddr *) &poped.their_addr, sizeof(poped.their_addr))) == -1) {
+    
+    if ((numbytes = sendto(sockfd, buf, strlen(buf) + 1, 0,
+                           (struct sockaddr *) &their_addr, addr_len)) == -1) {
         perror("sendto");
         return FAILURE;
     }
+    
     return SUCCESS;
-}
-
-int DNet::findPriorty(std::string recv_msg) {
-    char cstr[MAXBUFLEN];
-    strcpy(cstr, recv_msg.c_str());
-    char * msg_type = strtok(cstr, "#");
-    
-    if (strcmp(msg_type, D_M_MSG) == 0 || strcmp(msg_type, D_CHAT) == 0) { // chat messag has low priority
-        return 0;
-    } else if ( strcmp(msg_type, D_HEARTBEAT) == 0 || strcmp(msg_type, D_ELECTION) == 0 || strcmp(msg_type, D_COOR) == 0){
-        std::cout << "# priority : important" << std::endl;
-        // important messages regrading heartbeat and election
-        return 9;
-    } else {
-        // middle level messages
-        std::cout << "# priority : middle" << std::endl;
-        return 5;
-    }
-    
 }
 
 /**

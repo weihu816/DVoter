@@ -39,19 +39,12 @@ int DNode::recvLoop() {
     return SUCCESS;
 }
 
-void DNode::processLoop() {
-    dNet->processByPriority();
-}
-
 /**
  * FUNCTION NAME: msgLoop
  *
  * DESCRIPTION: This function receives chat messages and displays to terminal
  */
 std::string DNode::msgLoop() {
-#ifdef DEBUGLOG
-    std::cout << "\tpop from message_chat_queue" << std::endl;
-#endif
     return message_chat_queue.pop();
 }
 
@@ -96,7 +89,6 @@ int DNode::nodeStart() {
 int DNode::initThisNode() {
     member_node->inited = true;
     member_node->inGroup = false;
-    member_node->nnb = 0;
     member_node->memberList.clear();
     return SUCCESS;
 }
@@ -122,11 +114,7 @@ int DNode::nodeLeave() {
  *              ip1:port1:name1:ip2:port2:name2: ...
  */
 void DNode::initMemberList(std::string member_list) {
-    
-#ifdef DEBUGLOG
-    std::cout << "\tDNode::initMemberList: " << member_list  << " leaderAddr:" << leaderAddr << std::endl;
-#endif
-    
+
     if (member_list.empty()) return;
     char * cstr = new char[member_list.length() + 1];
     std::string addr;
@@ -289,6 +277,13 @@ void DNode::sendMsg(std::string msg) {
  */
 void DNode::sendMsgToLeader() {
     
+    std::unique_lock<std::mutex> lock(traffic_control);
+    std::chrono::milliseconds sleepTime(sleepInt); // sleep time....
+    std::this_thread::sleep_for(sleepTime);
+    lock.unlock();
+#ifdef DEBUGLOG2
+    std::cout << "send queue slept " << sleepInt << std::endl;
+#endif
     
     auto msg_pair = message_send_queue.pop();
 
@@ -308,14 +303,12 @@ void DNode::sendMsgToLeader() {
             // If the response is not OK, then it is a number that the leader current seen
             std::string ok("OK");
             if (strcmp(str_ack.c_str(), ok.c_str()) != 0) {
-                std::cout << str_to << " ACK from leader: " << str_ack << std::endl;
                 int ack = stoi(str_ack);
                 // if the ack seq number is less seq - 1, we need to resend that message
                 while (ack + 1 < seq) {
                     std::string resend_ack;
                     std::string resend_str = std::string(D_CHAT) + "#" + std::to_string(ack) + "#"
                     + username + ":: " + message_table[ack];
-                    std::cout << "Resend " + resend_str << std::endl;
                     dNet->DNsend(&leader_addr, resend_str, resend_ack, 1);
                     ack++;
                 }
@@ -417,25 +410,6 @@ void DNode::multicastNotice(std::string notice) {
 
 //////////////////////////////// LEADER ELECTION ////////////////////////////////
 
-///**
-// * FUNCTION NAME: electionHandler
-// *
-// * DESCRIPTION: Handle the case if the potential fails during the election process
-// */
-//void electionHandler(DNode * node) {
-//    // waits some time for D_COOR
-//    std::cout << "electionHandler~~" << std::endl;
-//    if (node->getElectionStatus() == E_WAITCOOR) {
-//        std::chrono::milliseconds sleepTime(ELECTIONTIME);
-//        std::this_thread::sleep_for(sleepTime);
-//
-//        if(node->getElectionStatus() == E_WAITCOOR) {
-//            node->updateElectionStatus(E_NONE);
-//            node->startElection();
-//        }
-//    }
-//}
-
 /**
  * FUNCTION NAME: startElection, called by a member
  *
@@ -503,7 +477,38 @@ void DNode::startElection() {
         updateElectionStatus(E_NONE);
         startElection();
     }
+}
+
+///////////////////////////////////// CONGESTION FUNC /////////////////////////////////////
+// leader check send rate
+void DNode::leaderTrafficLoop() {
+    std::string leader_address = member_node->getLeaderAddress();
+    std::string self_address = member_node->address->getAddress();
     
+    if(leader_address.compare(self_address) == 0) { // only leader checks for congestion
+        auto list = member_node->memberList;
+        for (auto iter = list.begin(); iter != list.end(); iter++) { // for every one in memberlist
+            std::string memberAddr = iter->getAddress();
+            std::map<std::string ,int>::iterator it;
+            it = message_counter_table.find(memberAddr);
+            if(it == message_counter_table.end()) continue;
+            // found item
+            if(it->second > MAXRATE) {
+                // send a slow down message
+#ifdef DEBUGLOG2
+                std::cout << memberAddr << " slow down.." << std::endl;
+#endif
+                sendNotice(std::string(D_SLOW), memberAddr);
+            } else {
+                // send a normal rate message
+#ifdef DEBUGLOG2
+                std::cout << memberAddr << " normal speed.." << std::endl;
+#endif
+                sendNotice(std::string(D_FAST), memberAddr);
+            }
+            message_counter_table[memberAddr] = 0;
+        }
+    }
 }
 
 
@@ -526,29 +531,18 @@ void DNode::nodeLoopOps() {
     
     if(leader_address.compare(self_address) == 0) { // I am the leader
         
-        // have the leader broadcast a heartbeat
-#ifdef DEBUGLOG
-        //std::cout << "\tLeader sent out heartbeat. " << std::endl;
-#endif
-        
-        // check every one's heartbeat in the memberlist (except myself)
+        // check every one's heartbeat in the memberlist
         auto list = member_node->memberList;
         for (auto iter = list.begin(); iter != list.end(); iter++) {
             
             std::string memberAddr = iter->getAddress();
             if(memberAddr.compare(self_address) != 0) {
-                
-                // check heartbeat
-                // if(checkHeartbeat(memberAddr) == FAILURE) {
                 if (sendNotice(std::string(D_HEARTBEAT) + "#" + self_address, memberAddr) == FAILURE) {
                     std::cout << "!!! checkHeartbeat fail " << memberAddr << std::endl;
                     // exceed timeout limit
                     deleteMember(memberAddr);
                     // std::string message_leave = memberAddr;
                     multicastMsg(memberAddr, D_LEAVEANNO);
-#ifdef DEBUGLOG
-                    std::cout << "\tSent out leave announcement. " << std::endl;
-#endif
                 }
             } else {
                 std::cout << "!!! Never here in nodeLoopOps " << memberAddr << std::endl;
@@ -565,6 +559,7 @@ void DNode::nodeLoopOps() {
             std::cout << "\tLeader failed. " << std::endl;
 #endif
             
+            // Must release the locak before start election
             lk.unlock();
             startElection();
             
@@ -576,33 +571,7 @@ void DNode::nodeLoopOps() {
 }
 
 
-/**
- * Check heart beat of a given address
- * Return SUCCESS if the node is alive and Failure otherwise
- */
-int DNode::checkHeartbeat(std::string address) {
-    time_t current;
-    time(&current);
-    time_t heartbeat = member_node->getHeartBeat(address);
-    if(difftime(current, heartbeat) > TIMEOUT / 1000) {
-#ifdef DEBUGLOG
-        std::cout << address << " !!! " << difftime(current, heartbeat) << std::endl;
-#endif
-        return FAILURE;
-    }
-    return SUCCESS;
-}
-
-
 //////////////////////////////// GETTERS ////////////////////////////////
-
-/**
- * dNet getter
- */
-DNet * DNode::getDNet() {
-    return dNet;
-}
-
 /**
  * member_node getter
  */

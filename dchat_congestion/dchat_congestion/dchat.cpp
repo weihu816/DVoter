@@ -22,6 +22,15 @@ void usage(std::string msg) {
 
 //////////////////////////////// THREAD FUNC ////////////////////////////////
 
+void trafficCheck(DNode * node) {
+    while (isAlive) {
+        std::chrono::milliseconds sleepTime(TRAFFICFREQ); // check every TRAFFICFREQ seconds
+        std::this_thread::sleep_for(sleepTime);
+        node -> leaderTrafficLoop();
+    }
+}
+
+
 /**
  * FUNCTION NAME: sendMsg
  * 
@@ -71,16 +80,6 @@ void displayMsg(DNode * node) {
 void recvMsg(DNode * node) {
     while (isAlive) {
         node->recvLoop();
-    }
-}
-
-// process loop
-void processMsg(DNode * node) {
-    while (isAlive) {
-        std::chrono::milliseconds sleepTime(500); // sleep for 0.5 sec
-        std::this_thread::sleep_for(sleepTime);
-        std::cout << "slept: 500" << std::endl;
-        node->processLoop();
     }
 }
 
@@ -141,15 +140,17 @@ int main(int argc, const char * argv[]) {
     std::thread thread_displayMsg(displayMsg, node);
     // Thread: Track heartbeat
     std::thread thread_heartbeat(heartBeatRoutine, node);
+    // Thread: Send message to leader
     std::thread thread_sendMsgToLeader(sendMsgToLeader, node);
-    std::thread thread_process(processMsg, node);
+    // Thread: Monitor congestion
+    std::thread thread_traffic(trafficCheck, node);
 
     thread_sendMsg.join();
     thread_recvMsg.join();
     thread_displayMsg.join();
     thread_heartbeat.join();
     thread_sendMsgToLeader.join();
-    thread_process.join();
+    thread_traffic.join();
     
     // Clean up and quit
     node->nodeLeave();

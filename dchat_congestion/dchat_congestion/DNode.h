@@ -23,8 +23,9 @@ class Handler;
 class DNode {
 private:
     
-    Member * member_node;
     DNet * dNet;
+    Member * member_node;
+    
     std::string join_address;
     std::string username;
     
@@ -35,11 +36,28 @@ private:
     int seq = 1; // The seq number to be sent
     std::map<int, std::string> message_table;
     blocking_queue<std::pair<int, std::string>> message_send_queue;
-
     
+    int election_status = E_NONE; // not in election
 
 public:
-    void processLoop();
+    // traffic congestion
+    void leaderTrafficLoop();
+    int sleepInt; // the sleep interval in milli sec
+    std::mutex traffic_control;
+    
+    int getSleepInt() {
+        std::unique_lock<std::mutex> lock(traffic_control);
+        return sleepInt;
+    }
+    
+    void updataSleepInt(std::string traffic_msg) { // alter sleep interval according to traffic control message
+        std::unique_lock<std::mutex> lock(traffic_control);
+        if(traffic_msg.compare(D_FAST) == 0) {
+            sleepInt  = 0;
+        } else { // traffic_msg = D_SLOW
+            sleepInt = SLOWINT;
+        }
+    }
     
     // multicst_queue will be initilized using a sequence number init_seen from the leader
     holdback_queue * m_queue;
@@ -47,44 +65,47 @@ public:
     std::mutex mutex_election;
 
     DNode(std::string name, std::string join_addr="");
-    int nodeStart();                                                // introduce and start functions
-    int initThisNode();                                             // parameter initialization
+    int nodeStart();                                // introduce and start functions
+    int initThisNode();                             // parameter initialization
+    int nodeLeave();                                // Wind up this node and clean up state
+    
+    // Membership
     int introduceSelfToGroup(std::string joinAddress, bool isSureLeaderAddr);
-    int nodeLeave();                                                // Wind up this node and clean up state
     void initMemberList(std::string member_list);
     void addMember(std::string ip_port, std::string name, bool toPrint);
-    void deleteMember(std::string ip_port);                         // delete a member
-    void clearMembers();                                            // delete all members
+    void deleteMember(std::string ip_port);
     
+    // Routine
     int recvLoop();
     std::string msgLoop();
     void nodeLoop();
     
-    static int enqueueWrapper(void *env, char *buff, int size);
-    void nodeLoopOps(); // this is the operation for heartbeat
-    int checkHeartbeat(std::string address);
     
+    // Failure detection
+    void nodeLoopOps();
     void startElection();
+    void updateElectionStatus(int new_status);
+    // This is for the leader (sequencer)
+    std::map<std::string, int> message_seen;
+    // leader traffic counter
+    std::map<std::string, int> message_counter_table;
 
-    void addMessage(std::string msg);
-    void recvHandler(std::pair<Address, std::string>);
+    // Total ordered multicast
+    void multicastMsg(std::string msg, std::string type);
     
+    // Message Routine
+    void addMessage(std::string msg);
     void sendMsg(std::string msg);
     void sendMsgToLeader();
-    void multicastMsg(std::string msg, std::string type);
     int sendNotice(std::string type, std::string addr);
     void multicastNotice(std::string type);
     
+    // Getters
     Member* getMember();
-    DNet* getDNet();
     std::string getUsername();
     int getElectionStatus();
-    void updateElectionStatus(int new_status);
     
-    // This is for the leader (sequencer)
-    int election_status = E_NONE; // not in election
-    std::map<std::string, int> message_seen;
-    
+    // Reset seqience number and leader message counter
     void resetSeq() {
         message_seen.clear();
         seq = 1;
