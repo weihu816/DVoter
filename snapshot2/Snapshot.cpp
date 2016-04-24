@@ -13,9 +13,8 @@
 /***
  * Constructor of Snapshot
  ***/
-Snapshot::Snapshot(std::string name, std::string addr, DNode* node) {
-    ssnode = node;        // Create Member node
-    
+Snapshot::Snapshot(std::string name, std::string addr) {
+    ssnode = new DNode(name, addr);        // Create Member node
     ssmember = new Member(addr);
     ssnode->m_queue = new holdback_queue(0, ssnode);
     channel_marker_cnt = 0;

@@ -64,7 +64,7 @@ public:
 
     std::unordered_map<std::string, Channel> channels;  // <address, channel> pair
 
-    Snapshot(std::string name, std::string addr, DNode* node);
+    Snapshot(std::string name, std::string addr);
     void recordState(DNode* cur);
     void recordChannelMarker(std::string from_addr);
     bool getChannelMarkerReceived(std::string addrKey);

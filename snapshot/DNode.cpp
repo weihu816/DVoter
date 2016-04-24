@@ -269,7 +269,6 @@ void DNode::sendMsg(std::string msg) {
     
     std::string leader_address = member_node->getLeaderAddress();
     std::string self_address = member_node->address->getAddress();
-    std::cout << "sendMsg" << " leader: " << leader_address << " self:" << self_address << std::endl;
     if (leader_address.compare(self_address) == 0) { // I'm the leader (sequencer)
         std::string msgToSend = self_address+"#"+username + "::" + msg;
         multicastMsg(msgToSend, D_M_MSG);
@@ -536,7 +535,7 @@ void DNode::startSnapshotByUser() {
     std::unique_lock<std::mutex> lk(mutex_snapshot);
     if (getSnapshotStatus() == S_NONE) {
         // initialize Snapshot object
-        snapshot = new Snapshot(this->getUsername(), member_node->getAddress());
+        snapshot = new Snapshot(this->getUsername(), member_node->getAddress(), this);
         
         snapshotCnt++;
         
@@ -574,7 +573,7 @@ void DNode::startSnapshotByUser() {
 Snapshot* DNode::startSnapshotByMarker(std::string from_addr) {
     std::unique_lock<std::mutex> lk(mutex_snapshot);
     // initialize Snapshot object
-    snapshot = new Snapshot(this->getUsername(), member_node->getAddress());
+    snapshot = new Snapshot(this->getUsername(), member_node->getAddress(), this);
     
     snapshotCnt++;
     
